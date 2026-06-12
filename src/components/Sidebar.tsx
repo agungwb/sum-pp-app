@@ -2,13 +2,27 @@ import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import logoFundex from '../assets/logo-fundex.svg';
 
-export default function Sidebar() {
+interface SidebarProps {
+  isCollapsed: boolean;
+  setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   // State untuk mengontrol mode minimize/expand sidebar
-  const [isMinimized, setIsMinimized] = useState(false);
+  // const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menus = [
     { 
-      name: 'Monitoring Utama', 
+      name: 'Dashboard', 
+      path: '/dashboard/overview', 
+      icon: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z" />
+        </svg>
+      )
+    },
+    { 
+      name: 'Monitor Investee', 
       path: '/dashboard/monitoring', 
       icon: (
         <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -17,39 +31,56 @@ export default function Sidebar() {
       )
     },
     { 
-      name: 'Menu Dua', 
-      path: '/dashboard/menu-dua', 
+      name: 'Kupon & Sinking Fund', 
+      path: '/dashboard/sinking-fund', 
       icon: (
         <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
         </svg>
       )
     },
     { 
-      name: 'Menu Tiga', 
-      path: '/dashboard/menu-tiga', 
+      name: 'Cek Mundur & Kolateral', 
+      path: '/dashboard/collaterals', 
       icon: (
         <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
         </svg>
       )
     },
     { 
-      name: 'Menu Empat', 
-      path: '/dashboard/menu-empat', 
+      name: 'Denda & Kepatuhan', 
+      path: '/dashboard/compliance', 
       icon: (
         <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      )
+    },
+    { 
+      name: 'Monitoring Fee & Pajak', 
+      path: '/dashboard/billing', 
+      icon: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       )
     },
   ];
 
+  // Bikin handler fungsi klik terpisah biar bisa dipasang log sebelum menembak state
+  const handleToggle = () => {
+    //debuggin
+    // console.log("⚡ [Sidebar] Tombol toggle diklik! Kondisi lama:", isCollapsed);
+    
+    // Tembak fungsi pengubah milik layout utama
+    setIsCollapsed(!isCollapsed); 
+  };
+
   return (
     <div 
       className={`min-h-screen flex flex-col justify-between text-white border-r border-slate-900 z-20 shrink-0 transition-all duration-300 ease-in-out ${
-        isMinimized ? 'w-16' : 'w-64'
+        isCollapsed ? 'w-16' : 'w-64'
       }`}
       style={{
         // Mempertahankan gradasi merah kuat 0.14 dari sudut kanan bawah
@@ -60,12 +91,12 @@ export default function Sidebar() {
         {/* ========================================== */}
         {/* HEADER BRANDING SIDEBAR                    */}
         {/* ========================================== */}
-        {isMinimized ? (
+        {isCollapsed ? (
           // Poin 1 & 3: Saat mode collapsed, tombol posisi PALING ATAS, baru tulisan SUM.PP di bawahnya
           <div className="pt-6 pb-4 flex flex-col items-center gap-3.5">
             {/* Poin 2: Mengganti ikon ke gaya 'Horizontal Lines Staggered' yang modern */}
             <button
-              onClick={() => setIsMinimized(!isMinimized)}
+              onClick={() => handleToggle()}
               className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors focus:outline-none"
               title="Perluas Menu"
             >
@@ -93,7 +124,7 @@ export default function Sidebar() {
 
             {/* Poin 1 & 2: Tombol collapse ditaruh paling atas kanan dengan ikon garis list futuristik */}
             <button
-              onClick={() => setIsMinimized(!isMinimized)}
+              onClick={() => handleToggle(!isCollapsed)}
               className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors focus:outline-none mt-1 shrink-0"
               title="Sembunyikan Menu"
             >
@@ -107,7 +138,7 @@ export default function Sidebar() {
         {/* ========================================== */}
         {/* LIST NAVIGASI MENU                         */}
         {/* ========================================== */}
-        <nav className={`mt-6 space-y-0.5 ${isMinimized ? 'px-1.5' : 'px-3'}`}>
+        <nav className={`mt-6 space-y-0.5 ${isCollapsed ? 'px-1.5' : 'px-3'}`}>
           {menus.map((menu, index) => (
             <NavLink
               key={index}
@@ -117,15 +148,15 @@ export default function Sidebar() {
                 ${isActive 
                   ? 'bg-white/10 text-white font-medium shadow-sm border-l-2 border-rose-500' 
                   : 'text-slate-400 font-light hover:bg-white/5 hover:text-white'}
-                ${isMinimized 
+                ${isCollapsed 
                   ? 'justify-center px-0' 
                   : 'gap-3 pr-4 pl-3.5'}
-                ${isActive && !isMinimized ? 'pl-3' : ''} 
+                ${isActive && !isCollapsed ? 'pl-3' : ''} 
               `}
-              title={isMinimized ? menu.name : undefined}
+              title={isCollapsed ? menu.name : undefined}
             >
               <span className="transition-colors">{menu.icon}</span>
-              {!isMinimized && <span className="truncate">{menu.name}</span>}
+              {!isCollapsed && <span className="truncate">{menu.name}</span>}
             </NavLink>
           ))}
         </nav>
@@ -134,21 +165,23 @@ export default function Sidebar() {
       {/* ========================================== */}
       {/* BOTTOM SECTION: LOGO & COPYRIGHT           */}
       {/* ========================================== */}
-      <div className={`p-4 border-t border-slate-800/40 bg-slate-950/10 flex flex-col ${isMinimized ? 'items-center justify-center' : 'px-6 py-5 gap-3.5'}`}>
+      <div className={`p-4 border-t border-slate-800/40 bg-slate-950/10 flex flex-col ${isCollapsed ? 'items-center justify-center' : 'px-6 py-5 gap-3.5'}`}>
         <img 
           src={logoFundex} 
           alt="Logo Fundex" 
           className={`brightness-0 invert opacity-100 transition-all duration-300 ${
-            isMinimized ? 'h-3.5 w-auto max-w-[40px]' : 'h-5.5 w-auto self-start'
+            isCollapsed ? 'h-3.5 w-auto max-w-[40px]' : 'h-5.5 w-auto self-start'
           }`} 
         />
-        {!isMinimized && (
+        {!isCollapsed && (
           <div className="text-[9px] font-sans text-slate-500 leading-normal tracking-wide">
             Copyright © 2026 PT Dana Investasi Bersama. All Rights Reserved.
           </div>
         )}
       </div>
 
+
     </div>
   );
+  
 }

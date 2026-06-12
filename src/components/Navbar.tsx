@@ -1,7 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export default function Navbar() {
+// 1. Tambahkan kontrak TypeScript untuk menerima status collapse dari induk
+interface NavbarProps {
+  isCollapsed: boolean;
+  setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+
+export default function Navbar({ isCollapsed }: NavbarProps) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -9,13 +16,20 @@ export default function Navbar() {
     navigate('/login');
   };
 
+
+
   return (
-    <header className="h-16 bg-white border-b border-slate-100 px-8 flex items-center justify-between shadow-sm/50 sticky top-0 z-10">
+    // 2. UBAH DI SINI, BRO: Kita pakai fixed, top-0, right-0, dan left-nya dinamis dinilai dari status sidebar
+    <header 
+      className={`fixed top-0 right-0 ${
+        isCollapsed ? 'left-16' : 'left-64'
+      } h-16 bg-white border-b border-slate-100 px-8 flex items-center justify-between z-40 transition-all duration-300`}
+    >
       
       {/* Kiri: Breadcrumb Penanda Lokasi */}
       <div className="flex items-center gap-2 text-sm">
-        <span className="font-medium text-slate-400">Dashboard</span>
-        <span className="text-slate-300">/</span>
+        <span className="font-medium text-slate-400">SUM.PP</span>
+        <span className="text-slate-300">{`>`}</span>
         <span className="font-bold text-[#090f26]">Monitoring Pembayaran</span>
       </div>
 
@@ -36,7 +50,7 @@ export default function Navbar() {
         {/* Tombol Cepat Keluar */}
         <button
           onClick={handleLogout}
-          className="rounded-lg px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-all border border-transparent hover:border-rose-100"
+          className="rounded-lg px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-all border border-transparent hover:border-rose-100 cursor-pointer"
         >
           Keluar
         </button>
