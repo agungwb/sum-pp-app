@@ -4,6 +4,10 @@ import Login from '../views/Login';
 import DashboardLayout from '../layouts/DashboardLayout';
 import MonitoringDashboard from '../views/MonitoringDashboard';
 
+// 1. IMPORT Halaman Repayment Dashboard yang Baru Kita Bikin
+import RepaymentDashboard from '../views/repayment/RepaymentDashboard';
+import RepaymentDetail from '../views/repayment/RepaymentDetail';
+
 // Komponen Halaman Dummy untuk mengetes apakah redirect login berhasil
 const TestDashboard = () => {
   const token = localStorage.getItem('sum_pp_token');
@@ -48,19 +52,33 @@ export default function AppRoutes() {
         
         {/* Jalur Terproteksi: Struktur Dashboard */}
         <Route path="/dashboard" element={<DashboardLayout />}>
-          {/* Halaman utama di dalam dashboard */}
+          {/* Mengarahkan /dashboard langsung ke overview atau monitoring */}
+          <Route index element={<Navigate to="overview" replace />} />
+
+          {/* 2. SINKRONISASI ROUTE DENGAN PATH DI SIDEBAR */}
+          <Route path="overview" element={<div className="bg-white p-6 rounded-xl border border-slate-100 text-slate-600 font-medium">Halaman Overview Utama (Placeholder)</div>} />
+          
           <Route path="monitoring" element={<MonitoringDashboard />} />
           
-          {/* Placeholder Rute Kosong untuk Menu Dummy Lainnya */}
-          <Route path="menu-dua" element={<div className="bg-white p-6 rounded-xl border border-slate-100">Konten Menu Dua</div>} />
-          <Route path="menu-three" element={<div className="bg-white p-6 rounded-xl border border-slate-100">Konten Menu Tiga</div>} />
-          <Route path="menu-empat" element={<div className="bg-white p-6 rounded-xl border border-slate-100">Konten Menu Empat</div>} />
+          {/* 3. ROUTE AKTIF UNTUK REPAYMENT PENERBIT */}
+          <Route path="repayment" element={<RepaymentDashboard />} />
+
+          <Route path="repayment/:id" element={<RepaymentDetail />} />
+          
+          {/* Sisa Rute Menu Lainnya (Placeholder agar tidak broken link saat diklik) */}
+          <Route path="sinking-fund" element={<div className="bg-white p-6 rounded-xl border border-slate-100 text-slate-600 font-medium">Halaman Kupon & Sinking Fund (Placeholder)</div>} />
+          <Route path="collaterals" element={<div className="bg-white p-6 rounded-xl border border-slate-100 text-slate-600 font-medium">Halaman Cek Mundur & Kolateral (Placeholder)</div>} />
+          <Route path="compliance" element={<div className="bg-white p-6 rounded-xl border border-slate-100 text-slate-600 font-medium">Halaman Denda & Kepatuhan (Placeholder)</div>} />
+          <Route path="billing" element={<div className="bg-white p-6 rounded-xl border border-slate-100 text-slate-600 font-medium">Halaman Monitoring Fee & Pajak (Placeholder)</div>} />
         </Route>
         
         {/* Fallback route jika mengetik path asal-asalan */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={
+          <div className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-500 font-medium">
+            404 - Halaman Tidak Ditemukan
+          </div>
+        } />
       </Routes>
     </BrowserRouter>
   );
 }
-

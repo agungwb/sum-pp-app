@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import logoFundex from '../assets/logo-fundex.svg';
 
@@ -8,8 +8,6 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
-  // State untuk mengontrol mode minimize/expand sidebar
-  // const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menus = [
     { 
@@ -27,6 +25,16 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       icon: (
         <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      )
+    },
+    // Menambahkan Menu Repayment Penerbit yang baru kita buat
+    { 
+      name: 'Repayment Penerbit', 
+      path: '/dashboard/repayment', 
+      icon: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       )
     },
@@ -70,9 +78,6 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
 
   // Bikin handler fungsi klik terpisah biar bisa dipasang log sebelum menembak state
   const handleToggle = () => {
-    //debuggin
-    // console.log("⚡ [Sidebar] Tombol toggle diklik! Kondisi lama:", isCollapsed);
-    
     // Tembak fungsi pengubah milik layout utama
     setIsCollapsed(!isCollapsed); 
   };
@@ -97,7 +102,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             {/* Poin 2: Mengganti ikon ke gaya 'Horizontal Lines Staggered' yang modern */}
             <button
               onClick={() => handleToggle()}
-              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors focus:outline-none"
+              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors focus:outline-none cursor-pointer"
               title="Perluas Menu"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -124,8 +129,8 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
 
             {/* Poin 1 & 2: Tombol collapse ditaruh paling atas kanan dengan ikon garis list futuristik */}
             <button
-              onClick={() => handleToggle(!isCollapsed)}
-              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors focus:outline-none mt-1 shrink-0"
+              onClick={() => handleToggle()}
+              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors focus:outline-none mt-1 shrink-0 cursor-pointer"
               title="Sembunyikan Menu"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -180,8 +185,6 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         )}
       </div>
 
-
     </div>
   );
-  
 }
