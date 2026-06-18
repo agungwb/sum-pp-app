@@ -20,7 +20,7 @@ export default function RepaymentDashboard() {
       try {
         setLoading(true);
         // Panggil endpoint backend
-        const response = await fetch(`${API_BASE_URL}/repayment-security/list`);
+        const response = await fetch(`${API_BASE_URL}/repayment/securities`);
         if (!response.ok) throw new Error('Gagal mengambil data dari server');
         
         const result: ApiResponse<RepaymentSecurity[]> = await response.json();

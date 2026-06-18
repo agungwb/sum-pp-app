@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { RepaymentSecurity, ApiResponse, ContractStatus, SecurityType } from '../../types/repayment';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function RepaymentDetail() {
   const { id } = useParams<{ id: string }>();
@@ -11,13 +11,31 @@ export default function RepaymentDetail() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // State untuk progress bar dinamis
+  const [totalReceipt, setTotalReceipt] = useState<number>(0);
+  const [animatedProgress, setAnimatedProgress] = useState<number>(0);
+  
+  // State untuk jadwal pembayaran (Schedules)
+  const [schedulesRaw, setSchedulesRaw] = useState<any[]>([]);
+
   useEffect(() => {
     const fetchDetail = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        const response = await fetch(`${API_BASE_URL}/repayment-security/${id}`);
+        // Panggil 3 endpoint secara paralel (detail, total receipt, dan schedules)
+        const [response, receiptResponse, schedulesResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/repayment/securities/${id}`),
+          fetch(`${API_BASE_URL}/repayment/securities/${id}/receipt-sinking-fund/total`).catch((e) => {
+            console.error("Gagal mengambil data total receipt:", e);
+            return null;
+          }),
+          fetch(`${API_BASE_URL}/repayment/securities/${id}/schedules`).catch((e) => {
+            console.error("Gagal mengambil data schedules:", e);
+            return null;
+          })
+        ]);
         
         const contentType = response.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
@@ -27,9 +45,36 @@ export default function RepaymentDetail() {
         if (!response.ok) throw new Error(`Server respons dengan status: ${response.status}`);
         
         const result: ApiResponse<RepaymentSecurity> = await response.json();
+
+        // Parsing data receipt total
+        let fetchedTotalReceipt = 0;
+        if (receiptResponse && receiptResponse.ok) {
+          const receiptResult = await receiptResponse.json();
+          fetchedTotalReceipt = parseFloat(receiptResult?.totalReceiptSinkingFund?.toString() || '0');
+        }
+
+        // Parsing data schedules
+        if (schedulesResponse && schedulesResponse.ok) {
+          const schedulesResult = await schedulesResponse.json();
+          setSchedulesRaw(schedulesResult?.data || []);
+        }
         
         if (result && result.data) {
           setData(result.data);
+          setTotalReceipt(fetchedTotalReceipt);
+          
+          // Kalkulasi target progress
+          const underlyingFund = parseFloat(result.data.contractUnderlyingFund?.toString() || '0');
+          let targetProgress = 0;
+          if (underlyingFund > 0) {
+            targetProgress = (fetchedTotalReceipt / underlyingFund) * 100;
+          }
+
+          // Trigger animasi bar
+          setTimeout(() => {
+            setAnimatedProgress(targetProgress);
+          }, 100);
+
         } else {
           throw new Error('Format data tidak valid.');
         }
@@ -83,7 +128,6 @@ export default function RepaymentDetail() {
   // ===========================================================================
   // DATA PREPARATION & CALCULATIONS
   // ===========================================================================
-  const taxRate = parseFloat(data.contractTaxPpn || '11') / 100;
   
   // Kalkulasi Pendapatan (Revenue)
   const totalMonitoringRevenue = parseFloat(data.contractFeeMonitoring || '0') * (data.contractDurationInMonths || 1);
@@ -96,44 +140,48 @@ export default function RepaymentDetail() {
     
   // Persentase Revenue Estimasi
   const totalRevenuePercentage = data.contractUnderlyingFund 
-    ? ((totalRevenue / parseFloat(data.contractUnderlyingFund)) * 100).toFixed(2)
+    ? ((totalRevenue / parseFloat(data.contractUnderlyingFund?.toString() || '0')) * 100).toFixed(2)
     : '0.00';
 
-  // Data Tabel 1: Upfront Fee (Angsuran 0)
+  // ===========================================================================
+  // MAPPING DATA SCHEDULES (DARI API)
+  // ===========================================================================
+  
+  // Ambil Data Order 0 untuk Upfront
+  const rawUpfront = schedulesRaw.find(s => s.scheduleOrder === 0);
   const upfrontData = {
     no: 0,
-    dueDate: data.contractStartDate,
-    status: 'DIBAYAR',
-    admin: parseFloat(data.contractFeeAdministration || '0'),
-    provision: parseFloat(data.contractFeeProvision || '0'),
-    platform: parseFloat(data.contractFeePlatform || '0'),
-    servicing: parseFloat(data.contractFeeServicing || '0'),
+    dueDate: rawUpfront?.scheduleDate || data.contractStartDate,
+    status: rawUpfront?.invoiceStatus || 'BELUM TERSEDIA',
+    admin: parseFloat(rawUpfront?.invoiceFeeAdministration || '0'),
+    adminTax: parseFloat(rawUpfront?.invoiceFeeAdministrationTax || '0'),
+    provision: parseFloat(rawUpfront?.invoiceFeeProvision || '0'),
+    provisionTax: parseFloat(rawUpfront?.invoiceFeeProvisionTax || '0'),
+    platform: parseFloat(rawUpfront?.invoiceFeePlatform || '0'),
+    platformTax: parseFloat(rawUpfront?.invoiceFeePlatformTax || '0'),
+    servicing: parseFloat(rawUpfront?.invoiceFeeServicing || '0'),
+    servicingTax: parseFloat(rawUpfront?.invoiceFeeServicingTax || '0'),
+    baseTotal: parseFloat(rawUpfront?.invoiceTotal || '0'),
+    taxTotal: parseFloat(rawUpfront?.invoiceTotalTax || '0'),
+    grandTotal: parseFloat(rawUpfront?.invoiceTotalWithTax || '0'),
   };
 
-  // Kalkulasi Pajak Upfront
-  const taxAdmin = upfrontData.admin * taxRate;
-  const taxProvision = upfrontData.provision * taxRate;
-  const taxPlatform = upfrontData.platform * taxRate;
-  const taxServicing = upfrontData.servicing * taxRate;
-  const upfrontBaseTotal = upfrontData.admin + upfrontData.provision + upfrontData.platform + upfrontData.servicing;
-  const upfrontTaxTotal = taxAdmin + taxProvision + taxPlatform + taxServicing;
-  const upfrontGrandTotal = upfrontBaseTotal + upfrontTaxTotal;
-
-  // Data Tabel 2: Jadwal Bulanan
-  const dummySchedules = [
-    { month: 1, date: '01 Feb 2025', sf: 0, yield: 15000000, monitoring: 2000000, status: 'DIBAYAR' },
-    { month: 2, date: '01 Mar 2025', sf: 0, yield: 15000000, monitoring: 2000000, status: 'DIBAYAR' },
-    { month: 3, date: '01 Apr 2025', sf: 0, yield: 15000000, monitoring: 2000000, status: 'TERTUNDA' },
-    { month: 4, date: '01 Mei 2025', sf: 0, yield: 15000000, monitoring: 2000000, status: 'BELUM JATUH TEMPO' },
-    { month: 5, date: '01 Jun 2025', sf: 0, yield: 15000000, monitoring: 2000000, status: 'BELUM JATUH TEMPO' },
-    { month: 6, date: '01 Jul 2025', sf: parseFloat(data.contractUnderlyingFund), yield: 15000000, monitoring: 2000000, status: 'BELUM JATUH TEMPO' },
-  ].map(row => {
-    const taxMonitoring = row.monitoring * taxRate;
-    const baseTotal = row.sf + row.yield + row.monitoring;
-    const taxTotal = taxMonitoring; 
-    const grandTotal = baseTotal + taxTotal;
-    return { ...row, taxMonitoring, baseTotal, taxTotal, grandTotal };
-  });
+  // Ambil Data Order > 0 untuk Cicilan (Schedules)
+  const schedules = schedulesRaw
+    .filter(s => s.scheduleOrder > 0)
+    .sort((a, b) => a.scheduleOrder - b.scheduleOrder)
+    .map(row => ({
+      month: row.scheduleOrder,
+      date: formatDate(row.scheduleDate),
+      sf: parseFloat(row.invoiceSinkingFund || '0'),
+      yield: parseFloat(row.invoiceYield || '0'),
+      monitoring: parseFloat(row.invoiceFeeMonitoring || '0'),
+      taxMonitoring: parseFloat(row.invoiceFeeMonitoringTax || '0'),
+      baseTotal: parseFloat(row.invoiceTotal || '0'),
+      taxTotal: parseFloat(row.invoiceTotalTax || '0'),
+      grandTotal: parseFloat(row.invoiceTotalWithTax || '0'),
+      status: row.invoiceStatus
+    }));
 
   const dummyCollaterals = [
     { id: 'COL-001', type: 'INVOICE', value: 2000000000, status: 'DIAMANKAN', vDoc: true, vLegal: true, vField: true, vValue: true },
@@ -141,7 +189,16 @@ export default function RepaymentDetail() {
     { id: 'COL-003', type: 'PERSONAL GUARANTEE', value: 500000000, status: 'MENUNGGU VERIFIKASI', vDoc: false, vLegal: false, vField: false, vValue: false },
   ];
 
-  const dummyProgressValue = 16.5; 
+  // Kalkulasi Progress Dana Aktual untuk ditambilkan di text (angka persentase fix)
+  const underlyingFund = parseFloat(data.contractUnderlyingFund?.toString() || '0');
+  let progressPercentage = 0;
+  if (underlyingFund > 0) {
+    progressPercentage = (totalReceipt / underlyingFund) * 100;
+  }
+  const formattedProgress = progressPercentage.toFixed(2);
+  
+  // Batas maksimal animasi width (agar tidak melebihi container)
+  const boundedWidth = Math.min(animatedProgress, 100);
 
   return (
     <div className="p-5 w-full max-w-[1400px] mx-auto space-y-5 bg-slate-50/20 min-h-screen text-slate-700 antialiased">
@@ -170,11 +227,10 @@ export default function RepaymentDetail() {
       <div className="flex flex-col lg:flex-row gap-5 items-stretch">
         
         {/* CONTAINER 1: Informasi Utama (Proporsi 1/3) */}
-        {/* CONTAINER 1: Informasi Utama (Proporsi 1/3) */}
         <div className="w-full lg:w-1/3 bg-white rounded-xl border-2 border-slate-200 shadow-sm p-5 flex flex-col justify-between">
           
           <div className="flex flex-col gap-2.5">
-            {/* Baris 1: Penerbit, Legalitas, dan Status (Mirip RepaymentCard) */}
+            {/* Baris 1: Penerbit, Legalitas, dan Status */}
             <div className="flex justify-between items-start gap-2 border-b-2 border-slate-100 pb-3">
               <div className="min-w-0 pr-2">
                 <h3 className="text-base font-bold text-slate-800 leading-tight truncate" title={data.investeeName}>
@@ -199,7 +255,7 @@ export default function RepaymentDetail() {
               </span>
             </div>
 
-            {/* Baris 3: Jumlah Pendanaan (Dengan Container Card) */}
+            {/* Baris 3: Jumlah Pendanaan */}
             <div className="bg-slate-50 border-2 border-slate-100 rounded-lg p-3 my-2">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Jumlah Pendanaan</span>
               <p className="text-2xl xl:text-[28px] font-black text-slate-800 font-mono tracking-tighter break-words leading-none">
@@ -235,7 +291,7 @@ export default function RepaymentDetail() {
             <div className="flex justify-between items-end border-t border-slate-100 pt-2.5">
               <div className="flex flex-col">
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Jumlah Cicilan</span>
-                <span className="text-[13px] font-sans font-semibold text-slate-700">{dummySchedules.length}x Cicilan</span>
+                <span className="text-[13px] font-sans font-semibold text-slate-700">{schedules.length}x Cicilan</span>
               </div>
               <div className="flex flex-col text-right">
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Agunan</span>
@@ -263,14 +319,17 @@ export default function RepaymentDetail() {
             </div>
           </div>
 
-          {/* Baris 8: Progress Bar (Tanpa Container Box Ekstra) */}
+          {/* Baris 8: Progress Bar Animasi */}
           <div className="mt-auto pt-4 border-t-2 border-slate-100">
             <div className="flex justify-between text-[11px] font-bold mb-2">
               <span className="text-slate-500 uppercase tracking-wider">Progress Dana</span>
-              <span className="text-slate-700">{dummyProgressValue}% Terkumpul</span>
+              <span className="text-slate-700">{formattedProgress}% Terkumpul</span>
             </div>
             <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
-              <div className="bg-orange-500 h-full rounded-full transition-all duration-1000" style={{ width: `${dummyProgressValue}%` }}></div>
+              <div 
+                className="bg-orange-500 h-full rounded-full transition-all duration-1000 ease-out" 
+                style={{ width: `${boundedWidth}%` }}
+              ></div>
             </div>
           </div>
         </div>
@@ -359,22 +418,22 @@ export default function RepaymentDetail() {
                   </td>
                   <td className="py-3 px-3 align-top">{formatDate(upfrontData.dueDate)}</td>
                   <td className="py-3 px-3 text-right align-top">
-                    <FeeWithTax base={upfrontData.admin} tax={taxAdmin} />
+                    <FeeWithTax base={upfrontData.admin} tax={upfrontData.adminTax} />
                   </td>
                   <td className="py-3 px-3 text-right align-top">
-                    <FeeWithTax base={upfrontData.provision} tax={taxProvision} />
+                    <FeeWithTax base={upfrontData.provision} tax={upfrontData.provisionTax} />
                   </td>
                   <td className="py-3 px-3 text-right align-top">
-                    <FeeWithTax base={upfrontData.platform} tax={taxPlatform} />
+                    <FeeWithTax base={upfrontData.platform} tax={upfrontData.platformTax} />
                   </td>
                   <td className="py-3 px-3 text-right align-top">
-                    <FeeWithTax base={upfrontData.servicing} tax={taxServicing} />
+                    <FeeWithTax base={upfrontData.servicing} tax={upfrontData.servicingTax} />
                   </td>
                   <td className="py-3 px-3 text-right align-top">
-                    <FeeWithTax base={upfrontBaseTotal} tax={upfrontTaxTotal} isTotal={true} />
+                    <FeeWithTax base={upfrontData.baseTotal} tax={upfrontData.taxTotal} isTotal={true} />
                   </td>
                   <td className="py-3 px-3 text-right font-mono font-bold text-xs text-slate-800 align-top">
-                    {formatRupiah(upfrontGrandTotal)}
+                    {formatRupiah(upfrontData.grandTotal)}
                   </td>
                 </tr>
               </tbody>
@@ -400,7 +459,7 @@ export default function RepaymentDetail() {
                 </tr>
               </thead>
               <tbody className="text-[11px] font-medium text-slate-700 divide-y divide-slate-100">
-                {dummySchedules.map((sch) => (
+                {schedules.map((sch) => (
                   <tr key={sch.month} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-3 px-3 text-center text-slate-800 font-bold align-top">{sch.month}</td>
                     <td className="py-3 px-3 text-left align-top">
@@ -544,13 +603,13 @@ function RevenueRow({ label, value }: { label: string; value: string | number })
   );
 }
 
-// Helper: Status Badge
+// Helper: Status Badge (Ditambah support untuk format data API seperti PAID/OVERDUE)
 function StatusBadge({ status }: { status: string }) {
   let color = 'bg-slate-100 text-slate-600 border border-slate-200';
   
-  if (status === 'DIBAYAR' || status === 'DIAMANKAN') color = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-  if (status === 'TERTUNDA' || status === 'DALAM PROSES') color = 'bg-amber-50 text-amber-700 border border-amber-300';
-  if (status === 'BELUM JATUH TEMPO' || status === 'MENUNGGU VERIFIKASI') color = 'bg-blue-50 text-blue-600 border border-blue-200';
+  if (status === 'DIBAYAR' || status === 'DIAMANKAN' || status === 'PAID') color = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+  if (status === 'TERTUNDA' || status === 'DALAM PROSES' || status === 'OVERDUE') color = 'bg-amber-50 text-amber-700 border border-amber-300';
+  if (status === 'BELUM JATUH TEMPO' || status === 'MENUNGGU VERIFIKASI' || status === 'UNPAID' || status === 'PENDING') color = 'bg-blue-50 text-blue-600 border border-blue-200';
   
   return (
     <span className={`px-2 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase inline-block border-2 ${color}`}>
