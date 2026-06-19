@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { RepaymentSecurity, ApiResponse, ContractStatus, SecurityType } from '../../types/repayment';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 export default function RepaymentDetail() {
   const { id } = useParams<{ id: string }>();
@@ -15,8 +15,9 @@ export default function RepaymentDetail() {
   const [totalReceipt, setTotalReceipt] = useState<number>(0);
   const [animatedProgress, setAnimatedProgress] = useState<number>(0);
   
-  // State untuk jadwal pembayaran (Schedules)
+  // State untuk jadwal pembayaran (Schedules) dan Agunan (Collaterals)
   const [schedulesRaw, setSchedulesRaw] = useState<any[]>([]);
+  const [collateralsRaw, setCollateralsRaw] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -24,8 +25,8 @@ export default function RepaymentDetail() {
         setLoading(true);
         setError(null);
         
-        // Panggil 3 endpoint secara paralel (detail, total receipt, dan schedules)
-        const [response, receiptResponse, schedulesResponse] = await Promise.all([
+        // Panggil 4 endpoint secara paralel (detail, total receipt, schedules, dan collaterals)
+        const [response, receiptResponse, schedulesResponse, collateralsResponse] = await Promise.all([
           fetch(`${API_BASE_URL}/repayment/securities/${id}`),
           fetch(`${API_BASE_URL}/repayment/securities/${id}/receipt-sinking-fund/total`).catch((e) => {
             console.error("Gagal mengambil data total receipt:", e);
@@ -33,6 +34,10 @@ export default function RepaymentDetail() {
           }),
           fetch(`${API_BASE_URL}/repayment/securities/${id}/schedules`).catch((e) => {
             console.error("Gagal mengambil data schedules:", e);
+            return null;
+          }),
+          fetch(`${API_BASE_URL}/repayment/securities/${id}/collaterals`).catch((e) => {
+            console.error("Gagal mengambil data collaterals:", e);
             return null;
           })
         ]);
@@ -50,21 +55,27 @@ export default function RepaymentDetail() {
         let fetchedTotalReceipt = 0;
         if (receiptResponse && receiptResponse.ok) {
           const receiptResult = await receiptResponse.json();
-          fetchedTotalReceipt = parseFloat(receiptResult?.totalReceiptSinkingFund?.toString() || '0');
+          fetchedTotalReceipt = parseFloat(receiptResult?.data?.sum.toString() || '0');
         }
 
         // Parsing data schedules
         if (schedulesResponse && schedulesResponse.ok) {
           const schedulesResult = await schedulesResponse.json();
-          setSchedulesRaw(schedulesResult?.data || []);
+          setSchedulesRaw(schedulesResult?.data?.items || []);
+        }
+
+        // Parsing data collaterals
+        if (collateralsResponse && collateralsResponse.ok) {
+          const collateralsResult = await collateralsResponse.json();
+          setCollateralsRaw(collateralsResult?.data?.items|| []);
         }
         
         if (result && result.data) {
-          setData(result.data);
+          setData(result?.data?.item);
           setTotalReceipt(fetchedTotalReceipt);
           
           // Kalkulasi target progress
-          const underlyingFund = parseFloat(result.data.contractUnderlyingFund?.toString() || '0');
+          const underlyingFund = parseFloat(result?.data?.item?.contractUnderlyingFund?.toString() || '0');
           let targetProgress = 0;
           if (underlyingFund > 0) {
             targetProgress = (fetchedTotalReceipt / underlyingFund) * 100;
@@ -144,7 +155,7 @@ export default function RepaymentDetail() {
     : '0.00';
 
   // ===========================================================================
-  // MAPPING DATA SCHEDULES (DARI API)
+  // MAPPING DATA SCHEDULES & COLLATERALS
   // ===========================================================================
   
   // Ambil Data Order 0 untuk Upfront
@@ -166,11 +177,12 @@ export default function RepaymentDetail() {
     grandTotal: parseFloat(rawUpfront?.invoiceTotalWithTax || '0'),
   };
 
-  // Ambil Data Order > 0 untuk Cicilan (Schedules)
+  // Ambil Data Order > 0 untuk Cicilan
   const schedules = schedulesRaw
     .filter(s => s.scheduleOrder > 0)
     .sort((a, b) => a.scheduleOrder - b.scheduleOrder)
     .map(row => ({
+      id: row.id,
       month: row.scheduleOrder,
       date: formatDate(row.scheduleDate),
       sf: parseFloat(row.invoiceSinkingFund || '0'),
@@ -183,13 +195,19 @@ export default function RepaymentDetail() {
       status: row.invoiceStatus
     }));
 
-  const dummyCollaterals = [
-    { id: 'COL-001', type: 'INVOICE', value: 2000000000, status: 'DIAMANKAN', vDoc: true, vLegal: true, vField: true, vValue: true },
-    { id: 'COL-002', type: 'CEK MUNDUR', value: 1500000000, status: 'DALAM PROSES', vDoc: true, vLegal: false, vField: false, vValue: false },
-    { id: 'COL-003', type: 'PERSONAL GUARANTEE', value: 500000000, status: 'MENUNGGU VERIFIKASI', vDoc: false, vLegal: false, vField: false, vValue: false },
-  ];
+  // Mapping Data Agunan (Collaterals) dari API
+  const collaterals = collateralsRaw.map(col => ({
+    id: col.id,
+    type: col.collateralType ? col.collateralType.replace(/_/g, ' ') : '-',
+    value: parseFloat(col.collateralValueEstimated || '0'),
+    status: col.collateralStatus || '-',
+    vDoc: col.verificationDocumentStatus === 'VERIFIED',
+    vLegal: col.verificationLegalStatus === 'VERIFIED',
+    vField: col.verificationFieldStatus === 'VERIFIED',
+    vValue: col.verificationValueStatus === 'VERIFIED',
+  }));
 
-  // Kalkulasi Progress Dana Aktual untuk ditambilkan di text (angka persentase fix)
+  // Kalkulasi Progress Dana Aktual untuk ditambilkan di text
   const underlyingFund = parseFloat(data.contractUnderlyingFund?.toString() || '0');
   let progressPercentage = 0;
   if (underlyingFund > 0) {
@@ -197,7 +215,7 @@ export default function RepaymentDetail() {
   }
   const formattedProgress = progressPercentage.toFixed(2);
   
-  // Batas maksimal animasi width (agar tidak melebihi container)
+  // Batas maksimal animasi width
   const boundedWidth = Math.min(animatedProgress, 100);
 
   return (
@@ -295,7 +313,7 @@ export default function RepaymentDetail() {
               </div>
               <div className="flex flex-col text-right">
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Agunan</span>
-                <span className="text-[13px] font-sans font-semibold text-slate-700">{dummyCollaterals.length} Kolateral</span>
+                <span className="text-[13px] font-sans font-semibold text-slate-700">{collaterals.length} Kolateral</span>
               </div>
             </div>
 
@@ -399,7 +417,7 @@ export default function RepaymentDetail() {
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
                 <tr className="bg-slate-50 text-[9px] text-slate-500 uppercase tracking-wider border-y border-slate-200">
-                  <th className="py-2.5 px-3 font-bold text-center">No</th>
+                  <th className="py-2.5 px-3 font-bold text-center">Informasi</th>
                   <th className="py-2.5 px-3 font-bold text-left">Status</th>
                   <th className="py-2.5 px-3 font-bold text-left">Jatuh Tempo</th>
                   <th className="py-2.5 px-3 font-bold text-right">Biaya Admin</th>
@@ -445,41 +463,83 @@ export default function RepaymentDetail() {
         <div className="p-5">
           <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-3 border-b-2 border-slate-100 pb-2">Jadwal Pembayaran: Cicilan Bulanan</h3>
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse whitespace-nowrap">
-              <thead>
+          <table className="w-full text-left border-collapse whitespace-nowrap">
+            <thead>
                 <tr className="bg-slate-50 text-[9px] text-slate-500 uppercase tracking-wider border-y border-slate-200">
-                  <th className="py-2.5 px-3 font-bold text-center">No</th>
-                  <th className="py-2.5 px-3 font-bold text-left">Status</th>
-                  <th className="py-2.5 px-3 font-bold text-left">Jatuh Tempo</th>
-                  <th className="py-2.5 px-3 font-bold text-right">Cicilan Sinking Fund</th>
-                  <th className="py-2.5 px-3 font-bold text-right">{data.securityType === 'Sukuk' ? 'Kupon' : 'Dividen'}</th>
-                  <th className="py-2.5 px-3 font-bold text-right">Biaya Pemantauan</th>
-                  <th className="py-2.5 px-3 font-bold text-right">Total</th>
-                  <th className="py-2.5 px-3 font-bold text-right">Total + Pajak</th>
+                {/* Kolom 1 Besar & Padat */}
+                <th className="py-2.5 px-3 font-bold text-left min-w-[200px]">Informasi Pembayaran</th>
+                
+                {/* Kolom Eksisting Tengah (Dilarang Merubah Tampilan & Kode) */}
+                <th className="py-2.5 px-3 font-bold text-right">Cicilan Sinking Fund</th>
+                <th className="py-2.5 px-3 font-bold text-right">{data.securityType === 'Sukuk' ? 'Kupon' : 'Dividen'}</th>
+                <th className="py-2.5 px-3 font-bold text-right">Biaya Pemantauan</th>
+                <th className="py-2.5 px-3 font-bold text-right">Total</th>
+                {/* Total + Pajak sebagai pembatas kiri diberikan garis vertikal di sebelah kanannya */}
+                <th className="py-2.5 px-3 font-bold text-right border-r border-slate-200">Total + Pajak</th>
+                
+                {/* Kolom Jumlah Dibayarkan Sekarang Berada di Paling Kanan */}
+                <th className="py-2.5 px-3 font-bold text-right">Jumlah Dibayarkan</th>
                 </tr>
-              </thead>
-              <tbody className="text-[11px] font-medium text-slate-700 divide-y divide-slate-100">
-                {schedules.map((sch) => (
-                  <tr key={sch.month} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3 px-3 text-center text-slate-800 font-bold align-top">{sch.month}</td>
-                    <td className="py-3 px-3 text-left align-top">
-                       <StatusBadge status={sch.status} />
+            </thead>
+            <tbody className="text-[11px] font-medium text-slate-700 divide-y divide-slate-100">
+                {schedules.map((sch) => {
+                const isUpfront = sch.month === 0;
+                const titleLabel = isUpfront ? 'UPFRONT FEE' : `Pembayaran ${sch.month}`;
+
+                console.log("schedule : ",sch);
+
+                return (
+                    <tr key={sch.month} className="hover:bg-slate-50/80 transition-colors align-top">
+                    
+                    {/* KOLOM 1: INFORMASI PEMBAYARAN (DENSE & MENARIK) */}
+                    <td className="py-3 px-3 text-left">
+                        <div className="flex flex-col space-y-0.5 max-w-[240px]">
+                        {/* Row Atas: Judul di kiri, Status Badge di kanan */}
+                        <div className="flex items-center justify-between gap-4">
+                            <span className="font-bold text-slate-900 tracking-wide text-xs">{titleLabel}</span>
+                            <StatusBadge status={sch.status} />
+                        </div>
+                        
+                        {/* Row Tengah: Detail Tanggal Jadwal */}
+                        <div className="flex flex-col text-[10px] text-slate-500 pt-0.5">
+                            <span>Jatuh Tempo: <span className="font-semibold text-slate-600">{sch.date || '-'}</span></span>
+                            <span>Invoicing: <span className="font-semibold text-slate-600">{sch.date || '-'}</span></span>
+                        </div>
+                        
+                        {/* Row Bawah: Aksi Detil */}
+                        <Link 
+                            to={`/dashboard/repayment/schedules/${sch.id}`} 
+                            className="text-blue-600 font-bold hover:text-blue-800 hover:underline inline-block pt-0.5 text-[10px]"
+                        >
+                            Lihat detil &gt;
+                        </Link>
+                        </div>
                     </td>
-                    <td className="py-3 px-3 align-top">{sch.date}</td>
-                    <td className="py-3 px-3 text-right font-mono align-top">{formatRupiah(sch.sf)}</td>
-                    <td className="py-3 px-3 text-right font-mono align-top">{formatRupiah(sch.yield)}</td>
-                    <td className="py-3 px-3 text-right align-top">
-                       <FeeWithTax base={sch.monitoring} tax={sch.taxMonitoring} />
+
+                    {/* KOLOM EKSISTING (TIDAK BERUBAH) */}
+                    <td className="py-3 px-3 text-right font-mono">{formatRupiah(sch.sf)}</td>
+                    <td className="py-3 px-3 text-right font-mono">{formatRupiah(sch.yield)}</td>
+                    <td className="py-3 px-3 text-right">
+                        <FeeWithTax base={sch.monitoring} tax={sch.taxMonitoring} />
                     </td>
-                    <td className="py-3 px-3 text-right align-top">
-                       <FeeWithTax base={sch.baseTotal} tax={sch.taxTotal} isTotal={true} />
+                    <td className="py-3 px-3 text-right">
+                        <FeeWithTax base={sch.baseTotal} tax={sch.taxTotal} isTotal={true} />
                     </td>
-                    <td className="py-3 px-3 text-right font-mono font-bold text-xs text-slate-800 align-top">
-                       {formatRupiah(sch.grandTotal)}
+                    
+                    {/* KOLOM TOTAL + PAJAK (Diberikan garis pemisah kanan border-r) */}
+                    <td className="py-3 px-3 text-right font-mono font-bold text-xs text-slate-800 border-r border-slate-200">
+                        {formatRupiah(sch.grandTotal)}
                     </td>
-                  </tr>
-                ))}
-              </tbody>
+
+                    {/* KOLOM BARU: JUMLAH DIBAYARKAN (DUMMY DATA - SEKARANG DI PALING KANAN) */}
+                    <td className="py-3 px-3 text-right font-mono font-bold text-emerald-600">
+                        {formatRupiah(0)}
+                    </td>
+
+                    </tr>
+                );
+                })}
+            </tbody>
             </table>
           </div>
         </div>
@@ -509,7 +569,7 @@ export default function RepaymentDetail() {
           </div>
         </div>
 
-        {/* CONTAINER 5: Daftar Kolateral (1/2) */}
+        {/* CONTAINER 5: Daftar Agunan / Kolateral (1/2) */}
         <div className="w-full lg:w-1/2 bg-white rounded-xl border-2 border-slate-200 shadow-sm p-5 flex flex-col">
           <div className="flex justify-between items-end mb-4 border-b-2 border-slate-100 pb-2">
             <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider">Daftar Agunan (Kolateral)</h3>
@@ -517,33 +577,39 @@ export default function RepaymentDetail() {
           </div>
           
           <div className="flex-1 overflow-x-auto">
-            <table className="w-full text-left border-collapse whitespace-nowrap">
-              <thead>
-                <tr className="bg-slate-50 text-[9px] text-slate-500 uppercase tracking-wider border-y border-slate-200">
-                  <th className="py-2.5 px-3 font-bold">Tipe & Status</th>
-                  <th className="py-2.5 px-3 font-bold text-right">Estimasi Nilai</th>
-                  <th className="py-2.5 px-2 font-bold text-center" title="Verifikasi Dokumen">Dok</th>
-                  <th className="py-2.5 px-2 font-bold text-center" title="Verifikasi Legal">Leg</th>
-                  <th className="py-2.5 px-2 font-bold text-center" title="Verifikasi Lapangan">Lap</th>
-                  <th className="py-2.5 px-2 font-bold text-center" title="Verifikasi Nilai">Nil</th>
-                </tr>
-              </thead>
-              <tbody className="text-[11px] font-medium text-slate-700 divide-y divide-slate-100">
-                {dummyCollaterals.map((col) => (
-                  <tr key={col.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3 px-3 align-top">
-                      <p className="font-bold text-slate-700 mb-1">{col.type}</p>
-                      <StatusBadge status={col.status} />
-                    </td>
-                    <td className="py-3 px-3 text-right font-mono font-bold text-slate-800 align-top">{formatRupiah(col.value)}</td>
-                    <td className="py-3 px-2 align-top"><CheckOrCross isChecked={col.vDoc} /></td>
-                    <td className="py-3 px-2 align-top"><CheckOrCross isChecked={col.vLegal} /></td>
-                    <td className="py-3 px-2 align-top"><CheckOrCross isChecked={col.vField} /></td>
-                    <td className="py-3 px-2 align-top"><CheckOrCross isChecked={col.vValue} /></td>
+            {collaterals.length === 0 ? (
+              <div className="flex justify-center items-center h-full text-[11px] font-medium text-slate-400 py-6">
+                Belum ada data agunan terdaftar.
+              </div>
+            ) : (
+              <table className="w-full text-left border-collapse whitespace-nowrap">
+                <thead>
+                  <tr className="bg-slate-50 text-[9px] text-slate-500 uppercase tracking-wider border-y border-slate-200">
+                    <th className="py-2.5 px-3 font-bold">Tipe & Status</th>
+                    <th className="py-2.5 px-3 font-bold text-right">Estimasi Nilai</th>
+                    <th className="py-2.5 px-2 font-bold text-center" title="Verifikasi Dokumen">Dok</th>
+                    <th className="py-2.5 px-2 font-bold text-center" title="Verifikasi Legal">Leg</th>
+                    <th className="py-2.5 px-2 font-bold text-center" title="Verifikasi Lapangan">Lap</th>
+                    <th className="py-2.5 px-2 font-bold text-center" title="Verifikasi Nilai">Nil</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="text-[11px] font-medium text-slate-700 divide-y divide-slate-100">
+                  {collaterals.map((col) => (
+                    <tr key={col.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3 px-3 align-top">
+                        <p className="font-bold text-slate-700 mb-1">{col.type}</p>
+                        <StatusBadge status={col.status} />
+                      </td>
+                      <td className="py-3 px-3 text-right font-mono font-bold text-slate-800 align-top">{formatRupiah(col.value)}</td>
+                      <td className="py-3 px-2 align-top"><CheckOrCross isChecked={col.vDoc} /></td>
+                      <td className="py-3 px-2 align-top"><CheckOrCross isChecked={col.vLegal} /></td>
+                      <td className="py-3 px-2 align-top"><CheckOrCross isChecked={col.vField} /></td>
+                      <td className="py-3 px-2 align-top"><CheckOrCross isChecked={col.vValue} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
 
@@ -603,17 +669,33 @@ function RevenueRow({ label, value }: { label: string; value: string | number })
   );
 }
 
-// Helper: Status Badge (Ditambah support untuk format data API seperti PAID/OVERDUE)
+// Helper: Status Badge (Menambahkan mapping status API HELD_BY_PLATFORM, SUBMITTED, dll)
 function StatusBadge({ status }: { status: string }) {
   let color = 'bg-slate-100 text-slate-600 border border-slate-200';
   
-  if (status === 'DIBAYAR' || status === 'DIAMANKAN' || status === 'PAID') color = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-  if (status === 'TERTUNDA' || status === 'DALAM PROSES' || status === 'OVERDUE') color = 'bg-amber-50 text-amber-700 border border-amber-300';
-  if (status === 'BELUM JATUH TEMPO' || status === 'MENUNGGU VERIFIKASI' || status === 'UNPAID' || status === 'PENDING') color = 'bg-blue-50 text-blue-600 border border-blue-200';
+  // Emerald (Sukses / Terjamin)
+  if (status === 'DIBAYAR' || status === 'DIAMANKAN' || status === 'PAID' || status === 'HELD_BY_PLATFORM' || status === 'LIQUIDATED') {
+    color = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+  }
+  // Amber (Peringatan / Sedang Proses)
+  else if (status === 'TERTUNDA' || status === 'DALAM PROSES' || status === 'OVERDUE' || status === 'UNDER_REVIEW' || status === 'SUBMITTED') {
+    color = 'bg-amber-50 text-amber-700 border border-amber-300';
+  }
+  // Blue (Belum Waktunya / Menunggu / Biasa)
+  else if (status === 'BELUM JATUH TEMPO' || status === 'MENUNGGU VERIFIKASI' || status === 'UNPAID' || status === 'PENDING') {
+    color = 'bg-blue-50 text-blue-600 border border-blue-200';
+  }
+  // Red (Ditolak)
+  else if (status === 'DECLINED') {
+    color = 'bg-rose-50 text-rose-700 border border-rose-200';
+  }
+  
+  // Replace underscores dengan spasi untuk tampilan yang lebih ramah
+  const displayStatus = status ? status.replace(/_/g, ' ') : '-';
   
   return (
     <span className={`px-2 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase inline-block border-2 ${color}`}>
-      {status}
+      {displayStatus}
     </span>
   );
 }

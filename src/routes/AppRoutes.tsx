@@ -7,6 +7,7 @@ import MonitoringDashboard from '../views/MonitoringDashboard';
 // 1. IMPORT Halaman Repayment Dashboard yang Baru Kita Bikin
 import RepaymentDashboard from '../views/repayment/RepaymentDashboard';
 import RepaymentDetail from '../views/repayment/RepaymentDetail';
+import RepaymentSchedule from '../views/repayment/RepaymentSchedule';
 
 // Komponen Halaman Dummy untuk mengetes apakah redirect login berhasil
 const TestDashboard = () => {
@@ -64,6 +65,10 @@ export default function AppRoutes() {
           <Route path="repayment" element={<RepaymentDashboard />} />
 
           <Route path="repayment/:id" element={<RepaymentDetail />} />
+
+          <Route path="repayment/schedules/:id" element={<RepaymentSchedule />} />
+
+     
           
           {/* Sisa Rute Menu Lainnya (Placeholder agar tidak broken link saat diklik) */}
           <Route path="sinking-fund" element={<div className="bg-white p-6 rounded-xl border border-slate-100 text-slate-600 font-medium">Halaman Kupon & Sinking Fund (Placeholder)</div>} />

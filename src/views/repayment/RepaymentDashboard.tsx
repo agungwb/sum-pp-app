@@ -36,7 +36,7 @@ export default function RepaymentDashboard() {
   }, []);
 
   // Logic filter & search berantai
-  const filteredData = data.filter((item) => {
+  const filteredData = data?.items?.filter((item) => {
     const matchesSearch = 
       item.investeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.securityName.toLowerCase().includes(searchTerm.toLowerCase());
