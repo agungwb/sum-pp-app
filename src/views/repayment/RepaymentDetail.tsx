@@ -1,6 +1,12 @@
 // src/pages/repayment/RepaymentDetail.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import RepaymentScheduleCreateWrapper from '../../components/repayment/RepaymentScheduleCreateWrapper';
+import RepaymentScheduleEditWrapper from '../../components/repayment/RepaymentScheduleEditWrapper';
+import RepaymentSecurityEditWrapper from '../../components/repayment/RepaymentSecurityEditWrapper';
+import RepaymentSecurityForm from '../../components/repayment/RepaymentSecurityForm';
+import { useGlobalMode } from '../../context/GlobalModeContext';
+import { useSidePanel } from '../../context/SidePanelContext';
 import { RepaymentSecurity, ApiResponse, ContractStatus, SecurityType } from '../../types/repayment';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
@@ -18,6 +24,10 @@ export default function RepaymentDetail() {
   // State untuk jadwal pembayaran (Schedules) dan Agunan (Collaterals)
   const [schedulesRaw, setSchedulesRaw] = useState<any[]>([]);
   const [collateralsRaw, setCollateralsRaw] = useState<any[]>([]);
+
+  const { isEditMode } = useGlobalMode();
+
+  const { openPanel } = useSidePanel();
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -161,6 +171,7 @@ export default function RepaymentDetail() {
   // Ambil Data Order 0 untuk Upfront
   const rawUpfront = schedulesRaw.find(s => s.scheduleOrder === 0);
   const upfrontData = {
+    id: rawUpfront?.id,
     no: 0,
     dueDate: rawUpfront?.scheduleDate || data.contractStartDate,
     status: rawUpfront?.invoiceStatus || 'BELUM TERSEDIA',
@@ -230,12 +241,20 @@ export default function RepaymentDetail() {
         </Link>
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Detail Portofolio Pembayaran</h1>
+            <h1 className="text-xl font-bold text-slate-800 tracking-tight">Detail Portofolio Pembayaran</h1>
           </div>
-          <button className="text-sm font-semibold bg-white text-slate-700 border border-slate-200 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-100 flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-            Ubah Detail
-          </button>
+          {isEditMode && (
+              <button 
+                  // 3. Tambahkan onClick di sini (sesuaikan "data.id" dengan variabel ID row/item lo saat ini)
+                  onClick={() => openPanel(<RepaymentSecurityEditWrapper repaymentId={data.id} />)}
+                  className="text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-2 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2"
+              >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                  Ubah Detail
+              </button>
+          )}
         </div>
       </div>
 
@@ -243,7 +262,58 @@ export default function RepaymentDetail() {
           ROW 1: CONTAINER 1 (Utama - 1/3) & CONTAINER 2 (Detail - 2/3)
       ====================================================================== */}
       <div className="flex flex-col lg:flex-row gap-5 items-stretch">
-        
+        {/* CONTAINER 2: Detil Informasi (Proporsi 2/3, Grid 2 Kolom) */}
+        <div className="w-full lg:w-2/3 bg-white rounded-xl border-2 border-slate-200 shadow-sm p-5 flex flex-col justify-start">
+          <h3 className="text-[12px] font-bold text-slate-800 uppercase tracking-wider border-b-2 border-slate-100 pb-2 mb-4 shrink-0">Detil Informasi & Legalitas</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            {/* Baris 1 */}
+            <InfoRow label="Nama Efek" value={data.securityName} />
+            <InfoRow label="Tipe Efek" value={data.securityType} />
+            
+            {/* Baris 2 */}
+            <InfoRow label="Nama Penerbit" value={data.investeeName} />
+            <InfoRow label="Nama Penerbit (Legal)" value={data.investeeNameLegal} />
+            
+            {/* Baris 3 */}
+            <InfoRow label="Jumlah Pendanaan" value={formatRupiah(data.contractUnderlyingFund)} fontMono />
+            <InfoRow label="Status" value={data.contractStatus} />
+            
+            {/* Baris 4 */}
+            <InfoRow label="Jumlah Imbal Hasil (p.a.)" value={formatRupiah(data.contractYieldAmount)} fontMono textClass="text-emerald-700" />
+            <InfoRow label="Persentase Imbal Hasil" value={`${data.contractYieldRateAnnually}%`} fontMono textClass="text-emerald-700" />
+            
+            {/* Baris 5 */}
+            <InfoRow label="Durasi Efek" value={`${data.contractDurationInMonths} Bulan`} />
+            <InfoRow label="Mulai" value={formatDate(data.contractStartDate)} />
+            
+            {/* Baris 6 (Kiri Kosong) */}
+            <div></div> 
+            <InfoRow label="Selesai" value={formatDate(data.contractEndDate)} />
+            
+            {/* Section Dokumen */}
+            <div className="col-span-1 md:col-span-2 border-t-2 border-slate-50 pt-4 mt-1 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+              
+              {/* Baris 7 */}
+              <div className="col-span-1 md:col-span-2">
+                 <InfoRow label="Judul Dokumen Perjanjian" value={data.contractDocumentTitle} />
+              </div>
+              
+              {/* Baris 8 */}
+              <InfoRow label="Nomor Dokumen Perjanjian" value={data.contractDocumentNumber} fontMono />
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Unduh Dokumen Perjanjian</span>
+                <a href={data.contractDocumentUrl} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 w-fit bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 transition-colors">
+                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                   Unduh Dokumen
+                </a>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+
         {/* CONTAINER 1: Informasi Utama (Proporsi 1/3) */}
         <div className="w-full lg:w-1/3 bg-white rounded-xl border-2 border-slate-200 shadow-sm p-5 flex flex-col justify-between">
           
@@ -352,56 +422,7 @@ export default function RepaymentDetail() {
           </div>
         </div>
 
-        {/* CONTAINER 2: Detil Informasi (Proporsi 2/3, Grid 2 Kolom) */}
-        <div className="w-full lg:w-2/3 bg-white rounded-xl border-2 border-slate-200 shadow-sm p-5 flex flex-col justify-start">
-          <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider border-b-2 border-slate-100 pb-2 mb-4 shrink-0">Detil Informasi & Legalitas</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-            {/* Baris 1 */}
-            <InfoRow label="Nama Efek" value={data.securityName} />
-            <InfoRow label="Tipe Efek" value={data.securityType} />
-            
-            {/* Baris 2 */}
-            <InfoRow label="Nama Penerbit" value={data.investeeName} />
-            <InfoRow label="Nama Penerbit (Legal)" value={data.investeeNameLegal} />
-            
-            {/* Baris 3 */}
-            <InfoRow label="Jumlah Pendanaan" value={formatRupiah(data.contractUnderlyingFund)} fontMono />
-            <InfoRow label="Status" value={data.contractStatus} />
-            
-            {/* Baris 4 */}
-            <InfoRow label="Jumlah Imbal Hasil (p.a.)" value={formatRupiah(data.contractYieldAmount)} fontMono textClass="text-emerald-700" />
-            <InfoRow label="Persentase Imbal Hasil" value={`${data.contractYieldRateAnnually}%`} fontMono textClass="text-emerald-700" />
-            
-            {/* Baris 5 */}
-            <InfoRow label="Durasi Efek" value={`${data.contractDurationInMonths} Bulan`} />
-            <InfoRow label="Mulai" value={formatDate(data.contractStartDate)} />
-            
-            {/* Baris 6 (Kiri Kosong) */}
-            <div></div> 
-            <InfoRow label="Selesai" value={formatDate(data.contractEndDate)} />
-            
-            {/* Section Dokumen */}
-            <div className="col-span-1 md:col-span-2 border-t-2 border-slate-50 pt-4 mt-1 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-              
-              {/* Baris 7 */}
-              <div className="col-span-1 md:col-span-2">
-                 <InfoRow label="Judul Dokumen Perjanjian" value={data.contractDocumentTitle} />
-              </div>
-              
-              {/* Baris 8 */}
-              <InfoRow label="Nomor Dokumen Perjanjian" value={data.contractDocumentNumber} fontMono />
-              <div className="flex flex-col">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Unduh Dokumen Perjanjian</span>
-                <a href={data.contractDocumentUrl} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 w-fit bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 transition-colors">
-                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                   Unduh Dokumen
-                </a>
-              </div>
-
-            </div>
-          </div>
-        </div>
+        
 
       </div>
 
@@ -418,7 +439,6 @@ export default function RepaymentDetail() {
               <thead>
                 <tr className="bg-slate-50 text-[9px] text-slate-500 uppercase tracking-wider border-y border-slate-200">
                   <th className="py-2.5 px-3 font-bold text-center">Informasi</th>
-                  <th className="py-2.5 px-3 font-bold text-left">Status</th>
                   <th className="py-2.5 px-3 font-bold text-left">Jatuh Tempo</th>
                   <th className="py-2.5 px-3 font-bold text-right">Biaya Admin</th>
                   <th className="py-2.5 px-3 font-bold text-right">Provisi</th>
@@ -426,33 +446,55 @@ export default function RepaymentDetail() {
                   <th className="py-2.5 px-3 font-bold text-right">Biaya Service</th>
                   <th className="py-2.5 px-3 font-bold text-right">Biaya Total</th>
                   <th className="py-2.5 px-3 font-bold text-right">Total + Pajak</th>
+                  <th className="py-2.5 px-3 font-bold text-left">Status</th>
+                  {isEditMode && (
+                    <th className="py-2.5 px-3 font-bold text-left">Edit</th> 
+                  )}
                 </tr>
               </thead>
               <tbody className="text-[11px] font-medium text-slate-700">
                 <tr className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3 px-3 text-center text-slate-800 font-bold align-top">{upfrontData.no}</td>
-                  <td className="py-3 px-3 text-left align-top">
-                    <StatusBadge status={upfrontData.status} />
+                  <td className="py-3 px-3 text-left text-slate-800 font-bold align-top">
+                    <Link 
+                            to={`${upfrontData.id}`}
+                            className="flex items-center gap-1.5 text-[12px] font-bold bg-white text-slate-500 px-2.5 hover:bg-slate-50 hover:text-cyan-600 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-100 cursor-pointer"
+                        >
+                            Upfront Fee
+                            <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </Link>
                   </td>
                   <td className="py-3 px-3 align-top">{formatDate(upfrontData.dueDate)}</td>
-                  <td className="py-3 px-3 text-right align-top">
+                  <td className="py-3 px-3 text-right align-top relative">
                     <FeeWithTax base={upfrontData.admin} tax={upfrontData.adminTax} />
                   </td>
-                  <td className="py-3 px-3 text-right align-top">
+                  <td className="py-3 px-3 text-right align-top relative">
                     <FeeWithTax base={upfrontData.provision} tax={upfrontData.provisionTax} />
                   </td>
-                  <td className="py-3 px-3 text-right align-top">
+                  <td className="py-3 px-3 text-right align-top relative">
                     <FeeWithTax base={upfrontData.platform} tax={upfrontData.platformTax} />
                   </td>
-                  <td className="py-3 px-3 text-right align-top">
+                  <td className="py-3 px-3 text-right align-top relative">
                     <FeeWithTax base={upfrontData.servicing} tax={upfrontData.servicingTax} />
                   </td>
-                  <td className="py-3 px-3 text-right align-top">
+                  <td className="py-3 px-3 text-right align-top relative">
                     <FeeWithTax base={upfrontData.baseTotal} tax={upfrontData.taxTotal} isTotal={true} />
                   </td>
                   <td className="py-3 px-3 text-right font-mono font-bold text-xs text-slate-800 align-top">
                     {formatRupiah(upfrontData.grandTotal)}
                   </td>
+                  <td className="py-3 px-3 text-left align-top relative">
+                    <StatusBadge status={upfrontData.status} />
+                  </td>
+                  {isEditMode && (
+                    <td className="py-3 px-3 text-left align-top">
+                        <button className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                        </button>
+                    </td>)}
                 </tr>
               </tbody>
             </table>
@@ -467,75 +509,79 @@ export default function RepaymentDetail() {
             <thead>
                 <tr className="bg-slate-50 text-[9px] text-slate-500 uppercase tracking-wider border-y border-slate-200">
                 {/* Kolom 1 Besar & Padat */}
-                <th className="py-2.5 px-3 font-bold text-left min-w-[200px]">Informasi Pembayaran</th>
+                <th className="py-2.5 px-3 font-bold text-center">Informasi</th>
+                <th className="py-2.5 px-3 font-bold text-left">Jatuh Tempo</th>
                 
-                {/* Kolom Eksisting Tengah (Dilarang Merubah Tampilan & Kode) */}
+                {/* Kolom Eksisting Tengah */}
                 <th className="py-2.5 px-3 font-bold text-right">Cicilan Sinking Fund</th>
                 <th className="py-2.5 px-3 font-bold text-right">{data.securityType === 'Sukuk' ? 'Kupon' : 'Dividen'}</th>
                 <th className="py-2.5 px-3 font-bold text-right">Biaya Pemantauan</th>
                 <th className="py-2.5 px-3 font-bold text-right">Total</th>
-                {/* Total + Pajak sebagai pembatas kiri diberikan garis vertikal di sebelah kanannya */}
-                <th className="py-2.5 px-3 font-bold text-right border-r border-slate-200">Total + Pajak</th>
+                <th className="py-2.5 px-3 font-bold text-right">Total + Pajak</th>
                 
-                {/* Kolom Jumlah Dibayarkan Sekarang Berada di Paling Kanan */}
-                <th className="py-2.5 px-3 font-bold text-right">Jumlah Dibayarkan</th>
+                {/* Kolom Jumlah Dibayarkan */}
+                <th className="py-2.5 px-3 font-bold text-center">Status</th>
+                {isEditMode && (
+                    <th className="py-2.5 px-3 font-bold text-left">Edit</th> 
+                  )}
                 </tr>
             </thead>
             <tbody className="text-[11px] font-medium text-slate-700 divide-y divide-slate-100">
                 {schedules.map((sch) => {
                 const isUpfront = sch.month === 0;
-                const titleLabel = isUpfront ? 'UPFRONT FEE' : `Pembayaran ${sch.month}`;
+                const titleLabel = isUpfront ? 'UPFRONT FEE' : `Tagihan ${sch.month}`;
 
                 console.log("schedule : ",sch);
 
                 return (
                     <tr key={sch.month} className="hover:bg-slate-50/80 transition-colors align-top">
                     
-                    {/* KOLOM 1: INFORMASI PEMBAYARAN (DENSE & MENARIK) */}
+                    {/* KOLOM 1: INFORMASI PEMBAYARAN */}
                     <td className="py-3 px-3 text-left">
-                        <div className="flex flex-col space-y-0.5 max-w-[240px]">
-                        {/* Row Atas: Judul di kiri, Status Badge di kanan */}
-                        <div className="flex items-center justify-between gap-4">
-                            <span className="font-bold text-slate-900 tracking-wide text-xs">{titleLabel}</span>
-                            <StatusBadge status={sch.status} />
-                        </div>
-                        
-                        {/* Row Tengah: Detail Tanggal Jadwal */}
-                        <div className="flex flex-col text-[10px] text-slate-500 pt-0.5">
-                            <span>Jatuh Tempo: <span className="font-semibold text-slate-600">{sch.date || '-'}</span></span>
-                            <span>Invoicing: <span className="font-semibold text-slate-600">{sch.date || '-'}</span></span>
-                        </div>
-                        
-                        {/* Row Bawah: Aksi Detil */}
+                    
                         <Link 
-                            to={`/dashboard/repayment/schedules/${sch.id}`} 
-                            className="text-blue-600 font-bold hover:text-blue-800 hover:underline inline-block pt-0.5 text-[10px]"
+                            to={`schedules/${sch.id}`}
+                            className="flex items-center gap-1.5 text-[12px] font-bold bg-white text-slate-500 px-2.5 hover:bg-slate-50 hover:text-cyan-600 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-100 cursor-pointer"
                         >
-                            Lihat detil &gt;
+                            {titleLabel}
+                            <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
                         </Link>
-                        </div>
                     </td>
-
-                    {/* KOLOM EKSISTING (TIDAK BERUBAH) */}
+                    <td className="py-3 px-3 align-top">{formatDate(upfrontData.dueDate)}</td>
+                    
+                    {/* KOLOM EKSISTING */}
                     <td className="py-3 px-3 text-right font-mono">{formatRupiah(sch.sf)}</td>
                     <td className="py-3 px-3 text-right font-mono">{formatRupiah(sch.yield)}</td>
-                    <td className="py-3 px-3 text-right">
+                    <td className="py-3 px-3 text-right relative">
                         <FeeWithTax base={sch.monitoring} tax={sch.taxMonitoring} />
                     </td>
-                    <td className="py-3 px-3 text-right">
+                    <td className="py-3 px-3 text-right relative">
                         <FeeWithTax base={sch.baseTotal} tax={sch.taxTotal} isTotal={true} />
                     </td>
                     
-                    {/* KOLOM TOTAL + PAJAK (Diberikan garis pemisah kanan border-r) */}
-                    <td className="py-3 px-3 text-right font-mono font-bold text-xs text-slate-800 border-r border-slate-200">
+                    {/* KOLOM TOTAL + PAJAK */}
+                    <td className="py-3 px-3 text-right font-mono font-bold text-xs text-slate-800">
                         {formatRupiah(sch.grandTotal)}
                     </td>
 
-                    {/* KOLOM BARU: JUMLAH DIBAYARKAN (DUMMY DATA - SEKARANG DI PALING KANAN) */}
-                    <td className="py-3 px-3 text-right font-mono font-bold text-emerald-600">
-                        {formatRupiah(0)}
+                    {/* KOLOM STATUS */}
+                    <td className="py-3 px-3 text-center font-mono font-bold text-emerald-600">
+                        <div className="flex items-center justify-center gap-4">
+                            <StatusBadge status={sch.status} />
+                        </div>
                     </td>
-
+                    {isEditMode && (
+                    <td className="py-3 px-3 text-left align-top">
+                        <button 
+                        onClick={() => openPanel(<RepaymentScheduleEditWrapper scheduleId={sch.id} />)}
+                        className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                        </button>
+                    </td>)}
                     </tr>
                 );
                 })}
@@ -544,7 +590,29 @@ export default function RepaymentDetail() {
           </div>
         </div>
 
-      </div>
+        {/* ROW 3: Buat Jadwal Pembayaran Baru (Khusus Edit Mode) */}
+        {isEditMode && (
+          <div className="p-5 border-t-2 border-slate-200">
+            <div className="p-5 border-t-2 border-slate-200">
+              <button
+                type="button"
+                onClick={() => openPanel(<RepaymentScheduleCreateWrapper />)}
+                className="flex items-center justify-center w-full py-4 border-2 border-dashed border-amber-300 bg-amber-50/50 text-amber-700 rounded-xl hover:bg-amber-100 hover:border-amber-400 transition-all group focus:outline-none focus:ring-2 focus:ring-amber-200"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="bg-amber-200/60 p-1.5 rounded-full group-hover:bg-amber-300 transition-colors">
+                    <svg className="w-4 h-4 text-amber-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                  </div>
+                  <span className="text-[11px] font-bold tracking-wider">Buat Tagihan Baru</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+</div>
 
       {/* =====================================================================
           ROW 3: CONTAINER 4 (Revenue) & CONTAINER 5 (Collateral)
@@ -573,7 +641,7 @@ export default function RepaymentDetail() {
         <div className="w-full lg:w-1/2 bg-white rounded-xl border-2 border-slate-200 shadow-sm p-5 flex flex-col">
           <div className="flex justify-between items-end mb-4 border-b-2 border-slate-100 pb-2">
             <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider">Daftar Agunan (Kolateral)</h3>
-            <span className="text-[9px] font-bold text-rose-600 cursor-pointer hover:underline">+ Tambah Data</span>
+            
           </div>
           
           <div className="flex-1 overflow-x-auto">
@@ -611,6 +679,15 @@ export default function RepaymentDetail() {
               </table>
             )}
           </div>
+          <div className="flex justify-end m-2">
+            <Link 
+            to={`collaterals`} 
+            className="text-[10px] font-semibold text-gray-600 hover:text-blue-800 hover:underline transition-colors duration-150"
+            >
+            Lihat Detail &gt;
+            </Link>
+          </div>
+          
         </div>
 
       </div>
@@ -633,25 +710,24 @@ function InfoRow({ label, value, fontMono = false, textClass = "text-slate-700" 
   );
 }
 
-// Helper: Komponen Sel Tabel dengan Pajak (Font Normal untuk Pajak)
-function FeeWithTax({ base, tax, isTotal = false }: { base: number; tax: number; isTotal?: boolean }) {
-  const formatRupiah = (num: number) => {
-    if (num === 0) return '-';
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
-  };
-  
-  return (
-    <div className="flex flex-col items-end">
-      <span className={`font-mono ${isTotal ? 'font-bold text-[11px] text-slate-800' : 'text-[11px]'}`}>
-        {formatRupiah(base)}
-      </span>
-      {tax > 0 && (
-        <span className="text-[9px] text-rose-700 mt-0.5 font-sans font-normal tracking-tight">
-          +tax {formatRupiah(tax)}
+function FeeWithTax({ base, tax=0, isTotal = false }: { base: number; tax?: number; isTotal?: boolean }) {
+    const formatRupiah = (num: number) => {
+      if (num === 0) return '-';
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
+    };
+    
+    return (
+      <div className="flex flex-col items-end">
+        <span className={`font-mono ${isTotal ? 'font-bold text-[12px] text-slate-800' : 'text-[12px]'}`}>
+          {formatRupiah(base)}
         </span>
-      )}
-    </div>
-  );
+        {tax != null && tax > 0 && (
+          <span className="absolute mt-4 placeholder:text-[8px] text-rose-700 font-sans font-normal text-[9px] tracking-tight font-light">
+            +tax {formatRupiah(tax)}
+          </span>
+        )}
+      </div>
+    );
 }
 
 // Helper: Baris Revenue Summary

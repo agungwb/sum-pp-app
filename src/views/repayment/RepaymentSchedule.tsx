@@ -1,6 +1,7 @@
 // src/pages/repayment/RepaymentSchedule.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useGlobalMode } from '../../context/GlobalModeContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 
@@ -36,54 +37,61 @@ interface ScheduleItem {
 }
 
 // Dummy interface untuk Repayment Receipt
-interface RepaymentReceipt {
-  id: string;
-  receiptNumber: string;
-  amountPaid: number;
-  paymentDate: string;
-  paymentMethod: string;
-  bankName: string;
-  status: string;
-}
+// interface RepaymentReceipt {
+//   id: string;
+//   receiptNumber: string;
+//   amountPaid: number;
+//   paymentDate: string;
+//   paymentMethod: string;
+//   bankName: string;
+//   status: string;
+// }
 
 export default function RepaymentSchedule() {
   const { id: scheduleId } = useParams<{ id: string }>();
-  const [schedule, setSchedule] = useState<ScheduleItem | null>(null);
+  const [schedule, setSchedule] = useState<ScheduleItem>();
+  const [receipts, setReceipts] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // State untuk melacak baris yang di-expand
+  const [expandedRows, setExpandedRows] = useState<string[]>([]);
 
-  // Data Dummy untuk Tabel Repayment Receipt di bagian bawah
-  const dummyReceipts: RepaymentReceipt[] = [
-    {
-      id: 'rcpt-001',
-      receiptNumber: 'REC/2026/01/0082',
-      amountPaid: 500000000,
-      paymentDate: '2026-01-26T10:30:00.000Z',
-      paymentMethod: 'Escrow Transfer',
-      bankName: 'Bank Mandiri',
-      status: 'VERIFIED',
-    },
-    {
-      id: 'rcpt-002',
-      receiptNumber: 'REC/2026/01/0095',
-      amountPaid: 364975000,
-      paymentDate: '2026-01-28T14:15:00.000Z',
-      paymentMethod: 'Escrow Transfer',
-      bankName: 'Bank BCA',
-      status: 'VERIFIED',
-    },
-  ];
+  const { isEditMode } = useGlobalMode();
+  
 
   useEffect(() => {
     const fetchScheduleDetail = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(`${API_BASE_URL}/repayment/schedules/${scheduleId}`);
-        if (!response.ok) throw new Error('Gagal mengambil data jadwal pembayaran');
-        
-        const result = await response.json();
-        setSchedule(result.data?.item || null);
+
+        const [response, receiptsResponse] = await Promise.all([
+            fetch(`${API_BASE_URL}/repayment/schedules/${scheduleId}`).catch((e) => {
+                console.error("Gagal mengambil data schedule :", e);
+                return null;
+                }),
+            fetch(`${API_BASE_URL}/repayment/schedules/${scheduleId}/receipts`).catch((e) => {
+                console.error("Gagal mengambil data receipts:", e);
+                return null;
+                }),
+        ]);
+
+        if (!response?.ok) throw new Error('Gagal mengambil data jadwal pembayaran');
+
+        if (!receiptsResponse?.ok) throw new Error('Gagal mengambil data receipt pembayaran');
+
+
+        if (response && response.ok) {
+            const scheduleResult = await response.json();
+            setSchedule(scheduleResult?.data?.item || null);
+        }
+
+        if (receiptsResponse && receiptsResponse.ok) {
+            const receiptsResult = await receiptsResponse.json();
+            setReceipts(receiptsResult?.data?.items || []);
+        }
+
       } catch (err: any) {
         setError(err.message || 'Terjadi kesalahan sistem');
       } finally {
@@ -95,6 +103,13 @@ export default function RepaymentSchedule() {
       fetchScheduleDetail();
     }
   }, [scheduleId]);
+
+  // Fungsi toggle untuk expand/collapse row
+  const toggleRow = (id: string) => {
+    setExpandedRows((prev) => 
+      prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]
+    );
+  };
 
   // Formatter Rupiah Standar Project
   const formatRupiah = (value: string | number) => {
@@ -134,7 +149,7 @@ export default function RepaymentSchedule() {
   }
 
   return (
-    <div className="p-6 bg-slate-50 min-h-screen text-slate-600">
+    <div className="p-6 mt-12 bg-slate-50 min-h-screen text-slate-600">
       {/* BREADCRUMB / NAVIGASI ATAS */}
       <div className="mb-5 flex items-center space-x-2 text-xs">
         <Link to="/repayment" className="text-slate-400 hover:text-slate-600">Repayment</Link>
@@ -145,27 +160,55 @@ export default function RepaymentSchedule() {
       </div>
 
       {/* HEADER UTAMA */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-8">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            {schedule.invoiceNotes.toUpperCase()} (Term {schedule.scheduleOrder})
-          </h1>
-          <p className="text-xs text-slate-400 mt-0.5">ID Jadwal: {schedule.id}</p>
+           <div className="flex gap-4">
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+                {schedule.invoiceNotes.toUpperCase()} (Term {schedule.scheduleOrder})
+            </h1>
+            {isEditMode && (
+                <span className={`px-2.5 py-1 rounded text-xs font-bold tracking-wider uppercase inline-block border-2 ${
+                    schedule.invoiceStatus === 'OVERDUE' 
+                    ? 'bg-amber-50 text-amber-700 border-amber-300' 
+                    : schedule.invoiceStatus === 'PAID' 
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                    : 'bg-blue-50 text-blue-600 border-blue-200'
+                    }`}>
+                    {schedule.invoiceStatus}
+                </span>
+            )}
+            
+        </div> 
+
+        <p className="text-xs text-slate-400 mt-0.5">ID Jadwal: {schedule.id}</p>
+          
         </div>
         <div>
-          <span className={`px-2.5 py-1 rounded text-xs font-bold tracking-wider uppercase inline-block border-2 ${
-            schedule.invoiceStatus === 'OVERDUE' 
-              ? 'bg-amber-50 text-amber-700 border-amber-300' 
-              : schedule.invoiceStatus === 'PAID' 
-              ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-              : 'bg-blue-50 text-blue-600 border-blue-200'
-          }`}>
-            {schedule.invoiceStatus}
-          </span>
+            {!isEditMode && (
+                <span className={`px-2.5 py-1 rounded text-xs font-bold tracking-wider uppercase inline-block border-2 ${
+                    schedule.invoiceStatus === 'OVERDUE' 
+                    ? 'bg-amber-50 text-amber-700 border-amber-300' 
+                    : schedule.invoiceStatus === 'PAID' 
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                    : 'bg-blue-50 text-blue-600 border-blue-200'
+                    }`}>
+                    {schedule.invoiceStatus}
+                </span>
+            )}
+          
+            {isEditMode && (
+                <button className="text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-2 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    Ubah Detail
+                </button>
+            )}
         </div>
+        
       </div>
 
-      {/* LAYOUT CONTAINER SUMMARY & DETAIL (Benchmark Style: RepaymentDetail) */}
+      {/* LAYOUT CONTAINER SUMMARY & DETAIL */}
       <div className="flex flex-col lg:flex-row gap-4 items-stretch mb-6">
         
         {/* CONTAINER KIRI: DETAIL KOMPONEN TAGIHAN */}
@@ -173,72 +216,167 @@ export default function RepaymentSchedule() {
           <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">
             Rincian Komponen Tagihan
           </h2>
-          <div className="text-[11px] font-medium space-y-2.5 text-slate-700">
-            <div className="flex justify-between items-center bg-slate-50 p-2 rounded">
-              <span className="font-semibold text-slate-900">Pokok Sinking Fund</span>
-              <span className="font-mono text-slate-900 font-bold">{formatRupiah(schedule.invoiceSinkingFund)}</span>
-            </div>
-            <div className="flex justify-between items-center bg-slate-50 p-2 rounded">
-              <span className="font-semibold text-slate-900">Imbal Hasil / Kupon</span>
-              <span className="font-mono text-slate-900 font-bold">{formatRupiah(schedule.invoiceYield)}</span>
-            </div>
-            
-            <div className="pt-2">
-              <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wide">Biaya Pemantauan & Operasional</span>
-              <div className="flex justify-between items-center mt-1">
-                <span>Biaya Pemantauan (Base)</span>
-                <span className="font-mono">{formatRupiah(schedule.invoiceFeeMonitoring)}</span>
-              </div>
-              <div className="flex justify-between items-center mt-1">
-                <span>Pajak Biaya Pemantauan</span>
-                <span className="font-mono text-amber-600">+{formatRupiah(schedule.invoiceFeeMonitoringTax)}</span>
-              </div>
+          <div className="text-[12px] font-medium space-y-2.5 text-slate-700">
+
+            {Number(schedule?.invoiceFeeAdministration) > 0 ? (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-semibold text-slate-900">Biaya Administrasi</span>
+                    <FeeWithTax base={Number(schedule.invoiceFeeAdministration)} tax={Number(schedule.invoiceFeeAdministrationTax)}  />
+                </div>
+            ) : null}
+
+            {Number(schedule?.invoiceFeeProvision) > 0 ? (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-semibold text-slate-900">Biaya Provisi</span>
+                    <FeeWithTax base={Number(schedule.invoiceFeeProvision)} tax={Number(schedule.invoiceFeeProvisionTax)}  />
+                </div>
+            ) : null}
+
+            {Number(schedule?.invoiceFeeServicing) > 0 ? (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-semibold text-slate-900">Biaya Servicing</span>
+                    <FeeWithTax base={Number(schedule.invoiceFeeServicing)} tax={Number(schedule.invoiceFeeServicingTax)}  />
+                </div>
+            ) : null}
+
+            {Number(schedule?.invoiceFeeMonitoring) > 0 ? (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-semibold text-slate-900">Biaya Monitoring</span>
+                    <FeeWithTax base={Number(schedule.invoiceFeeMonitoring)} tax={Number(schedule.invoiceFeeMonitoring)}  />
+                </div>
+            ) : null}
+
+            {Number(schedule?.invoiceFeeOther) > 0 ? (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-semibold text-slate-900">Biaya Lain-lain</span>
+                    <FeeWithTax base={Number(schedule.invoiceFeeOther)} tax={Number(schedule.invoiceFeeOtherTax)}  />
+                </div>
+            ) : null}
+
+            {Number(schedule?.invoiceSinkingFund) > 0 ? (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-semibold text-slate-900">Cicilan Sinking Fund</span>
+                    <FeeWithTax base={Number(schedule.invoiceSinkingFund)}  />
+                </div>
+            ) : null}
+
+            {Number(schedule?.invoiceYield) > 0 ? (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-semibold text-slate-900">Imbal hasil / Kupon</span>
+                    <FeeWithTax base={Number(schedule.invoiceYield)}  />
+                </div>
+            ) : null}
+
+            {Number(schedule?.invoicePenalty) > 0 ? (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-semibold text-slate-900">Denda</span>
+                    <FeeWithTax base={Number(schedule.invoicePenalty)}  />
+                </div>
+            ) : null}
+
+            {Number(schedule?.invoiceActualLoss) > 0 ? (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-semibold text-slate-900">Kerugian Riil</span>
+                    <FeeWithTax base={Number(schedule.invoiceActualLoss)}  />
+                </div>
+            ) : null}
+
+            <div className="flex justify-between items-center p-2 rounded">
+                <span className="font-semibold text-slate-900">TOTAL</span>
+                <FeeWithTax base={Number(schedule.invoiceTotal)} tax={Number(schedule.invoiceTotalTax)} />
             </div>
 
-            {parseFloat(schedule.invoicePenalty) > 0 && (
-              <div className="flex justify-between items-center bg-rose-50 p-2 rounded text-rose-700 mt-2">
-                <span className="font-semibold">Denda Keterlambatan (Penalty)</span>
-                <span className="font-mono font-bold">{formatRupiah(schedule.invoicePenalty)}</span>
-              </div>
-            )}
+            <div className="flex justify-between items-center p-2 rounded">
+                <span className="font-bold text-slate-900">TOTAL + PAJAK</span>
+                <FeeWithTax base={Number(schedule.invoiceTotalWithTax)} />
+            </div>
+            
           </div>
         </div>
 
         {/* CONTAINER KANAN: RINGKASAN AKUMULASI (SUMMARY) */}
         <div className="w-full lg:w-1/3 bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col justify-between">
-          <div>
-            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">
-              Ringkasan Invoice
-            </h2>
-            <div className="text-[11px] font-medium space-y-2 text-slate-600">
-              <div className="flex justify-between">
-                <span>Tanggal Invoicing:</span>
-                <span className="text-slate-900 font-semibold">{formatDate(schedule.invoiceDate)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tanggal Jatuh Tempo:</span>
-                <span className="text-slate-900 font-semibold text-rose-600">{formatDate(schedule.scheduleDate)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Total Tagihan Bersih:</span>
-                <span className="text-slate-900 font-mono">{formatRupiah(schedule.invoiceTotal)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Total Akumulasi Pajak:</span>
-                <span className="text-slate-900 font-mono">{formatRupiah(schedule.invoiceTotalTax)}</span>
-              </div>
-            </div>
-          </div>
+            <div>
+                <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">
+                Ringkasan Invoice
+                </h2>
+                <div className="text-[11px] font-medium space-y-2 text-slate-600">
+                <div className="flex justify-between">
+                    <span>No Invoice:</span>
+                    <span className="text-slate-900 font-semibold">09/HNK/93id/Syududu</span>
+                </div>
+                <div className="flex justify-between  border-b-2 pb-4">
+                    <span>Tanggal Invoicing:</span>
+                    <span className="text-slate-900 font-semibold">{formatDate(schedule.invoiceDate)}</span>
+                </div>
+                <div className="flex justify-between pt-2">
+                    <span>Total Tagihan:</span>
+                    <span className="text-slate-900 font-mono">{formatRupiah(schedule.invoiceTotal)}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span>Tanggal Jatuh Tempo:</span>
+                    <span className="text-slate-900 font-semibold text-rose-600">{formatDate(schedule.scheduleDate)}</span>
+                </div>
 
-          <div className="mt-4 pt-4 border-t border-slate-100 bg-slate-50/50 p-2.5 rounded-lg">
-            <div className="flex justify-between items-baseline">
-              <span className="text-xs font-bold text-slate-900">GRAND TOTAL</span>
-              <span className="text-base font-mono font-black text-slate-900">
-                {formatRupiah(schedule.invoiceTotalWithTax)}
-              </span>
+                <div className="flex justify-between border-b-2 pb-4">
+                    <span>Catatan / Notes:</span>
+                    <span className="text-slate-900 font-semibold italic">{schedule.invoiceNotes || '-'}</span>
+                </div>
+                
+                <div className="flex justify-between pt-2">
+                    <span>Virtual Account</span>
+                    
+                    {/* Wrapper flex baru biar icon dan teks sejajar rapi */}
+                    <div className="flex items-start gap-1.5">
+                        <button 
+                            type="button"
+                            title="copy nomor va"
+                            onClick={() => navigator.clipboard.writeText('09812309810283019283')}
+                            className="mt-0.5 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                        >
+                            {/* SVG Icon Copy proporsional 16px */}
+                            <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                fill="none" 
+                                viewBox="0 0 24 24" 
+                                strokeWidth={2} 
+                                stroke="currentColor" 
+                                className="w-4 h-4"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                            </svg>
+                        </button>
+
+                        {/* Note: class text-slate-900 gw hapus karena redundan dan langsung ketimpa sama text-rose-600 */}
+                        <span className="font-semibold text-rose-600">
+                            09812309810283019283
+                        </span>
+                    </div>
+                </div>
+                <div className="flex justify-between">
+                    <span>Bank</span>
+                    <span className="text-slate-900 font-semibold text-rose-600">
+                        BCA
+                    </span>
+                </div>
+                <div className="flex justify-between">
+                    <span>Status Invoice:</span>
+                    <span className="text-slate-900 font-semibold text-rose-600">
+                    {schedule.invoiceStatus || 'DRAFT'}
+                    </span>
+                </div>
+                </div>
             </div>
-          </div>
-        </div>
+
+            {/* <div className="mt-4 pt-4 border-t border-slate-100 bg-slate-50/50 p-2.5 rounded-lg">
+                <div className="flex justify-between items-baseline">
+                <span className="text-xs font-bold text-slate-900">GRAND TOTAL</span>
+                <span className="text-base font-mono font-black text-slate-900">
+                    {formatRupiah(schedule.invoiceTotalWithTax)}
+                </span>
+                </div>
+            </div> */}
+            </div>
 
       </div>
 
@@ -252,45 +390,200 @@ export default function RepaymentSchedule() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse whitespace-nowrap">
+        <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
-              <tr className="bg-slate-50 text-[9px] text-slate-500 uppercase tracking-wider border-y border-slate-200">
-                <th className="py-2.5 px-3 font-bold text-left">No. Kuitansi</th>
-                <th className="py-2.5 px-3 font-bold text-left">Tanggal Setor</th>
-                <th className="py-2.5 px-3 font-bold text-left">Metode Pembayaran</th>
-                <th className="py-2.5 px-3 font-bold text-left">Bank Tujuan</th>
+                <tr className="bg-slate-50 text-[9px] text-slate-500 uppercase tracking-wider border-y border-slate-200">
+                <th className="py-2.5 px-3 w-8"></th> {/* Kolom Expand */}
+                <th className="py-2.5 px-3 font-bold text-left">No</th>
+                <th className="py-2.5 px-3 font-bold text-left">Tanggal Diterima</th>
+                <th className="py-2.5 px-3 font-bold text-center">Metode Pembayaran</th>
+                <th className="py-2.5 px-3 font-bold text-center">Notes</th>
+                <th className="py-2.5 px-3 font-bold text-right">Jumlah Dana Diterima</th>
                 <th className="py-2.5 px-3 font-bold text-center">Status</th>
-                <th className="py-2.5 px-3 font-bold text-right">Jumlah Dibayarkan</th>
-              </tr>
+                {isEditMode && (
+                    <th className="py-2.5 px-3 font-bold text-center">Edit</th>
+                )}
+                </tr>
             </thead>
             <tbody className="text-[11px] font-medium text-slate-700 divide-y divide-slate-100">
-              {dummyReceipts.map((rcpt) => (
-                <tr key={rcpt.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3 px-3 text-slate-900 font-bold">{rcpt.receiptNumber}</td>
-                  <td className="py-3 px-3">{formatDate(rcpt.paymentDate)}</td>
-                  <td className="py-3 px-3 text-slate-500">{rcpt.paymentMethod}</td>
-                  <td className="py-3 px-3 text-slate-500">{rcpt.bankName}</td>
-                  <td className="py-3 px-3 text-center">
-                    <span className="px-2 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase inline-block bg-emerald-50 text-emerald-600 border border-emerald-200">
-                      {rcpt.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 text-right font-mono font-bold text-emerald-600">
-                    {formatRupiah(rcpt.amountPaid)}
-                  </td>
+                {receipts.length === 0 ? (
+                <tr>
+                    <td colSpan={7} className="py-4 px-3 text-center text-slate-500 italic">
+                    -- Belum ada riwayat pembayaran --
+                    </td>
                 </tr>
-              ))}
-              {/* Row Total Receipt */}
-              <tr className="bg-slate-50/50 font-bold">
-                <td colSpan={5} className="py-2.5 px-3 text-right text-slate-900 text-xs uppercase">Total Pembayaran Diterima</td>
-                <td className="py-2.5 px-3 text-right font-mono text-emerald-700 text-xs">
-                  {formatRupiah(dummyReceipts.reduce((sum, item) => sum + item.amountPaid, 0))}
-                </td>
-              </tr>
+                ) : (
+                receipts.map((rcpt, idx) => {
+                    const isExpanded = expandedRows.includes(rcpt.id);
+                    return (
+                    <React.Fragment key={rcpt.id}>
+                        <tr
+                        className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                        onClick={() => toggleRow(rcpt.id)}
+                        >
+                        <td className="py-3 px-3 text-center">
+                            <div className="flex items-center justify-center">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={2.5}
+                                stroke="currentColor"
+                                className={`w-3.5 h-3.5 transition-transform duration-300 ease-in-out ${
+                                isExpanded ? 'rotate-45 text-rose-500' : 'text-slate-400'
+                                }`}
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            </div>
+                        </td>
+                        <td className="py-3 px-3">{idx + 1}</td>
+                        <td className="py-3 px-3">{formatDate(rcpt.receiptDate)}</td>
+                        <td className="py-3 px-3 text-center">
+                            BANK TRANSFER
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                            {rcpt.receiptNotes}
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono font-bold text-emerald-600">
+                            {formatRupiah(rcpt.receiptTotalWithTax)}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                            <span className="px-2 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase inline-block bg-emerald-50 text-emerald-600 border border-emerald-200">
+                            {rcpt.receiptStatus}
+                            </span>
+                        </td>
+                        {isEditMode && (
+                            <td className="py-3 px-3 text-left align-top">
+                                <button className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                </button>
+                            </td>)}
+                        </tr>
+                        {/* EXPANDED ROW (DUMMY DETAIL) */}
+                        {isExpanded && (
+                        <tr>
+                            <td colSpan={7} className="p-0 border-b border-slate-100 bg-slate-50/50">
+                            <div className="py-4 px-6 mr-24 my-2 flex justify-end gap-4 text-[11px] animate-in fade-in duration-300">
+                                {/* <div className="w-1/3 bg">
+                                    <span className="block text-slate-400 mb-1">ID Transaksi</span>
+                                    <span className="font-semibold text-slate-700">tes satu dua tiga</span>
+                                </div> */}
+                                <div className="w-1/2 bg border-l-2 border-slate-300">
+                                {Number(rcpt?.receiptFeeAdministration) > 0 ? (
+                                    <div className="flex justify-between items-center p-2 mb-2 rounded">
+                                    <span className="font-normal text-slate-900">Biaya Administrasi</span>
+                                    <FeeWithTax base={Number(rcpt.receiptFeeAdministration)} tax={Number(rcpt.receiptFeeAdministrationTax)} />
+                                    </div>
+                                ) : null}
+
+                                {Number(rcpt?.receiptFeeProvision) > 0 ? (
+                                    <div className="flex justify-between items-center p-2 mb-2 rounded">
+                                    <span className="font-normal text-slate-900">Biaya Provisi</span>
+                                    <FeeWithTax base={Number(rcpt.receiptFeeProvision)} tax={Number(rcpt.receiptFeeProvisionTax)} />
+                                    </div>
+                                ) : null}
+
+                                {Number(rcpt?.receiptFeeServicing) > 0 ? ( 
+                                    <div className="flex justify-between items-center p-2 mb-2 rounded">
+                                    <span className="font-normal text-slate-900">Biaya Servicing</span>
+                                    <FeeWithTax base={Number(rcpt.receiptFeeServicing)} tax={Number(rcpt.receiptFeeServicingTax)} />
+                                    </div>
+                                ) : null}
+
+                                {Number(rcpt?.receiptFeeMonitoring) > 0 ? (
+                                    <div className="flex justify-between items-center p-2 mb-2 rounded">
+                                    <span className="font-normal text-slate-900">Biaya Monitoring</span>
+                                    <FeeWithTax base={Number(rcpt.receiptFeeMonitoring)} tax={Number(rcpt.receiptFeeMonitoring)} />
+                                    </div>
+                                ) : null}
+
+                                {Number(rcpt?.receiptFeeOther) > 0 ? (
+                                    <div className="flex justify-between items-center p-2 mb-2 rounded">
+                                    <span className="font-normal text-slate-900">Biaya Lain-lain</span>
+                                    <FeeWithTax base={Number(rcpt.receiptFeeOther)} tax={Number(rcpt.receiptFeeOtherTax)} />
+                                    </div>
+                                ) : null}
+
+                                {Number(rcpt?.receiptSinkingFund) > 0 ? (
+                                    <div className="flex justify-between items-center p-2 mb-2 rounded">
+                                    <span className="font-normal text-slate-900">Cicilan Sinking Fund</span>
+                                    <FeeWithTax base={Number(rcpt.receiptSinkingFund)} />
+                                    </div>
+                                ) : null}
+
+                                {Number(rcpt?.receiptYield) > 0 ? (
+                                    <div className="flex justify-between items-center p-2 mb-2 rounded">
+                                    <span className="font-normal text-slate-900">Imbal hasil / Kupon</span>
+                                    <FeeWithTax base={Number(rcpt.receiptYield)} />
+                                    </div>
+                                ) : null}
+
+                                {Number(rcpt?.receiptPenalty) > 0 ? (
+                                    <div className="flex justify-between items-center p-2 mb-2 rounded">
+                                    <span className="font-normal text-slate-900">Denda</span>
+                                    <FeeWithTax base={Number(rcpt.receiptPenalty)} />
+                                    </div>
+                                ) : null}
+
+                                {Number(rcpt?.receiptActualLoss) > 0 ? (
+                                    <div className="flex justify-between items-center p-2 mb-2 rounded">
+                                    <span className="font-normal text-slate-900">Kerugian Riil</span>
+                                    <FeeWithTax base={Number(rcpt.receiptActualLoss)} />
+                                    </div>
+                                ) : null}
+
+                                <div className="flex justify-between items-center p-2 mb-2 rounded">
+                                    <span className="font-semibold text-slate-900">TOTAL</span>
+                                    <FeeWithTax base={Number(rcpt.receiptTotal)} tax={Number(rcpt.receiptTotalTax)} />
+                                </div>
+
+                                <div className="flex justify-between items-center p-2 mb-2 rounded">
+                                    <span className="font-bold text-slate-900">TOTAL + PAJAK</span>
+                                    <FeeWithTax base={Number(rcpt.receiptTotalWithTax)} />
+                                </div>
+                                </div>
+                            </div>
+                            </td>
+                        </tr>
+                        )}
+                    </React.Fragment>
+                    );
+                })
+                )}
+                {/* Row Total Receipt */}
+                <tr className="bg-slate-50/50 font-bold">
+                    <td colSpan={5} className="py-2.5 px-3 text-right text-slate-900 text-xs uppercase">Total Pembayaran Diterima</td>
+                    <td className="py-2.5 px-3 text-right font-mono text-emerald-700 text-xs">
+                        {formatRupiah(receipts.reduce((sum, item) => sum + Number(item.receiptTotalWithTax || 0), 0))}
+                    </td>
+                </tr>
             </tbody>
-          </table>
+            </table>
         </div>
       </div>
     </div>
   );
+}
+
+function FeeWithTax({ base, tax=0, isTotal = false }: { base: number; tax?: number; isTotal?: boolean }) {
+    const formatRupiah = (num: number) => {
+      if (num === 0) return '-';
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
+    };
+    
+    return (
+      <div className="flex flex-col items-end">
+        <span className={`font-mono ${isTotal ? 'font-bold text-[12px] text-slate-800' : 'text-[12px]'}`}>
+          {formatRupiah(base)}
+        </span>
+        {tax != null && tax > 0 && (
+          <span className="absolute mt-4 placeholder:text-[8px] text-rose-700 font-sans font-normal text-[10px] tracking-tight font-light">
+            +tax {formatRupiah(tax)}
+          </span>
+        )}
+      </div>
+    );
 }

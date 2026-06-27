@@ -1,7 +1,10 @@
 // src/pages/repayment/RepaymentDashboard.tsx
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { RepaymentSecurity, ApiResponse } from '../../types/repayment';
 import RepaymentCard from '../../components/repayment/RepaymentCard';
+import { useGlobalMode } from '../../context/GlobalModeContext';
+import RepaymentSecurityFormPanel from '../../components/repayment/RepaymentSecurityFormPanel';
 
 // Ambil URL dari Environment variable (Best Practice)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -14,6 +17,26 @@ export default function RepaymentDashboard() {
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+
+  const { isEditMode } = useGlobalMode();
+
+  // const [isFormOpen, setIsFormOpen] = useState(false);
+  // const [formMode, setFormMode] = useState<'add'|'edit'>('add');
+
+  // 💡 SENIOR-STYLE: Baca parameter dari URL browser lo
+  const [searchParams, setSearchParams] = useSearchParams();
+  const actionParam = searchParams.get('action'); // Akan membaca '?action=add'
+  
+  // Status panel terbuka kalau ada parameter 'add' atau 'edit'
+  const isFormOpen = actionParam === 'add' || actionParam === 'edit';
+  const formMode = actionParam === 'edit' ? 'edit' : 'add';
+
+  // Handler nutup panel: Bersihkan URL dari parameter form
+  const handleCloseForm = () => {
+    searchParams.delete('action');
+    searchParams.delete('id'); // Jaga-jaga buat mode edit nanti
+    setSearchParams(searchParams);
+  };
 
   useEffect(() => {
     const fetchRepayments = async () => {
@@ -119,8 +142,12 @@ export default function RepaymentDashboard() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {filteredData.map((repayment) => (
-                <RepaymentCard key={repayment.id} data={repayment} />
+                <RepaymentCard key={repayment.id} data={repayment} url={repayment.id} />
               ))}
+              {isEditMode && (
+                <RepaymentCard key="new-repayment-security" data={null} url="tes"/>
+              )}
+              
             </div>
           )}
         </>

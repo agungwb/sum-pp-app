@@ -2,12 +2,53 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { RepaymentSecurity, ContractStatus, SecurityType } from '../../types/repayment';
+import {useSidePanel} from '../../context/SidePanelContext';
+import RepaymentSecurityCreateWrapper from './RepaymentSecurityCreateWrapper';
 
 interface Props {
-  data: RepaymentSecurity;
+  data: RepaymentSecurity | null;
+  url: string;
 }
 
-export default function RepaymentCard({ data }: Props) {
+
+export default function RepaymentCard({ data, url }: Props) {
+  // Jika data null, jangan render card biasa, melainkan render card "Tambah Data"
+
+  const { openPanel, closePanel, isOpen } = useSidePanel();
+  
+  
+  if (!data) {
+    return (
+      <button 
+        type="button"
+        // onClick={() => openPanel('Tambah Data Repayment Baru', <RepaymentSecurityForm mode="add" />)}
+        onClick={() => openPanel(<RepaymentSecurityCreateWrapper />)}
+        
+        className="group relative flex flex-col items-center justify-center p-4 min-h-[220px] h-full w-full bg-gradient-to-br from-amber-50/40 to-white border-2 border-dashed border-amber-200 rounded-xl hover:border-amber-400 hover:shadow-md hover:from-amber-50/80 transition-all duration-300 ease-in-out cursor-pointer overflow-hidden"
+      >
+        {/* Efek Glow Aksen di Pojok Kanan Atas */}
+        <div className="absolute -right-4 -top-4 w-16 h-16 bg-amber-100/50 rounded-full blur-xl group-hover:bg-amber-200/60 transition-colors"></div>
+        
+        {/* Ikon Relevan (Dokumen + Plus) */}
+        <div className="flex items-center justify-center w-10 h-10 mb-2.5 bg-amber-100 rounded-full text-amber-600 group-hover:bg-amber-500 group-hover:text-white transition-colors duration-300 shadow-sm z-10">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+            {/* Menggambarkan Dokumen dengan Tanda Tambah di Tengahnya */}
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        
+        {/* Text Area */}
+        <div className="text-center z-10">
+          <p className="font-bold text-xs text-amber-900 group-hover:text-amber-700 transition-colors">
+            Tambahkan data pembayaran baru
+          </p>
+          <p className="text-[10px] text-slate-500 mt-1 font-medium">
+            Buat profil repayment security
+          </p>
+        </div>
+      </button>
+    );
+  }
   // Formatters
 
   const formatRupiah = (numStr: string) => {
@@ -146,7 +187,7 @@ export default function RepaymentCard({ data }: Props) {
       
         <div className="shrink-0 flex flex-col justify-end">
           <Link 
-            to={`/dashboard/repayment/${data.id}`} 
+            to={`${url}`} 
             className="flex items-center gap-1.5 text-[10px] font-bold bg-white text-slate-700 border-2 border-slate-200 px-2.5 py-1.5 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-100 cursor-pointer"
           >
             Lihat detil
@@ -161,3 +202,4 @@ export default function RepaymentCard({ data }: Props) {
     </div>
   );
 }
+

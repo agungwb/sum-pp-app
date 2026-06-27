@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
+import { SidePanelProvider } from '../context/SidePanelContext';
+import SidePanelLayout from './SidePanelLayout';
 
 export default function DashboardLayout() {
   const token = localStorage.getItem('sum_pp_token');
@@ -43,12 +45,26 @@ export default function DashboardLayout() {
       {/* PANEL KANAN: Area Utama (Otomatis masuk ke kolom ke-2 / 1fr tanpa perlu margin/padding kiri!) */}
       <div className="flex flex-col min-h-screen overflow-x-hidden">
         {/* Atas: Navbar */}
-        <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed}/>
+        
+        <SidePanelProvider>
+          <div className="flex flex-col min-h-screen bg-slate-50">
 
-        {/* Bawah: Area Konten Dinamis (Disesuaikan p-5 agar tetap compact & padat data) */}
-        <main className="flex-1 p-5">
-          <Outlet />
-        </main>
+            
+            {/* Misal lo pasang komponen Navbar & Sidebar lo di sini */}
+            <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed}/>
+            
+            {/* Bawah: Area Konten Dinamis (Disesuaikan p-5 agar tetap compact & padat data) */}
+            <main className="flex-1 p-5">
+              <Outlet />
+            </main>
+
+            
+            {/* Komponen pembungkus panel gesernya ada di paling dasar */}
+            <SidePanelLayout />
+            
+          </div>
+        </SidePanelProvider>
+
       </div>
 
     </div>
