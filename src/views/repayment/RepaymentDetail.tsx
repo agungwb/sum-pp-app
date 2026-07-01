@@ -5,6 +5,8 @@ import RepaymentScheduleCreateWrapper from '../../components/repayment/Repayment
 import RepaymentScheduleEditWrapper from '../../components/repayment/RepaymentScheduleEditWrapper';
 import RepaymentSecurityEditWrapper from '../../components/repayment/RepaymentSecurityEditWrapper';
 import RepaymentSecurityForm from '../../components/repayment/RepaymentSecurityForm';
+import FeeWithTax from '../../components/ui/FeeWithTax';
+import InfoRow from '../../components/ui/InfoRow';
 import { useGlobalMode } from '../../context/GlobalModeContext';
 import { useSidePanel } from '../../context/SidePanelContext';
 import { RepaymentSecurity, ApiResponse, ContractStatus, SecurityType } from '../../types/repayment';
@@ -261,19 +263,39 @@ export default function RepaymentDetail() {
       {/* =====================================================================
           ROW 1: CONTAINER 1 (Utama - 1/3) & CONTAINER 2 (Detail - 2/3)
       ====================================================================== */}
-      <div className="flex flex-col lg:flex-row gap-5 items-stretch">
-        {/* CONTAINER 2: Detil Informasi (Proporsi 2/3, Grid 2 Kolom) */}
-        <div className="w-full lg:w-2/3 bg-white rounded-xl border-2 border-slate-200 shadow-sm p-5 flex flex-col justify-start">
-          <h3 className="text-[12px] font-bold text-slate-800 uppercase tracking-wider border-b-2 border-slate-100 pb-2 mb-4 shrink-0">Detil Informasi & Legalitas</h3>
+      {/* 💡 UPDATE KOMPONEN INFOROW LO JADI SEPERTI INI BIAR FONT KIRI MEMBESAR */}
+      {/* const InfoRow = ({ label, value, fontMono, textClass = "text-slate-800" }: any) => (
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{label}</span>
+          <span className={`text-[13px] font-semibold leading-tight ${fontMono ? 'font-mono' : 'font-sans'} ${textClass}`}>
+            {value || '-'}
+          </span>
+        </div>
+      ); 
+      */}
+
+
+      {/* ================= MULAI DARI SINI ================= */}
+      <div className="flex flex-col lg:flex-row gap-4 items-stretch">
+        
+        {/* CONTAINER 2: Detil Informasi (KIRI - Font Agak Dibesarkan & Fit) */}
+        <div className="w-full lg:w-2/3 bg-white rounded-xl border-2 border-slate-200 shadow-sm p-4 flex flex-col justify-start">
+          <h3 className="text-[13px] font-bold text-slate-800 uppercase tracking-wider border-b-2 border-slate-100 pb-2 mb-3 shrink-0">
+            Detil Informasi & Legalitas
+          </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3 ">
             {/* Baris 1 */}
+            <InfoRow label="Nama Penerbit" value={data.investeeName} />
+            <InfoRow label="Nama Penerbit (Legal)" value={data.investeeNameLegal} />
+
+            {/* Baris 2 */}
             <InfoRow label="Nama Efek" value={data.securityName} />
             <InfoRow label="Tipe Efek" value={data.securityType} />
             
-            {/* Baris 2 */}
-            <InfoRow label="Nama Penerbit" value={data.investeeName} />
-            <InfoRow label="Nama Penerbit (Legal)" value={data.investeeNameLegal} />
+            <InfoRow label="Kode Efek" value="KKKKAAXXSCFS" />
+            <InfoRow label="Penerbitan Ke" value="5" />
+            
             
             {/* Baris 3 */}
             <InfoRow label="Jumlah Pendanaan" value={formatRupiah(data.contractUnderlyingFund)} fontMono />
@@ -292,137 +314,150 @@ export default function RepaymentDetail() {
             <InfoRow label="Selesai" value={formatDate(data.contractEndDate)} />
             
             {/* Section Dokumen */}
-            <div className="col-span-1 md:col-span-2 border-t-2 border-slate-50 pt-4 mt-1 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            <div className="col-span-1 md:col-span-2 border-t-2 border-slate-50 pt-3 mt-1 grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">
               
               {/* Baris 7 */}
               <div className="col-span-1 md:col-span-2">
-                 <InfoRow label="Judul Dokumen Perjanjian" value={data.contractDocumentTitle} />
+                <InfoRow label="Judul Dokumen Perjanjian" value={data.contractDocumentTitle} />
               </div>
               
               {/* Baris 8 */}
               <InfoRow label="Nomor Dokumen Perjanjian" value={data.contractDocumentNumber} fontMono />
               <div className="flex flex-col">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Unduh Dokumen Perjanjian</span>
-                <a href={data.contractDocumentUrl} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 w-fit bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 transition-colors">
-                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                   Unduh Dokumen
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Unduh Dokumen Perjanjian</span>
+                <a href={data.contractDocumentUrl} target="_blank" rel="noreferrer" className="text-[12px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 w-fit bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 transition-colors">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  Unduh Dokumen
                 </a>
               </div>
-
             </div>
           </div>
         </div>
 
-
-        {/* CONTAINER 1: Informasi Utama (Proporsi 1/3) */}
-        <div className="w-full lg:w-1/3 bg-white rounded-xl border-2 border-slate-200 shadow-sm p-5 flex flex-col justify-between">
+        {/* CONTAINER 1: Informasi Utama (KANAN - Font Dikecilkan) */}
+        <div className="w-full lg:w-1/3 bg-white rounded-xl border-2 border-slate-200 shadow-sm p-4 flex flex-col justify-between">
           
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-2 mb-6">
             {/* Baris 1: Penerbit, Legalitas, dan Status */}
-            <div className="flex justify-between items-start gap-2 border-b-2 border-slate-100 pb-3">
+            <div className="flex justify-between items-start gap-2 border-b-2 border-slate-100 pb-2.5">
               <div className="min-w-0 pr-2">
-                <h3 className="text-base font-bold text-slate-800 leading-tight truncate" title={data.investeeName}>
+                <h3 className="text-[16px] font-bold text-slate-800 leading-tight truncate" title={data.investeeName}>
                   {data.investeeName}
                 </h3>
                 <p className="text-[10px] text-slate-400 mt-0.5 font-medium truncate" title={data.investeeNameLegal}>
                   {data.investeeNameLegal}
                 </p>
               </div>
-              <span className={`px-2.5 py-1 rounded-md text-[9px] font-bold tracking-wider uppercase border-2 shrink-0 ${getStatusStyle(data.contractStatus)}`}>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase border-2 shrink-0 ${getStatusStyle(data.contractStatus)}`}>
                 {data.contractStatus}
               </span>
             </div>
 
             {/* Baris 2: Tipe Efek & Nama Efek */}
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase border-2 shrink-0 ${getTypeStyle(data.securityType)}`}>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase border-2 shrink-0 ${getTypeStyle(data.securityType)}`}>
                 {data.securityType}
               </span>
-              <span className="text-[15px] font-bold text-slate-800 leading-tight line-clamp-2">
+              <span className="text-[14px] font-bold text-slate-800 leading-tight line-clamp-2">
                 {data.securityName}
               </span>
             </div>
 
             {/* Baris 3: Jumlah Pendanaan */}
-            <div className="bg-slate-50 border-2 border-slate-100 rounded-lg p-3 my-2">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Jumlah Pendanaan</span>
-              <p className="text-2xl xl:text-[28px] font-black text-slate-800 font-mono tracking-tighter break-words leading-none">
+            <div className="bg-slate-50 border-2 border-slate-100 rounded-lg p-2.5 my-1.5">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Jumlah Pendanaan</span>
+              <p className="text-xl xl:text-2xl font-black text-slate-800 font-mono tracking-tighter break-words leading-none">
                 {formatRupiah(data.contractUnderlyingFund)}
               </p>
             </div>
 
             {/* Baris 4: Imbal Hasil & % */}
-            <div className="flex justify-between items-end border-t border-slate-100 pt-2.5">
+            <div className="flex justify-between items-end border-t border-slate-100 pt-2">
               <div className="flex flex-col">
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Imbal Hasil</span>
-                <span className="text-[13px] font-mono font-semibold text-emerald-600">{formatRupiah(data.contractYieldAmount)}</span>
+                <span className="text-[12px] font-mono font-semibold text-emerald-600">{formatRupiah(data.contractYieldAmount)}</span>
               </div>
               <div className="flex flex-col text-right">
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">% p.a.</span>
-                <span className="text-[13px] font-mono font-semibold text-emerald-600">{data.contractYieldRateAnnually}%</span>
+                <span className="text-[12px] font-mono font-semibold text-emerald-600">{data.contractYieldRateAnnually}%</span>
               </div>
             </div>
 
             {/* Baris 5: Potensi Revenue & % */}
-            <div className="flex justify-between items-end border-t border-slate-100 pt-2.5">
+            <div className="flex justify-between items-end border-t border-slate-100 pt-2">
               <div className="flex flex-col">
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Potensi Revenue</span>
-                <span className="text-[13px] font-mono font-semibold text-slate-700">{formatRupiah(totalRevenue)}</span>
+                <span className="text-[12px] font-mono font-semibold text-slate-700">{formatRupiah(totalRevenue)}</span>
               </div>
               <div className="flex flex-col text-right">
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">% Estimasi</span>
-                <span className="text-[13px] font-mono font-semibold text-slate-700">{totalRevenuePercentage}%</span>
+                <span className="text-[12px] font-mono font-semibold text-slate-700">{totalRevenuePercentage}%</span>
               </div>
             </div>
 
             {/* Baris 6: Jumlah Cicilan & Kolateral */}
-            <div className="flex justify-between items-end border-t border-slate-100 pt-2.5">
+            <div className="flex justify-between items-end border-t border-slate-100 pt-2">
               <div className="flex flex-col">
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Jumlah Cicilan</span>
-                <span className="text-[13px] font-sans font-semibold text-slate-700">{schedules.length}x Cicilan</span>
+                <span className="text-[12px] font-sans font-semibold text-slate-700">{schedules.length}x Cicilan</span>
               </div>
               <div className="flex flex-col text-right">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Agunan</span>
-                <span className="text-[13px] font-sans font-semibold text-slate-700">{collaterals.length} Kolateral</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Durasi</span>
+                <span className="text-[12px] font-sans font-semibold text-slate-700">{data.contractDurationInMonths} Bln</span>
               </div>
             </div>
 
             {/* Baris 7: Durasi, Mulai & Selesai */}
-            <div className="grid grid-cols-3 items-end border-t border-slate-100 pt-2.5 mb-2">
+            <div className="flex justify-between items-end border-t border-slate-100 pt-2">
               {/* Kiri: Durasi */}
-              <div className="flex flex-col text-left">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Durasi</span>
-                <span className="text-[13px] font-sans font-semibold text-slate-700">{data.contractDurationInMonths} Bln</span>
-              </div>
               {/* Tengah: Mulai */}
-              <div className="flex flex-col text-center">
+              <div className="flex flex-col text-left">
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Mulai</span>
-                <span className="text-[13px] font-sans font-semibold text-slate-700">{formatCompactDate(data.contractStartDate)}</span>
+                <span className="text-[12px] font-sans font-semibold text-slate-700">{formatCompactDate(data.contractStartDate)}</span>
               </div>
               {/* Kanan: Selesai */}
               <div className="flex flex-col text-right">
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Selesai</span>
-                <span className="text-[13px] font-sans font-semibold text-slate-700">{formatCompactDate(data.contractEndDate)}</span>
+                <span className="text-[12px] font-sans font-semibold text-slate-700">{formatCompactDate(data.contractEndDate)}</span>
               </div>
             </div>
+
+            <div className="flex justify-between items-end border-t border-slate-100 pt-2">
+              {/* Jaminan */}
+              <div className="flex flex-col text-left">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Agunan</span>
+                <span className="text-[12px] font-sans font-semibold text-slate-700">{collaterals.length} Kolateral</span>
+              </div>
+              {/* Kanan: Selesai */}
+              <div className="flex flex-col text-right">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Denda</span>
+                <span className="text-[12px] font-sans font-semibold text-slate-700">100.000</span>
+              </div>
+            </div>
+
           </div>
 
+          
+
+
+          
+
           {/* Baris 8: Progress Bar Animasi */}
-          <div className="mt-auto pt-4 border-t-2 border-slate-100">
-            <div className="flex justify-between text-[11px] font-bold mb-2">
+          <div className="mt-auto pt-3 border-t-2 border-slate-100">
+            <div className="flex justify-between text-[10px] font-bold mb-1.5">
               <span className="text-slate-500 uppercase tracking-wider">Progress Dana</span>
               <span className="text-slate-700">{formattedProgress}% Terkumpul</span>
             </div>
-            <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+            <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
               <div 
-                className="bg-orange-500 h-full rounded-full transition-all duration-1000 ease-out" 
+                className={`${
+                  progressPercentage < 100 ? "bg-orange-500" : "bg-green-500"
+                } h-full rounded-full transition-all duration-1000 ease-out`}
                 style={{ width: `${boundedWidth}%` }}
               ></div>
             </div>
           </div>
         </div>
-
-        
 
       </div>
 
@@ -612,7 +647,7 @@ export default function RepaymentDetail() {
           </div>
         )}
 
-</div>
+      </div>
 
       {/* =====================================================================
           ROW 3: CONTAINER 4 (Revenue) & CONTAINER 5 (Collateral)
@@ -701,34 +736,6 @@ export default function RepaymentDetail() {
 // =============================================================================
 
 // Helper: Teks Informasi Flat
-function InfoRow({ label, value, fontMono = false, textClass = "text-slate-700" }: { label: string; value: React.ReactNode; fontMono?: boolean; textClass?: string }) {
-  return (
-    <div className="flex flex-col">
-      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{label}</span>
-      <span className={`text-[11px] ${fontMono ? 'font-mono' : 'font-sans'} font-semibold ${textClass}`}>{value}</span>
-    </div>
-  );
-}
-
-function FeeWithTax({ base, tax=0, isTotal = false }: { base: number; tax?: number; isTotal?: boolean }) {
-    const formatRupiah = (num: number) => {
-      if (num === 0) return '-';
-      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
-    };
-    
-    return (
-      <div className="flex flex-col items-end">
-        <span className={`font-mono ${isTotal ? 'font-bold text-[12px] text-slate-800' : 'text-[12px]'}`}>
-          {formatRupiah(base)}
-        </span>
-        {tax != null && tax > 0 && (
-          <span className="absolute mt-4 placeholder:text-[8px] text-rose-700 font-sans font-normal text-[9px] tracking-tight font-light">
-            +tax {formatRupiah(tax)}
-          </span>
-        )}
-      </div>
-    );
-}
 
 // Helper: Baris Revenue Summary
 function RevenueRow({ label, value }: { label: string; value: string | number }) {

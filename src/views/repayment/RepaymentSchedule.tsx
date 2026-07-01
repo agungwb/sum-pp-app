@@ -1,7 +1,12 @@
 // src/pages/repayment/RepaymentSchedule.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import RepaymentReceiptCreateWrapper from '../../components/repayment/RepaymentReceiptCreateWrapper';
+import RepaymentReceiptEditWrapper from '../../components/repayment/RepaymentReceiptEditWrapper';
+import RepaymentScheduleEditWrapper from '../../components/repayment/RepaymentScheduleEditWrapper';
+import FeeWithTax from '../../components/ui/FeeWithTax';
 import { useGlobalMode } from '../../context/GlobalModeContext';
+import { useSidePanel } from '../../context/SidePanelContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 
@@ -58,6 +63,8 @@ export default function RepaymentSchedule() {
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
 
   const { isEditMode } = useGlobalMode();
+
+  const { openPanel } = useSidePanel();
   
 
   useEffect(() => {
@@ -197,7 +204,9 @@ export default function RepaymentSchedule() {
             )}
           
             {isEditMode && (
-                <button className="text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-2 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
+                <button 
+                    onClick={() => openPanel(<RepaymentScheduleEditWrapper receiptId={schedule.id} />)}
+                    className="text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-2 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                     </svg>
@@ -220,75 +229,75 @@ export default function RepaymentSchedule() {
 
             {Number(schedule?.invoiceFeeAdministration) > 0 ? (
                 <div className="flex justify-between items-center p-2 rounded">
-                    <span className="font-semibold text-slate-900">Biaya Administrasi</span>
+                    <span className="font-normal text-slate-900">Biaya Administrasi</span>
                     <FeeWithTax base={Number(schedule.invoiceFeeAdministration)} tax={Number(schedule.invoiceFeeAdministrationTax)}  />
                 </div>
             ) : null}
 
             {Number(schedule?.invoiceFeeProvision) > 0 ? (
                 <div className="flex justify-between items-center p-2 rounded">
-                    <span className="font-semibold text-slate-900">Biaya Provisi</span>
+                    <span className="font-normal text-slate-900">Biaya Provisi</span>
                     <FeeWithTax base={Number(schedule.invoiceFeeProvision)} tax={Number(schedule.invoiceFeeProvisionTax)}  />
                 </div>
             ) : null}
 
             {Number(schedule?.invoiceFeeServicing) > 0 ? (
                 <div className="flex justify-between items-center p-2 rounded">
-                    <span className="font-semibold text-slate-900">Biaya Servicing</span>
+                    <span className="font-normal text-slate-900">Biaya Servicing</span>
                     <FeeWithTax base={Number(schedule.invoiceFeeServicing)} tax={Number(schedule.invoiceFeeServicingTax)}  />
                 </div>
             ) : null}
 
             {Number(schedule?.invoiceFeeMonitoring) > 0 ? (
                 <div className="flex justify-between items-center p-2 rounded">
-                    <span className="font-semibold text-slate-900">Biaya Monitoring</span>
+                    <span className="font-normal text-slate-900">Biaya Monitoring</span>
                     <FeeWithTax base={Number(schedule.invoiceFeeMonitoring)} tax={Number(schedule.invoiceFeeMonitoring)}  />
                 </div>
             ) : null}
 
             {Number(schedule?.invoiceFeeOther) > 0 ? (
                 <div className="flex justify-between items-center p-2 rounded">
-                    <span className="font-semibold text-slate-900">Biaya Lain-lain</span>
+                    <span className="font-normal text-slate-900">Biaya Lain-lain</span>
                     <FeeWithTax base={Number(schedule.invoiceFeeOther)} tax={Number(schedule.invoiceFeeOtherTax)}  />
                 </div>
             ) : null}
 
             {Number(schedule?.invoiceSinkingFund) > 0 ? (
                 <div className="flex justify-between items-center p-2 rounded">
-                    <span className="font-semibold text-slate-900">Cicilan Sinking Fund</span>
+                    <span className="font-normal text-slate-900">Cicilan Sinking Fund</span>
                     <FeeWithTax base={Number(schedule.invoiceSinkingFund)}  />
                 </div>
             ) : null}
 
             {Number(schedule?.invoiceYield) > 0 ? (
                 <div className="flex justify-between items-center p-2 rounded">
-                    <span className="font-semibold text-slate-900">Imbal hasil / Kupon</span>
+                    <span className="font-normal text-slate-900">Imbal hasil / Kupon</span>
                     <FeeWithTax base={Number(schedule.invoiceYield)}  />
                 </div>
             ) : null}
 
             {Number(schedule?.invoicePenalty) > 0 ? (
                 <div className="flex justify-between items-center p-2 rounded">
-                    <span className="font-semibold text-slate-900">Denda</span>
+                    <span className="font-normal text-slate-900">Denda</span>
                     <FeeWithTax base={Number(schedule.invoicePenalty)}  />
                 </div>
             ) : null}
 
             {Number(schedule?.invoiceActualLoss) > 0 ? (
                 <div className="flex justify-between items-center p-2 rounded">
-                    <span className="font-semibold text-slate-900">Kerugian Riil</span>
+                    <span className="font-normal text-slate-900">Kerugian Riil</span>
                     <FeeWithTax base={Number(schedule.invoiceActualLoss)}  />
                 </div>
             ) : null}
 
             <div className="flex justify-between items-center p-2 rounded">
                 <span className="font-semibold text-slate-900">TOTAL</span>
-                <FeeWithTax base={Number(schedule.invoiceTotal)} tax={Number(schedule.invoiceTotalTax)} />
+                <FeeWithTax base={Number(schedule.invoiceTotal)} tax={Number(schedule.invoiceTotalTax)} size='large' />
             </div>
 
             <div className="flex justify-between items-center p-2 rounded">
                 <span className="font-bold text-slate-900">TOTAL + PAJAK</span>
-                <FeeWithTax base={Number(schedule.invoiceTotalWithTax)} />
+                <FeeWithTax base={Number(schedule.invoiceTotalWithTax)} size='large-bold'/>
             </div>
             
           </div>
@@ -393,18 +402,19 @@ export default function RepaymentSchedule() {
         <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
                 <tr className="bg-slate-50 text-[9px] text-slate-500 uppercase tracking-wider border-y border-slate-200">
-                <th className="py-2.5 px-3 w-8"></th> {/* Kolom Expand */}
-                <th className="py-2.5 px-3 font-bold text-left">No</th>
-                <th className="py-2.5 px-3 font-bold text-left">Tanggal Diterima</th>
-                <th className="py-2.5 px-3 font-bold text-center">Metode Pembayaran</th>
-                <th className="py-2.5 px-3 font-bold text-center">Notes</th>
-                <th className="py-2.5 px-3 font-bold text-right">Jumlah Dana Diterima</th>
-                <th className="py-2.5 px-3 font-bold text-center">Status</th>
-                {isEditMode && (
-                    <th className="py-2.5 px-3 font-bold text-center">Edit</th>
-                )}
+                    <th className="py-2.5 px-3 w-8"></th>
+                    <th className="py-2.5 px-3 font-bold text-left">No</th>
+                    <th className="py-2.5 px-3 font-bold text-left">Tanggal Diterima</th>
+                    <th className="py-2.5 px-3 font-bold text-center">Metode Pembayaran</th>
+                    <th className="py-2.5 px-3 font-bold text-center">Notes</th>
+                    <th className="py-2.5 px-3 font-bold text-right">Jumlah Dana Diterima</th>
+                    <th className="py-2.5 px-3 font-bold text-center">Status</th>
+                    {isEditMode && (
+                        <th className="py-2.5 px-3 font-bold text-center">Edit</th>
+                    )}
                 </tr>
             </thead>
+           
             <tbody className="text-[11px] font-medium text-slate-700 divide-y divide-slate-100">
                 {receipts.length === 0 ? (
                 <tr>
@@ -455,7 +465,9 @@ export default function RepaymentSchedule() {
                         </td>
                         {isEditMode && (
                             <td className="py-3 px-3 text-left align-top">
-                                <button className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
+                                <button 
+                                onClick={() => openPanel(<RepaymentReceiptEditWrapper receiptId={rcpt.id} />)}
+                                className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                     </svg>
@@ -553,37 +565,42 @@ export default function RepaymentSchedule() {
                     );
                 })
                 )}
-                {/* Row Total Receipt */}
-                <tr className="bg-slate-50/50 font-bold">
-                    <td colSpan={5} className="py-2.5 px-3 text-right text-slate-900 text-xs uppercase">Total Pembayaran Diterima</td>
-                    <td className="py-2.5 px-3 text-right font-mono text-emerald-700 text-xs">
-                        {formatRupiah(receipts.reduce((sum, item) => sum + Number(item.receiptTotalWithTax || 0), 0))}
+               
+                {/* Row Tambah Receipt Pembayaran (Tema Edit / Amber) */}
+                {isEditMode && (
+                <tr>
+                    <td colSpan={2}></td>
+                    <td colSpan={5} className="p-0">
+                    <button
+                        onClick={() => openPanel(<RepaymentReceiptCreateWrapper/>)}
+                        type="button"
+                        className="flex items-center justify-center w-full p-2 m-2 border-2 border-dashed border-amber-300 bg-amber-50/50 text-amber-700 rounded-xl hover:bg-amber-100 hover:border-amber-400 transition-all group focus:outline-none focus:ring-2 focus:ring-amber-200"
+                    >
+                        <div className="bg-amber-200/60 p-1.5 rounded-full group-hover:bg-amber-300 transition-colors">
+                            <svg className="w-4 h-4 text-amber-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                        </div>
+                        <span className="text-[11px] font-bold tracking-wider">Tambah Bukti Pembayaran</span>
+                    </button>
                     </td>
                 </tr>
+                )}
+
+                {receipts.length > 0 && (
+                <tr className="bg-slate-50/50 border-t border-slate-200 font-bold">
+                    <td colSpan={5} className="py-2.5 px-3 text-right text-slate-900 text-xs uppercase">
+                    Total Pembayaran Diterima
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-mono text-emerald-700 text-xs">
+                    {formatRupiah(receipts.reduce((sum, item) => sum + Number(item.receiptTotalWithTax || 0), 0))}
+                    </td>
+                </tr>
+                )}
             </tbody>
             </table>
         </div>
       </div>
     </div>
   );
-}
-
-function FeeWithTax({ base, tax=0, isTotal = false }: { base: number; tax?: number; isTotal?: boolean }) {
-    const formatRupiah = (num: number) => {
-      if (num === 0) return '-';
-      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
-    };
-    
-    return (
-      <div className="flex flex-col items-end">
-        <span className={`font-mono ${isTotal ? 'font-bold text-[12px] text-slate-800' : 'text-[12px]'}`}>
-          {formatRupiah(base)}
-        </span>
-        {tax != null && tax > 0 && (
-          <span className="absolute mt-4 placeholder:text-[8px] text-rose-700 font-sans font-normal text-[10px] tracking-tight font-light">
-            +tax {formatRupiah(tax)}
-          </span>
-        )}
-      </div>
-    );
 }

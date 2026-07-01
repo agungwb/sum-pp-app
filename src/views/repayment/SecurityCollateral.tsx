@@ -1,7 +1,10 @@
 // src/pages/repayment/SecurityCollateral.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import SecurityCollateralCreateWrapper from '../../components/repayment/SecurityCollateralCreateWrapper';
+import SecurityCollateralEditWrapper from '../../components/repayment/SecurityCollateralEditWrapper';
 import { useGlobalMode } from '../../context/GlobalModeContext';
+import { useSidePanel } from '../../context/SidePanelContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
@@ -31,6 +34,7 @@ export default function SecurityCollateral() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isEditMode } = useGlobalMode();
+  const { openPanel } = useSidePanel();
 
   // Data header (Dummy/Placeholder) untuk info Security
   const headerData = {
@@ -242,7 +246,9 @@ export default function SecurityCollateral() {
                         </td>
                         {isEditMode && (
                             <td className="py-3 px-3 text-left align-top">
-                                <button className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
+                                <button 
+                                  onClick={() => openPanel(<SecurityCollateralEditWrapper collateralId={item.id}/>)}
+                                  className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                     </svg>
@@ -256,17 +262,18 @@ export default function SecurityCollateral() {
                         <tr className="border-t-2 border-slate-200">
                         <td></td>
                         <td colSpan={5} className="p-0">
-                            <Link
-                            to={`/dashboard/repayment/${repaymentSecurityId}/collaterals/new`} // Link dummy sementara
+                        <button
+                            type="button"
+                            onClick={() => openPanel(<SecurityCollateralCreateWrapper/>)}
                             className="w-full flex items-center justify-center gap-2 py-4 border-2 m-4 border-dashed rounded-lg border-amber-200 bg-amber-50/40 hover:bg-amber-100 text-amber-700 transition-all focus:outline-none focus:ring-2 focus:ring-amber-200 group"
-                            >
+                          >
                             <div className="bg-amber-100 p-1 rounded-full group-hover:bg-amber-500 transition-colors">
-                                <svg className="w-5 h-5 text-amber-600 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <svg className="w-5 h-5 text-amber-600 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                                </svg>
+                              </svg>
                             </div>
                             <span className="font-semibold text-sm">Tambah kolateral baru</span>
-                            </Link>
+                          </button>
                         </td>
                         <td></td>
                         </tr>
