@@ -1,261 +1,292 @@
 // src/components/repayment/RepaymentSecurityForm.tsx
 import React, { useState, useEffect } from 'react';
-import { useSidePanel } from '../../context/SidePanelContext'; 
+import { useSidePanel } from '../../context/SidePanelContext';
+import { RepaymentSecurityDTO, SecurityLookupItem } from '../../types/repayment-security-dto';
+import { NumericInput } from './NumericInput';
 
-interface RepaymentSecurityFormProps {
-  initialData?: any;
-  onSubmit: (data: any) => void;
-  isLoading?: boolean;
-}
-
-const defaultFormState = {
-  // GROUP 1: Informasi Penerbit dan Efek
-  id: '',
-  investee_id: '',
-  investee_name: '',
-  investee_name_legal: '',
-  investee_icon_url: '',
-  security_id: '',
-  security_type: '',
-  security_name: '',
-  security_code: '',
-  security_series: '',
-  security_phase: '',
-  security_sequence: '',
-  
-  // GROUP 2: Jangka Waktu
-  contract_start_date: '',
-  contract_end_date: '',
-  contract_duration_in_months: '',
-  contract_status: 'PERFORMING',
-
-  // GROUP 3: FUNDING, YIELD & FEE
-  contract_underlying_fund: '',
-  contract_yield_amount: '',
-  contract_yield_rate_annually: '',
-  contract_fee_administration: '',
-  contract_fee_administration_percentage: '',
-  contract_fee_provision: '',
-  contract_fee_provision_percentage: '',
-  contract_fee_platform: '',
-  contract_fee_platform_percentage: '',
-  contract_fee_servicing: '',
-  contract_fee_servicing_percentage: '',
-  contract_fee_monitoring_monthly: '',
-  contract_fee_monitoring_percentage_monthly: '',
-  contract_fee_monitoring: '',
-  contract_fee_monitoring_percentage: '',
-
-  // GROUP 4: TAX and Penalty
-  contract_tax_ppn: '',
-  contract_tax_factor: '',
-  contract_tax_yield: '',
-  contract_penalty_percentage_daily: '0.001',
-
-  // GROUP 5: PAYMENT AND CONTACT
-  contract_escrow_bank: '',
-  contract_escrow_account: '',
-  contract_va_bank: '',
-  contract_va_number: '',
-  contract_contact_email: '',
-  contract_contact_whatsapp: '',
-
-  // GROUP 6: DOCUMENT
-  contract_document_title: '',
-  contract_document_number: '',
-  contract_document_url: '',
-
-  // FLAGS & RESTRUCT
-  generate_schedule_flag: true,
-  restruct_order: '',
-  restruct_parent_security_id: '',
-  restruct_original_security_id: '',
+const colSpanClasses: Record<string, string> = {
+  "1": "col-span-1",
+  "2": "col-span-2",
 };
 
-// JSON Lookup Dummy Sesuai Request
-const lookupDummyData = [
-  {"id":"c913ad7e-9913-496c-a2f0-30df54d3701f","investee_id":"880f23e3-05e0-493d-9da9-8391d4ac13de","investee_name":"Nusa Farm","investee_name_legal":"PT Pintu Masuk Pangan","investee_icon_url":"google/test/doremi.png","security_id":"c07775ca-aa32-4156-85a3-9dd08e038d49","security_type":"Sukuk","security_name":"Sukuk Ijarah Nusa Farm Tahap I","security_code":"NSFR01X1SCFS","security_series":1,"security_phase":1,"security_sequence":1},
-  {"id":"cd38898b-f97d-48ce-971d-40f2e6a38d63","investee_id":"d51c74d3-9a98-4735-9bd6-0d50be173062","investee_name":"Studio Renang","investee_name_legal":"PT Klyra Adhyaksa Sera","investee_icon_url":"google/test/doremi.png","security_id":"221cebb4-4b43-42eb-9f56-06f85483c2a7","security_type":"Saham","security_name":"Studio Renang","security_code":"STDRECF","security_series":1,"security_phase":0,"security_sequence":2},
-  {"id":"afd64e5f-50dc-4f94-9345-60acfb54a49e","investee_id":"051ebbcc-ab92-47c3-a3ff-c3e33a76202a","investee_name":"Femurty","investee_name_legal":"PT Femurty Abadi Sentosa","investee_icon_url":"google/test/doremi.png","security_id":"b4ad96c6-c0c4-40df-b749-353c7e3d33b7","security_type":"Sukuk","security_name":"Sukuk Ijarah Femurty Abadi Sentosa Tahap I","security_code":"FMAS01X1SCFS","security_series":1,"security_phase":1,"security_sequence":3},
-  {"id":"31e9da09-70fa-4e8c-84e5-1f42da787c6a","investee_id":"5ff6a3b9-a9da-4d78-80de-f632c54bbd9c","investee_name":"ODAC","investee_name_legal":"PT Oranye Kafah Tahta Abadi","investee_icon_url":"google/test/doremi.png","security_id":"0ec70670-4bc6-4b39-b205-b0c085d13759","security_type":"Sukuk","security_name":"Sukuk Ijarah ODAC","security_code":"ODAC01XXSCFS","security_series":1,"security_phase":0,"security_sequence":4},
-  {"id":"24d22078-4fbe-49bc-be9c-ce2a45d9c28b","investee_id":"cd674b77-57d4-44c8-95e6-65d7a73c8eed","investee_name":"Dorks","investee_name_legal":"CV Triguna Mitra Abadi","investee_icon_url":"google/test/doremi.png","security_id":"68b7a1d2-63d8-4305-b760-9d15dbb14b54","security_type":"Sukuk","security_name":"Sukuk Ijarah Dorks","security_code":"DORK01XXSCFS","security_series":1,"security_phase":0,"security_sequence":5},
-  {"id":"346dff5e-8cf4-4ca9-8743-9713e1a8b74f","investee_id":"9d4178e6-334a-4d92-a005-0397b02f230c","investee_name":"Femurty","investee_name_legal":"PT Femurty Abadi Sentosa","investee_icon_url":"google/test/doremi.png","security_id":"c9192836-6f75-4385-bdb3-87b7e9bc3523","security_type":"Sukuk","security_name":"Sukuk Ijarah Femurty Abadi Sentosa Tahap II","security_code":"FMAS01X2SCFS","security_series":2,"security_phase":2,"security_sequence":6},
-  {"id":"55898df4-1cb8-4531-9757-75de0033d1dc","investee_id":"90256c49-d5b0-48a2-a183-2868f563b27e","investee_name":"Studio Renang","investee_name_legal":"PT Meimo Toronta Sera","investee_icon_url":"google/test/doremi.png","security_id":"2c5ee33e-8629-40b3-a3b5-e65d9e493bd1","security_type":"Sukuk","security_name":"Sukuk Ijarah Studio Renang Tahap I","security_code":"METS01X1SCFS","security_series":1,"security_phase":1,"security_sequence":7},
-  {"id":"e0fba99e-3984-45b6-b5ff-ed916806d4b9","investee_id":"8eace092-6eea-40ab-8c99-2fe47eda60cf","investee_name":"Studio Renang","investee_name_legal":"PT Meimo Toronta Sera","investee_icon_url":"google/test/doremi.png","security_id":"9d1b1b28-7879-4ccc-ba55-95ed650e3094","security_type":"Sukuk","security_name":"Sukuk Ijarah Studio Renang Tahap I","security_code":"METS01X1SCFS","security_series":2,"security_phase":2,"security_sequence":8},
-  {"id":"cdaf50d2-12a7-4b95-bf2c-b71d466b7953","investee_id":"56675177-f62d-446a-9796-84c7271d2ead","investee_name":"Hi Nashville","investee_name_legal":"PT Bohi Integra Tanaya","investee_icon_url":"google/test/doremi.png","security_id":"eccdbc9b-c3ed-4255-9878-a52fcb3c088d","security_type":"Saham","security_name":"Hi Nashville","security_code":"BOHIECF","security_series":1,"security_phase":0,"security_sequence":9},
-  {"id":"ee64a35a-5baf-440b-b9aa-f20ff300eaf1","investee_id":"c4117eb5-ef36-452b-8771-d4ad0a415751","investee_name":"IGN Global Network","investee_name_legal":"PT IGN Global Network","investee_icon_url":"google/test/doremi.png","security_id":"baa6d4b7-545d-45d4-9650-26362d785210","security_type":"Sukuk","security_name":"Sukuk Musyarakah IGN Global Network Tahap II","security_code":"IGN04X1SCFS","security_series":5,"security_phase":1,"security_sequence":10},
-  {"id":"14d4c645-b43c-4abf-b543-c919f5764f7a","investee_id":"8718cb11-8266-4f0f-905c-51764844e9c0","investee_name":"Temu Sushi","investee_name_legal":"CV Lima Sinergi Group","investee_icon_url":"google/test/doremi.png","security_id":"b9c0f4f2-66c2-43c6-8989-65a3b8644c62","security_type":"Sukuk","security_name":"Sukuk Ijarah Temu Sushi Tahap I","security_code":"TEMU02X1SCFS","security_series":2,"security_phase":1,"security_sequence":11},
-  {"id":"21f000cb-f198-4e65-90c6-9a26d1140de2","investee_id":"ab6d158e-2dcc-4241-9549-9a39d960d667","investee_name":"IGN Global Network","investee_name_legal":"PT IGN Global Network","investee_icon_url":"google/test/doremi.png","security_id":"39be8f04-3c06-4eb4-9bd2-64c83d65943f","security_type":"Sukuk","security_name":"Sukuk Musyarakah IGN Global Network Tahap III","security_code":"IGN04X2SCFS","security_series":6,"security_phase":2,"security_sequence":12},
-  {"id":"a8961fa8-5d4a-4b4e-bbdf-6912db3ad316","investee_id":"7d5d7240-e864-43c0-873b-e9732204046a","investee_name":"Sari Barokah","investee_name_legal":"PT Sari Barokah Group","investee_icon_url":"google/test/doremi.png","security_id":"d378db94-bfa8-4d82-a781-bd7f182d3192","security_type":"Sukuk","security_name":"Sukuk Ijarah Sari Barokah Group Tahap I","security_code":"SRBR01X1SCFS","security_series":2,"security_phase":1,"security_sequence":13},
-  {"id":"4111b2e0-0460-4736-b1be-84f91361beab","investee_id":"89af381d-f425-4de1-838f-c3c3d38ddbbd","investee_name":"Sari Barokah","investee_name_legal":"PT Sari Barokah Group","investee_icon_url":"google/test/doremi.png","security_id":"b775af43-fae5-4076-8bae-6c43d3c1e73b","security_type":"Sukuk","security_name":"Sukuk Ijarah Sari Barokah Group Tahap II","security_code":"SRBR01X2SCFS","security_series":3,"security_phase":2,"security_sequence":14}
-];
+// --- KOMPONEN BANTUAN UI ---
+const FormGroup = ({ title, children }: any) => (
+  <div className="mb-2 ">
+    {/* Warna dan ukuran judul grup disesuaikan menjadi normal dan tidak orange */}
+    <h3 className="text-xs font-semibold text-slate-700 mb-4 pb-2 border-b border-slate-100">{title}</h3>
+    <div className="grid grid-cols-2 gap-3">
+      {children}
+    </div>
+  </div>
+);
 
-
-export default function RepaymentSecurityForm({ initialData, onSubmit, isLoading }: RepaymentSecurityFormProps) {
-  const { closePanel } = useSidePanel();
-  const [formData, setFormData] = useState(defaultFormState);
-  const [lookupData, setLookupData] = useState<any[]>([]);
-
-  const isEditMode = !!initialData?.id;
-  
-  // Status Grup 3: Aktif jika Nilai Pendanaan dan Durasi ada nilainya
-  const fundVal = Number(formData.contract_underlying_fund) || 0;
-  const durationVal = Number(formData.contract_duration_in_months) || 0;
-  const isGroup3Active = fundVal > 0 && durationVal > 0;
-
-  useEffect(() => {
-    if (initialData) {
-      setFormData(prev => ({ ...prev, ...initialData }));
-    }
-  }, [initialData]);
-
-  useEffect(() => {
-    // Simulasi Fetching dari API Endpoint Lookup
-    // aslinya: fetch('http://localhost:3000/repayment/securities/lookup')
-    setLookupData(lookupDummyData);
-  }, []);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    let finalValue = value;
-    if (type === 'checkbox') {
-      finalValue = (e.target as HTMLInputElement).checked as any;
-    }
-    setFormData(prev => ({ ...prev, [name]: finalValue }));
-  };
-
-  // Kalkulasi Otomatis Durasi dari Tanggal
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    let newFormData = { ...formData, [name]: value };
-    
-    if (newFormData.contract_start_date && newFormData.contract_end_date) {
-      const d1 = new Date(newFormData.contract_start_date);
-      const d2 = new Date(newFormData.contract_end_date);
-      const months = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
-      newFormData.contract_duration_in_months = months > 0 ? String(months) : '0';
-      
-      // Jika durasi berubah, trigger ulang kalkulasi grup 3
-      newFormData = recalculateGroup3(newFormData);
-    }
-    setFormData(newFormData);
-  };
-
-  // Saat Dropdown Lookup Dipilih
-  const handleLookupSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedId = e.target.value;
-    const item = lookupData.find(d => d.security_id === selectedId);
-    
-    if (item) {
-      setFormData(prev => ({
-        ...prev,
-        security_name: item.security_name,
-        investee_id: item.investee_id,
-        investee_name: item.investee_name,
-        investee_name_legal: item.investee_name_legal,
-        investee_icon_url: item.investee_icon_url,
-        security_id: item.security_id,
-        security_type: item.security_type.toUpperCase(),
-        security_code: item.security_code,
-        security_series: String(item.security_series),
-        security_phase: String(item.security_phase),
-        security_sequence: String(item.security_sequence)
-      }));
-    } else {
-      setFormData(prev => ({ ...prev, security_id: '', investee_id: '' }));
-    }
-  };
-
-  // Helper fungsi untuk menghitung semua dependensi di Group 3
-  const recalculateGroup3 = (data: typeof defaultFormState) => {
-    const fund = Number(data.contract_underlying_fund) || 0;
-    const duration = Number(data.contract_duration_in_months) || 0;
-
-    if (fund > 0) {
-      data.contract_fee_administration = String((Number(data.contract_fee_administration_percentage) || 0) / 100 * fund);
-      data.contract_fee_provision = String((Number(data.contract_fee_provision_percentage) || 0) / 100 * fund);
-      data.contract_fee_platform = String((Number(data.contract_fee_platform_percentage) || 0) / 100 * fund);
-      data.contract_fee_servicing = String((Number(data.contract_fee_servicing_percentage) || 0) / 100 * fund);
-      data.contract_fee_monitoring_monthly = String((Number(data.contract_fee_monitoring_percentage_monthly) || 0) / 100 * fund);
-    }
-    
-    if (duration > 0 && fund > 0) {
-      data.contract_fee_monitoring = String((Number(data.contract_fee_monitoring_monthly) || 0) * duration);
-      data.contract_fee_monitoring_percentage = String((Number(data.contract_fee_monitoring_percentage_monthly) || 0) * duration);
-      
-      const rate = Number(data.contract_yield_rate_annually) || 0;
-      data.contract_yield_amount = String((rate / 100) * fund * (duration / 12));
-    }
-    
-    return data;
-  };
-
-  // Handler interaktif khusus untuk input di Group 3
-  const handleGroup3Change = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    let newFormData = { ...formData, [name]: value };
-    const fund = Number(newFormData.contract_underlying_fund) || 0;
-    const val = Number(value) || 0;
-    const duration = Number(newFormData.contract_duration_in_months) || 0;
-    
-    if (fund > 0) {
-      if (name === 'contract_fee_administration') {
-        newFormData.contract_fee_administration_percentage = String((val / fund) * 100);
-      } else if (name === 'contract_fee_administration_percentage') {
-        newFormData.contract_fee_administration = String((val / 100) * fund);
-      } 
-      else if (name === 'contract_fee_provision') {
-        newFormData.contract_fee_provision_percentage = String((val / fund) * 100);
-      } else if (name === 'contract_fee_provision_percentage') {
-        newFormData.contract_fee_provision = String((val / 100) * fund);
-      }
-      else if (name === 'contract_fee_platform') {
-        newFormData.contract_fee_platform_percentage = String((val / fund) * 100);
-      } else if (name === 'contract_fee_platform_percentage') {
-        newFormData.contract_fee_platform = String((val / 100) * fund);
-      }
-      else if (name === 'contract_fee_servicing') {
-        newFormData.contract_fee_servicing_percentage = String((val / fund) * 100);
-      } else if (name === 'contract_fee_servicing_percentage') {
-        newFormData.contract_fee_servicing = String((val / 100) * fund);
-      }
-      else if (name === 'contract_fee_monitoring_monthly') {
-        const pct = (val / fund) * 100;
-        newFormData.contract_fee_monitoring_percentage_monthly = String(pct);
-        newFormData.contract_fee_monitoring = String(val * duration);
-        newFormData.contract_fee_monitoring_percentage = String(pct * duration);
-      } else if (name === 'contract_fee_monitoring_percentage_monthly') {
-        const monthlyFee = (val / 100) * fund;
-        newFormData.contract_fee_monitoring_monthly = String(monthlyFee);
-        newFormData.contract_fee_monitoring = String(monthlyFee * duration);
-        newFormData.contract_fee_monitoring_percentage = String(val * duration);
-      }
-      else if (name === 'contract_yield_rate_annually') {
-         newFormData.contract_yield_amount = String((val / 100) * fund * (duration / 12));
-      }
-      else if (name === 'contract_underlying_fund') {
-         newFormData = recalculateGroup3(newFormData);
-      }
-    }
-    
-    setFormData(newFormData);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const payload = {
-      ...formData,
-      id: isEditMode ? formData.id : null, 
-      restruct_order: formData.restruct_order || null,
-      restruct_parent_security_id: formData.restruct_parent_security_id || null,
-      restruct_original_security_id: formData.restruct_original_security_id || null,
-    };
-    onSubmit(payload);
-  };
+const Select = ({ label, hasError, colSpan = "1", ...props }: any) => {
+  const baseClass = "w-full px-3 py-2 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors";
+  const errorClass = hasError ? "border-red-500 bg-red-50" : "border-slate-200";
+  const disabledClass = props.disabled ? "bg-slate-50 text-slate-500 cursor-not-allowed" : "bg-white text-slate-700";
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col h-full bg-white">
-      {/* Header Form */}
+    <div className={colSpanClasses[colSpan] || ""}>
+      <label className="block text-[10px] font-semibold text-slate-600 mb-1">{label}</label>
+      <select className={`${baseClass} ${errorClass} ${disabledClass}`} {...props}>
+        {props.children}
+      </select>
+    </div>
+  );
+};
+
+const Input = ({ label, hasError, colSpan = "1", ...props }: any) => {
+  const baseClass = "w-full px-3 py-2 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors";
+  const errorClass = hasError ? "border-red-500 bg-red-50" : "border-slate-200";
+  const disabledClass = props.disabled ? "bg-slate-50 text-slate-500 cursor-not-allowed" : "bg-white text-slate-700";
+
+  return (
+    <div className={colSpanClasses[colSpan] || ""}>
+      <label className="block text-[10px] font-semibold text-slate-600 mb-1">{label}</label>
+      <input className={`${baseClass} ${errorClass} ${disabledClass}`} {...props} />
+    </div>
+  );
+};
+
+const NumberField = ({ label, hasError, value, onValueChange, colSpan = "1", ...props }: any) => (
+  <div className={colSpanClasses[colSpan] || ""}>
+    <label className="block text-[10px] font-semibold text-slate-600 mb-1">{label}</label>
+    <NumericInput value={value} onValueChange={onValueChange} hasError={hasError} {...props} />
+  </div>
+);
+
+const Toggle = ({ label, checked, onChange, colSpan = "1", ...props }: any) => (
+  <div className={`flex items-center justify-between p-3 border rounded-md border-slate-200 bg-white ${colSpanClasses[colSpan] || ""}`}>
+    <span className="text-xs font-semibold text-slate-700">{label}</span>
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={`w-10 h-5 rounded-full transition-colors relative ${checked ? 'bg-amber-500' : 'bg-slate-300'}`} {...props} 
+    >
+      <div className={`w-3 h-3 bg-white rounded-full absolute top-1 transition-transform ${checked ? 'left-6' : 'left-1'}`} />
+    </button>
+  </div>
+);
+
+const ConfirmModal = ({ isOpen, onClose, onConfirm }: any) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl w-96 text-center">
+        <h3 className="text-lg font-bold text-slate-800 mb-4">Konfirmasi</h3>
+        <p className="text-sm text-slate-600 mb-6">Apakah data yang disubmit sudah sesuai?</p>
+        <div className="flex justify-center gap-4">
+          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">Batal</button>
+          <button type="button" onClick={onConfirm} className="px-4 py-2 text-sm font-semibold text-white bg-amber-600 rounded-md hover:bg-amber-700 transition-colors">Ya, Submit</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- KOMPONEN UTAMA ---
+export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel, isLoading }: any) {
+  // export default function RepaymentSecurityForm({ initialData, onSubmit, isLoading, onCancel }: RepaymentSecurityFormProps) {
+  const { closePanel } = useSidePanel();
+  const isEditMode = !!initialData?.id;
+
+  const [formData, setFormData] = useState<RepaymentSecurityDTO>({
+    id: initialData?.id || null, // hidden, null/0 if add mode
+    investee_id: initialData?.investee_id || '',
+    investee_name: initialData?.investee_name || '',
+    investee_name_legal: initialData?.investee_name_legal || '',
+    investee_icon_url: initialData?.investee_icon_url || '',
+    security_id: initialData?.security_id || '',
+    security_type: initialData?.security_type || '',
+    security_name: initialData?.security_name || '',
+    security_code: initialData?.security_code || '',
+    security_series: initialData?.security_series || 0,
+    security_phase: initialData?.security_phase || 0,
+    security_sequence: initialData?.security_sequence || 0,
+    
+    contract_start_date: initialData?.contract_start_date || '',
+    contract_end_date: initialData?.contract_end_date || '',
+    contract_duration_in_months: initialData?.contract_duration_in_months || 0,
+    contract_status: initialData?.contract_status || '',
+    
+    contract_underlying_fund: initialData?.contract_underlying_fund || 0,
+    contract_yield_amount: initialData?.contract_yield_amount || 0,
+    contract_yield_rate_annually: initialData?.contract_yield_rate_annually || 0,
+    contract_fee_administration: initialData?.contract_fee_administration || 0,
+    contract_fee_administration_percentage: initialData?.contract_fee_administration_percentage || 0,
+    contract_fee_provision: initialData?.contract_fee_provision || 0,
+    contract_fee_provision_percentage: initialData?.contract_fee_provision_percentage || 0,
+    contract_fee_platform: initialData?.contract_fee_platform || 0,
+    contract_fee_platform_percentage: initialData?.contract_fee_platform_percentage || 0,
+    contract_fee_servicing: initialData?.contract_fee_servicing || 0,
+    contract_fee_servicing_percentage: initialData?.contract_fee_servicing_percentage || 0,
+    contract_fee_monitoring_monthly: initialData?.contract_fee_monitoring_monthly || 0,
+    contract_fee_monitoring_percentage_monthly: initialData?.contract_fee_monitoring_percentage_monthly || 0,
+    contract_fee_monitoring: initialData?.contract_fee_monitoring || 0,
+    contract_fee_monitoring_percentage: initialData?.contract_fee_monitoring_percentage || 0,
+    
+    contract_tax_ppn: initialData?.contract_tax_ppn || '',
+    contract_tax_factor: initialData?.contract_tax_factor || '',
+    contract_tax_yield: initialData?.contract_tax_yield || '',
+    contract_penalty_percentage_daily: initialData?.contract_penalty_percentage_daily || '',
+    
+    contract_escrow_bank: initialData?.contract_escrow_bank || '',
+    contract_escrow_account: initialData?.contract_escrow_account || '',
+    contract_va_bank: initialData?.contract_va_bank || '',
+    contract_va_number: initialData?.contract_va_number || '',
+    contract_contact_email: initialData?.contract_contact_email || '',
+    contract_contact_whatsapp: initialData?.contract_contact_whatsapp || '',
+    
+    contract_document_title: initialData?.contract_document_title || '',
+    contract_document_number: initialData?.contract_document_number || '',
+    contract_document_url: null,
+    generate_schedule_flag: initialData?.generate_schedule_flag !== undefined ? initialData.generate_schedule_flag : true,
+    restruct_order: initialData?.restruct_order || null,
+    restruct_parent_security_id: initialData?.restruct_parent_security_id || null,
+    restruct_original_security_id: initialData?.restruct_original_security_id || null,
+  });
+
+  const [securities, setSecurities] = useState<SecurityLookupItem[]>([]);
+  const [selectedLookupId, setSelectedLookupId] = useState('');
+  const [showErrors, setShowErrors] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  // FETCH Data Security
+  useEffect(() => {
+    fetch('http://localhost:3000/repayment/securities/lookup')
+      .then(res => res.json())
+      .then(res => {
+        if (res.statusCode === 200) {
+          setSecurities(res.data.items);
+          // Set lookup default ID if editing
+          if (formData.security_code) {
+             const matched = res.data.items.find((s: any) => s.securityCode === formData.security_code);
+             if (matched) setSelectedLookupId(matched.id);
+          }
+        }
+      })
+      .catch(err => console.error("Failed fetching lookup", err));
+  }, []);
+
+  // AUTO CALCULATE DURATION
+  const countMonths = (start: string, end: string) => {
+    if (!start || !end) return 0;
+    const d1 = new Date(start);
+    const d2 = new Date(end);
+    let months = (d2.getFullYear() - d1.getFullYear()) * 12;
+    months -= d1.getMonth();
+    months += d2.getMonth();
+    return months <= 0 ? 0 : months;
+  };
+
+  useEffect(() => {
+    if (formData.contract_start_date && formData.contract_end_date) {
+      const duration = countMonths(formData.contract_start_date, formData.contract_end_date);
+      if (duration !== formData.contract_duration_in_months) {
+        setFormData(prev => {
+          const fund = prev.contract_underlying_fund;
+          const rate = prev.contract_yield_rate_annually;
+          
+          const yieldAmt = fund * (rate / 100) * (duration / 12);
+          
+          return {
+            ...prev,
+            contract_duration_in_months: duration,
+            contract_yield_amount: yieldAmt,
+            contract_fee_monitoring: prev.contract_fee_monitoring_monthly * duration,
+            contract_fee_monitoring_percentage: prev.contract_fee_monitoring_percentage_monthly * duration
+          };
+        });
+      }
+    }
+  }, [formData.contract_start_date, formData.contract_end_date]);
+
+  // GROUP 3 KALKULATOR
+  const handleGroup3Change = (field: keyof RepaymentSecurityDTO, val: number) => {
+    let newData = { ...formData, [field]: val };
+    const fund = field === 'contract_underlying_fund' ? val : formData.contract_underlying_fund;
+    const duration = formData.contract_duration_in_months;
+
+    if (['contract_underlying_fund', 'contract_yield_rate_annually'].includes(field)) {
+       const rate = field === 'contract_yield_rate_annually' ? val : formData.contract_yield_rate_annually;
+       newData.contract_yield_amount = fund * (rate / 100) * (duration / 12);
+    }
+
+    const calculateFee = (nameBase: string) => {
+      const feeField = `contract_fee_${nameBase}` as keyof RepaymentSecurityDTO;
+      const pctField = `contract_fee_${nameBase}_percentage` as keyof RepaymentSecurityDTO;
+      
+      if (field === feeField) {
+        newData[pctField] = fund > 0 ? (val / fund) * 100 : 0 as any;
+      } else if (field === pctField) {
+        newData[feeField] = (val / 100) * fund as any;
+      }
+    };
+
+    calculateFee('administration');
+    calculateFee('provision');
+    calculateFee('platform');
+    calculateFee('servicing');
+
+    if (field === 'contract_fee_monitoring_monthly') {
+      newData.contract_fee_monitoring_percentage_monthly = fund > 0 ? (val / fund) * 100 : 0;
+      newData.contract_fee_monitoring = val * duration;
+      newData.contract_fee_monitoring_percentage = newData.contract_fee_monitoring_percentage_monthly * duration;
+    } else if (field === 'contract_fee_monitoring_percentage_monthly') {
+      newData.contract_fee_monitoring_monthly = (val / 100) * fund;
+      newData.contract_fee_monitoring = newData.contract_fee_monitoring_monthly * duration;
+      newData.contract_fee_monitoring_percentage = val * duration;
+    }
+
+    if (field === 'contract_underlying_fund') {
+      newData.contract_fee_administration = (formData.contract_fee_administration_percentage / 100) * fund;
+      newData.contract_fee_provision = (formData.contract_fee_provision_percentage / 100) * fund;
+      newData.contract_fee_platform = (formData.contract_fee_platform_percentage / 100) * fund;
+      newData.contract_fee_servicing = (formData.contract_fee_servicing_percentage / 100) * fund;
+      newData.contract_fee_monitoring_monthly = (formData.contract_fee_monitoring_percentage_monthly / 100) * fund;
+      newData.contract_fee_monitoring = newData.contract_fee_monitoring_monthly * duration;
+    }
+
+    setFormData(newData);
+  };
+
+  // VALIDASI FORM
+  const isError = (field: keyof RepaymentSecurityDTO) => {
+    if (!showErrors) return false;
+    const val = formData[field];
+    if (val === '' || val === null || val === undefined) return true;
+    if (field === 'contract_underlying_fund' && val === 0) return true;
+    return false;
+  };
+
+  const handlePreSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowErrors(true);
+    
+    const required = [
+      'security_name', 'contract_start_date', 'contract_end_date', 'contract_status',
+      'contract_underlying_fund', 'contract_tax_ppn', 'contract_tax_factor', 'contract_tax_yield',
+      'contract_penalty_percentage_daily', 'contract_escrow_bank', 'contract_escrow_account',
+      'contract_va_bank', 'contract_va_number', 'contract_contact_email', 'contract_contact_whatsapp'
+    ];
+    
+    let isValid = true;
+    for (const field of required) {
+      const val = formData[field as keyof RepaymentSecurityDTO];
+      if (val === '' || val === null || val === undefined) isValid = false;
+      if (field === 'contract_underlying_fund' && val === 0) isValid = false;
+    }
+
+    if (isValid) setShowConfirmModal(true);
+  };
+
+  const isGroup3Active = formData.contract_underlying_fund > 0 && formData.contract_duration_in_months > 0;
+
+  return (
+    // Struktur flex-col dengan height penuh agar header dan footer menempel (fixed position / sticky)
+    <div className="flex flex-col h-full bg-slate-white relative">
+      
+      {/* HEADER: Fixed di Atas */}
       <div className="shrink-0 border-b border-slate-200 px-5 py-4 bg-white flex items-center justify-between">
         <div>
           <h2 className="text-sm font-bold text-slate-800">
@@ -267,184 +298,172 @@ export default function RepaymentSecurityForm({ initialData, onSubmit, isLoading
         </div>
       </div>
 
-      {/* Body Scrollable */}
-      <div className="flex-1 overflow-y-auto p-5 space-y-6">
-        
-        {/* GROUP 1: Informasi Penerbit dan Efek */}
-        <section>
-          <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-3 border-b border-slate-100 pb-1">
-            1. Informasi Penerbit & Efek
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <Select label="Nama Efek (Lookup API)" name="security_name" value={formData.security_id} onChange={handleLookupSelect} className="col-span-2">
-              <option value="">-- Pilih Efek dari Database --</option>
-              {lookupData.map(item => (
-                <option key={item.id} value={item.security_id}>{item.security_name}</option>
-              ))}
+      <ConfirmModal 
+        isOpen={showConfirmModal} 
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={() => {
+          setShowConfirmModal(false);
+          onSubmit(formData);
+        }}
+      />
+
+      {/* BODY FORM: Scrollable */}
+      <div className="flex-1 overflow-y-auto p-6 pb-20">
+        <form className="max-w-6xl mx-auto space-y-4">
+          
+          {/* HIDDEN FIELD */}
+          <input type="hidden" value={formData.id || ''} />
+          <input type="hidden" value={formData.investee_id} />
+          <input type="hidden" value={formData.security_id} />
+          <input type="hidden" value={formData.restruct_order || ''} />
+          <input type="hidden" value={formData.restruct_parent_security_id || ''} />
+          <input type="hidden" value={formData.restruct_original_security_id || ''} />
+
+          <FormGroup title="GROUP 1: Informasi Penerbit dan Efek">
+            <Select 
+              label="Nama Efek" 
+              hasError={isError('security_name')}
+              value={selectedLookupId} 
+              colSpan="2"
+              onChange={(e: any) => {
+                const valId = e.target.value;
+                setSelectedLookupId(valId);
+                const item = securities.find(s => s.id === valId);
+                if (item) {
+                  setFormData({
+                    ...formData,
+                    investee_id: item.investeeId,
+                    investee_name: item.investeeName,
+                    investee_name_legal: item.investeeNameLegal,
+                    investee_icon_url: item.investeeIconUrl,
+                    security_id: item.securityId,
+                    security_type: item.securityType,
+                    security_name: item.securityName, 
+                    security_code: item.securityCode,
+                    security_series: item.securitySeries,
+                    security_phase: item.securityPhase,
+                    security_sequence: item.securitySequence,
+                  });
+                } else {
+                  setFormData({ ...formData, security_name: '' }); 
+                }
+              }}
+            >
+              <option value="">-- Pilih Security Name --</option>
+              {securities.map(s => <option key={s.id} value={s.id}>{s.securityName} - {s.securityCode}</option>)}
             </Select>
+            <Input label="Investee Name" disabled value={formData.investee_name} />
+            <Input label="Investee Name Legal" disabled value={formData.investee_name_legal} />
+            <Input label="Investee Icon URL" disabled value={formData.investee_icon_url} />
+            <Input label="Security Type" disabled value={formData.security_type} />
+            <Input label="Security Code" disabled value={formData.security_code} />
+            <Input label="Security Series" disabled value={formData.security_series} />
+            <Input label="Security Phase" disabled value={formData.security_phase} />
+            <Input label="Security Sequence" disabled value={formData.security_sequence} />
+          </FormGroup>
 
-            <Input label="Nama Penerbit" name="investee_name" value={formData.investee_name} disabled />
-            <Input label="Nama Legal Penerbit" name="investee_name_legal" value={formData.investee_name_legal} disabled />
-            <Input label="URL Icon Penerbit" name="investee_icon_url" value={formData.investee_icon_url} disabled />
-            <Select label="Tipe Efek" name="security_type" value={formData.security_type} onChange={handleChange}>
-              <option value="">-</option>
-              <option value="SAHAM">SAHAM</option>
-              <option value="SUKUK">SUKUK</option>
+          <FormGroup title="GROUP 2: Jangka Waktu">
+            <Input type="date" label="Contract Start Date" hasError={isError('contract_start_date')} value={formData.contract_start_date} onChange={(e: any) => setFormData({...formData, contract_start_date: e.target.value})} />
+            <Input type="date" label="Contract End Date" hasError={isError('contract_end_date')} value={formData.contract_end_date} onChange={(e: any) => setFormData({...formData, contract_end_date: e.target.value})} />
+            <Input label="Contract Duration (Months)" disabled value={formData.contract_duration_in_months} />
+            <Select label="Contract Status" hasError={isError('contract_status')} value={formData.contract_status} onChange={(e: any) => setFormData({...formData, contract_status: e.target.value})}>
+              <option value="">-- Pilih Contract Status --</option>
+              <option value="PERFORMING">PERFORMING</option>
+              <option value="OBSERVATION">OBSERVATION</option>
+              <option value="SUBSTANDARD">SUBSTANDARD</option>
+              <option value="DOUBTFUL">DOUBTFUL</option>
+              <option value="DEFAULTED">DEFAULTED</option>
             </Select>
-            <Input label="Kode Efek" name="security_code" value={formData.security_code} disabled />
-            <Input label="Seri" name="security_series" type="number" value={formData.security_series} disabled />
-            <Input label="Tahap" name="security_phase" type="number" value={formData.security_phase} disabled />
-            <Input label="Sequence" name="security_sequence" type="number" value={formData.security_sequence} disabled />
-          </div>
-        </section>
+          </FormGroup>
 
-        {/* GROUP 2: Jangka Waktu */}
-        <section>
-           <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-3 border-b border-slate-100 pb-1">
-             2. Jangka Waktu & Status
-           </h3>
-           <div className="grid grid-cols-2 gap-3">
-              <Input label="Tanggal Mulai Kontrak" name="contract_start_date" type="date" value={formData.contract_start_date} onChange={handleDateChange} />
-              <Input label="Tanggal Akhir Kontrak" name="contract_end_date" type="date" value={formData.contract_end_date} onChange={handleDateChange} />
-              <Input label="Durasi (Bulan)" name="contract_duration_in_months" type="number" value={formData.contract_duration_in_months} disabled />
-              <Select label="Status Pembayaran" name="contract_status" value={formData.contract_status} onChange={handleChange}>
-                <option value="">-- Pilih Status Pembayaran --</option>
-                <option value="PERFORMING">PERFORMING</option>
-                <option value="OBSERVATION">OBSERVATION</option>
-                <option value="SUBSTANDARD">SUBSTANDARD</option>
-                <option value="DOUBTFUL">DOUBTFUL</option>
-                <option value="DEFAULTED">DEFAULTED</option>
-              </Select>
-           </div>
-        </section>
+          <FormGroup title="GROUP 3: FUNDING, YIELD & FEE">
+            <NumberField label="Underlying Fund" hasError={isError('contract_underlying_fund')} value={formData.contract_underlying_fund} onValueChange={(v: number) => handleGroup3Change('contract_underlying_fund', v)} colSpan="2"/>
+            <NumberField label="Yield Rate Annually (%)" disabled={!isGroup3Active} value={formData.contract_yield_rate_annually} onValueChange={(v: number) => handleGroup3Change('contract_yield_rate_annually', v)} />
+            <NumberField label="Yield Amount" disabled value={formData.contract_yield_amount} onValueChange={() => {}} />
 
-        {/* GROUP 3: FUNDING, YIELD & FEE */}
-        <section>
-           <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-3 border-b border-slate-100 pb-1 flex items-center justify-between">
-             <span>3. Funding, Yield & Fee</span>
-             {!isGroup3Active && <span className="text-[9px] text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full normal-case font-medium">Isi Pendanaan & Durasi untuk mengaktifkan</span>}
-           </h3>
-           
-           <div className="grid grid-cols-2 gap-3">
-             <Input label="Jumlah Pendanaan (Underlying Fund)" name="contract_underlying_fund" type="number" value={formData.contract_underlying_fund} onChange={handleGroup3Change} className="col-span-2" />
-             
-             <Input label="Rate Yield (p.a %)" name="contract_yield_rate_annually" type="number" step="0.01" value={formData.contract_yield_rate_annually} onChange={handleGroup3Change} disabled={!isGroup3Active} />
-             <Input label="Nilai Yield (Total)" name="contract_yield_amount" type="number" value={formData.contract_yield_amount} disabled />
+            <NumberField label="Fee Administration" disabled={!isGroup3Active} value={formData.contract_fee_administration} onValueChange={(v: number) => handleGroup3Change('contract_fee_administration', v)} />
+            <NumberField label="Fee Admin (%)" disabled={!isGroup3Active} value={formData.contract_fee_administration_percentage} onValueChange={(v: number) => handleGroup3Change('contract_fee_administration_percentage', v)} />
 
-             {/* Fee Inputs */}
-             <div className="col-span-2 grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-md border border-slate-100 mt-2">
-                <Input label="Admin Fee (Rp)" name="contract_fee_administration" type="number" value={formData.contract_fee_administration} onChange={handleGroup3Change} disabled={!isGroup3Active} />
-                <Input label="Admin Fee (%)" name="contract_fee_administration_percentage" type="number" step="0.01" value={formData.contract_fee_administration_percentage} onChange={handleGroup3Change} disabled={!isGroup3Active} />
-                
-                <Input label="Provision Fee (Rp)" name="contract_fee_provision" type="number" value={formData.contract_fee_provision} onChange={handleGroup3Change} disabled={!isGroup3Active} />
-                <Input label="Provision Fee (%)" name="contract_fee_provision_percentage" type="number" step="0.01" value={formData.contract_fee_provision_percentage} onChange={handleGroup3Change} disabled={!isGroup3Active} />
-                
-                <Input label="Platform Fee (Rp)" name="contract_fee_platform" type="number" value={formData.contract_fee_platform} onChange={handleGroup3Change} disabled={!isGroup3Active} />
-                <Input label="Platform Fee (%)" name="contract_fee_platform_percentage" type="number" step="0.01" value={formData.contract_fee_platform_percentage} onChange={handleGroup3Change} disabled={!isGroup3Active} />
-                
-                <Input label="Servicing Fee (Rp)" name="contract_fee_servicing" type="number" value={formData.contract_fee_servicing} onChange={handleGroup3Change} disabled={!isGroup3Active} />
-                <Input label="Servicing Fee (%)" name="contract_fee_servicing_percentage" type="number" step="0.01" value={formData.contract_fee_servicing_percentage} onChange={handleGroup3Change} disabled={!isGroup3Active} />
-             </div>
+            <NumberField label="Fee Provision" disabled={!isGroup3Active} value={formData.contract_fee_provision} onValueChange={(v: number) => handleGroup3Change('contract_fee_provision', v)} />
+            <NumberField label="Fee Provision (%)" disabled={!isGroup3Active} value={formData.contract_fee_provision_percentage} onValueChange={(v: number) => handleGroup3Change('contract_fee_provision_percentage', v)} />
 
-             {/* Monitoring Fee */}
-             <div className="col-span-2 grid grid-cols-2 gap-3 p-3 bg-indigo-50/50 rounded-md border border-indigo-100 mt-2">
-                <Input label="Monitoring Fee Bulanan (Rp)" name="contract_fee_monitoring_monthly" type="number" value={formData.contract_fee_monitoring_monthly} onChange={handleGroup3Change} disabled={!isGroup3Active} />
-                <Input label="Monitoring Fee Bulanan (%)" name="contract_fee_monitoring_percentage_monthly" type="number" step="0.01" value={formData.contract_fee_monitoring_percentage_monthly} onChange={handleGroup3Change} disabled={!isGroup3Active} />
-                
-                <Input label="Total Monitoring Fee (Rp)" name="contract_fee_monitoring" type="number" value={formData.contract_fee_monitoring} disabled />
-                <Input label="Total Monitoring Fee (%)" name="contract_fee_monitoring_percentage" type="number" step="0.01" value={formData.contract_fee_monitoring_percentage} disabled />
-             </div>
-           </div>
-        </section>
+            <NumberField label="Fee Platform" disabled={!isGroup3Active} value={formData.contract_fee_platform} onValueChange={(v: number) => handleGroup3Change('contract_fee_platform', v)} />
+            <NumberField label="Fee Platform (%)" disabled={!isGroup3Active} value={formData.contract_fee_platform_percentage} onValueChange={(v: number) => handleGroup3Change('contract_fee_platform_percentage', v)} />
 
-        {/* GROUP 4: TAX and Penalty */}
-        <section>
-           <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-3 border-b border-slate-100 pb-1">
-             4. Pajak & Penalti
-           </h3>
-           <div className="grid grid-cols-2 gap-3">
-             <Select label="PPN (%)" name="contract_tax_ppn" value={formData.contract_tax_ppn} onChange={handleChange}>
-                <option value="">-- Pilih Pajak PPN --</option>
-                <option value="10">10</option>
-                <option value="11">11</option>
-                <option value="12">12</option>
-             </Select>
-             <Select label="Faktor Pajak" name="contract_tax_factor" value={formData.contract_tax_factor} onChange={handleChange}>
-                <option value="1">-- Pilih Faktor Pengali Pajak --</option>
-                <option value="1">1</option>
-                <option value="0.91666667">11/12</option>
-             </Select>
-             <Select label="Pajak Yield (%)" name="contract_tax_yield" value={formData.contract_tax_yield} onChange={handleChange}>
-                <option value="">-- Pilih Pajak Yield --</option>
-                <option value="10">10</option>
-                <option value="15">15</option>
-                <option value="20">20</option>
-             </Select>
-             <Select label="Penalti Keterlambatan Harian" name="contract_penalty_percentage_daily" value={formData.contract_penalty_percentage_daily} onChange={handleChange}>
-                <option value="">-- Pilih Denda per Hari --</option>
-                <option value="0.001">1/1000 (0.1%)</option>
-                <option value="0.002">2/1000 (0.2%)</option>
-                <option value="0.003">3/1000 (0.3%)</option>
-             </Select>
-           </div>
-        </section>
+            <NumberField label="Fee Servicing" disabled={!isGroup3Active} value={formData.contract_fee_servicing} onValueChange={(v: number) => handleGroup3Change('contract_fee_servicing', v)} />
+            <NumberField label="Fee Servicing (%)" disabled={!isGroup3Active} value={formData.contract_fee_servicing_percentage} onValueChange={(v: number) => handleGroup3Change('contract_fee_servicing_percentage', v)} />
 
-        {/* GROUP 5: PAYMENT AND CONTACT */}
-        <section>
-           <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-3 border-b border-slate-100 pb-1">
-             5. Pembayaran & Kontak
-           </h3>
-           <div className="grid grid-cols-2 gap-3">
-             <Select label="Escrow Bank" name="contract_escrow_bank" value={formData.contract_escrow_bank} onChange={handleChange}>
-                <option value="">-- Pilih Bank Escrow --</option>
-                <option value="BJB Syariah">BJB Syariah</option>
-                <option value="Mega Syariah">Bank Mega Syariah</option>
-             </Select>
-             <Input label="Escrow Account" name="contract_escrow_account" value={formData.contract_escrow_account} onChange={handleChange} />
-             <Select label="Virtual Account (VA) Bank" name="contract_va_bank" value={formData.contract_va_bank} onChange={handleChange}>
-                <option value="">-- Pilih Bank VA --</option>
-                <option value="BJB Syariah">BCA</option>
-                <option value="Mega Syariah">BNI</option>
-                <option value="Mega Syariah">Mandiri</option>
-                <option value="Mega Syariah">BSI</option>
-             </Select>
-             <Input label="VA Number" name="contract_va_number" value={formData.contract_va_number} onChange={handleChange} />
-             <Input label="Email PIC Kontak" name="contract_contact_email" type="email" value={formData.contract_contact_email} onChange={handleChange} />
-             <Input label="WhatsApp PIC Kontak" name="contract_contact_whatsapp" type="tel" value={formData.contract_contact_whatsapp} onChange={handleChange} />
-           </div>
-        </section>
+            <NumberField label="Fee Monitoring (Monthly)" disabled={!isGroup3Active} value={formData.contract_fee_monitoring_monthly} onValueChange={(v: number) => handleGroup3Change('contract_fee_monitoring_monthly', v)} />
+            <NumberField label="Fee Monitoring Monthly (%)" disabled={!isGroup3Active} value={formData.contract_fee_monitoring_percentage_monthly} onValueChange={(v: number) => handleGroup3Change('contract_fee_monitoring_percentage_monthly', v)} />
 
-        {/* GROUP 6: DOCUMENT */}
-        <section>
-           <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-3 border-b border-slate-100 pb-1">
-             6. Dokumen Legalitas
-           </h3>
-           <div className="grid grid-cols-2 gap-3">
-             <Input label="Judul Dokumen" name="contract_document_title" value={formData.contract_document_title} onChange={handleChange} />
-             <Input label="Nomor Dokumen" name="contract_document_number" value={formData.contract_document_number} onChange={handleChange} />
-             <Input label="URL / File Dokumen" name="contract_document_url" type="text" value={formData.contract_document_url} onChange={handleChange} className="col-span-2" />
-           </div>
-        </section>
+            <NumberField label="Total Fee Monitoring" disabled value={formData.contract_fee_monitoring} onValueChange={() => {}} />
+            <NumberField label="Total Fee Monitoring (%)" disabled value={formData.contract_fee_monitoring_percentage} onValueChange={() => {}} />
+          </FormGroup>
 
-        {/* Pengaturan Tambahan */}
-        <div className="flex items-center gap-2 p-3 bg-amber-50/50 border border-amber-200 border-dashed rounded-md">
-          <input 
-            type="checkbox" 
-            id="generate_schedule_flag" 
-            name="generate_schedule_flag" 
-            checked={formData.generate_schedule_flag} 
-            onChange={handleChange}
-            className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
-          />
-          <label htmlFor="generate_schedule_flag" className="text-[11px] font-medium text-slate-700">
-            Aktifkan / Generate Jadwal Pembayaran (Generate Schedule Flag)
-          </label>
-        </div>
+          <FormGroup title="GROUP 4: TAX and Penalty">
+            <Select label="Tax PPN (%)" hasError={isError('contract_tax_ppn')} value={formData.contract_tax_ppn} onChange={(e: any) => setFormData({...formData, contract_tax_ppn: e.target.value})}>
+              <option value="">-- Pilih Tax PPN --</option>
+              <option value="10">10</option>
+              <option value="11">11</option>
+              <option value="12">12</option>
+            </Select>
+            <Select label="Tax Factor" hasError={isError('contract_tax_factor')} value={formData.contract_tax_factor} onChange={(e: any) => setFormData({...formData, contract_tax_factor: e.target.value})}>
+              <option value="">-- Pilih Tax Factor --</option>
+              <option value="1">1</option>
+              <option value="11/12">11/12</option>
+            </Select>
+            <Select label="Tax Yield (%)" hasError={isError('contract_tax_yield')} value={formData.contract_tax_yield} onChange={(e: any) => setFormData({...formData, contract_tax_yield: e.target.value})}>
+              <option value="">-- Pilih Tax Yield --</option>
+              <option value="10">10</option>
+              <option value="15">15</option>
+              <option value="20">20</option>
+            </Select>
+            <Select label="Penalty Percentage Daily" hasError={isError('contract_penalty_percentage_daily')} value={formData.contract_penalty_percentage_daily} onChange={(e: any) => setFormData({...formData, contract_penalty_percentage_daily: e.target.value})}>
+              <option value="">-- Pilih Penalty --</option>
+              <option value="0.001">1/1000</option>
+              <option value="0.002">2/1000</option>
+              <option value="0.003">3/1000</option>
+            </Select>
+          </FormGroup>
 
+          <FormGroup title="GROUP 5: PAYMENT AND CONTACT">
+            <Select label="Escrow Bank" hasError={isError('contract_escrow_bank')} value={formData.contract_escrow_bank} onChange={(e: any) => setFormData({...formData, contract_escrow_bank: e.target.value})}>
+              <option value="">-- Pilih Escrow Bank --</option>
+              <option value="BJB Syariah">BJB Syariah</option>
+              <option value="Bank Mega Syariah">Bank Mega Syariah</option>
+            </Select>
+            <Input label="Escrow Account" hasError={isError('contract_escrow_account')} value={formData.contract_escrow_account} onChange={(e: any) => setFormData({...formData, contract_escrow_account: e.target.value})} />
+            <Select label="VA Bank" hasError={isError('contract_va_bank')} value={formData.contract_va_bank} onChange={(e: any) => setFormData({...formData, contract_va_bank: e.target.value})}>
+              <option value="">-- Pilih VA Bank --</option>
+              <option value="BCA">BCA</option>
+              <option value="BNI">BNI</option>
+              <option value="BRI">BRI</option>
+              <option value="Mandiri">Mandiri</option>
+            </Select>
+            <Input label="VA Number" hasError={isError('contract_va_number')} value={formData.contract_va_number} onChange={(e: any) => setFormData({...formData, contract_va_number: e.target.value})} />
+            <Input type="email" label="Contact Email" hasError={isError('contract_contact_email')} value={formData.contract_contact_email} onChange={(e: any) => setFormData({...formData, contract_contact_email: e.target.value})} />
+            <Input type="tel" label="Contact WhatsApp" hasError={isError('contract_contact_whatsapp')} value={formData.contract_contact_whatsapp} onChange={(e: any) => setFormData({...formData, contract_contact_whatsapp: e.target.value})} />
+          </FormGroup>
+
+          <FormGroup title="GROUP 6: DOCUMENT">
+            <Input label="Document Title" value={formData.contract_document_title} onChange={(e: any) => setFormData({...formData, contract_document_title: e.target.value})} />
+            <Input label="Document Number" value={formData.contract_document_number} onChange={(e: any) => setFormData({...formData, contract_document_number: e.target.value})} />
+            <div className="col-span-2 border-slate-200 px-6 py-4 border-b-2 rounded-lg">
+              <label className="block text-[10px] font-semibold text-slate-600 mb-1">Document URL (File Lokal)</label>
+              <input type="file" className="w-full text-xs" onChange={(e) => setFormData({...formData, contract_document_url: e.target.files ? e.target.files[0] : null})} />
+            </div>
+            
+          </FormGroup>
+
+          <FormGroup>
+            <Toggle label="Generate Jadwal Pembayaran" checked={formData.generate_schedule_flag} onChange={(val: boolean) => setFormData({...formData, generate_schedule_flag: val})} colSpan="2" />
+          </FormGroup>
+        </form>
       </div>
 
-      {/* Footer (Fixed Bawah) */}
-      <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50 flex justify-end gap-3">
+      {/* FOOTER: Fixed di Bawah */}
+      <div className="sticky bottom-0 z-50 bg-white border-t border-slate-200 px-6 py-4 flex justify-end gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+      
         <button 
           type="button" 
           onClick={closePanel}
@@ -452,43 +471,16 @@ export default function RepaymentSecurityForm({ initialData, onSubmit, isLoading
         >
           Batal
         </button>
-        <button 
-          type="submit" 
+        <button
+          type="button"
+          onClick={handlePreSubmit}
           disabled={isLoading}
-          className="px-4 py-2 text-xs font-medium text-white bg-amber-600 rounded-md hover:bg-amber-700 transition-colors disabled:opacity-50"
+          className="px-6 py-2 text-xs font-bold text-white bg-amber-600 rounded-md shadow hover:bg-amber-700 transition-colors disabled:opacity-50"
         >
           {isLoading ? 'Menyimpan...' : (isEditMode ? 'Simpan Perubahan' : 'Tambahkan Data')}
         </button>
       </div>
-    </form>
+
+    </div>
   );
-}
-
-// Komponen Pembantu Mini (Reusable & Compact)
-const Input = ({ label, className = "", disabled = false, ...props }: any) => (
-  <div className={className}>
-    <label className="block text-[10px] font-semibold text-slate-600 mb-1">{label}</label>
-    <input
-      disabled={disabled}
-      className={`w-full px-3 py-2 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors ${
-        disabled ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : 'bg-white text-slate-700'
-      }`}
-      {...props}
-    />
-  </div>
-);
-
-const Select = ({ label, className = "", disabled = false, children, ...props }: any) => (
-  <div className={className}>
-    <label className="block text-[10px] font-semibold text-slate-600 mb-1">{label}</label>
-    <select
-      disabled={disabled}
-      className={`w-full px-3 py-2 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors ${
-        disabled ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : 'bg-white text-slate-700'
-      }`}
-      {...props}
-    >
-      {children}
-    </select>
-  </div>
-);
+};
