@@ -135,9 +135,16 @@ export default function RepaymentDashboard() {
       {!loading && !error && (
         <>
           {filteredData.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 bg-white rounded-xl border border-slate-200/60 border-dashed">
-              <span className="text-2xl mb-2">📭</span>
-              <p className="text-sm text-slate-400 font-medium">Data tidak ditemukan.</p>
+            <div className="flex flex-col items-center justify-center bg-white rounded-xl border border-slate-200/60 border-dashed">
+              <div className="my-16 text-center">
+                <span className="text-2xl mb-2">📭</span>
+                <p className="text-sm text-slate-400 font-medium">Data tidak ditemukan.</p>
+              </div>
+              {isEditMode && (
+                  <div>
+                  <RepaymentCard key="new-repayment-security" data={null} url="tes"/>
+                  </div>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
