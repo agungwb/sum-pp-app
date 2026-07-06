@@ -1,0 +1,30 @@
+export interface ScheduleItem {
+    id: string;
+    repaymentSecurityId: string;
+    scheduleOrder: number;
+    scheduleDate: string;
+    invoiceDate: string;
+    invoiceStatus: string;
+    invoiceNotes: string;
+    invoiceFeeAdministration: string;
+    invoiceFeeAdministrationTax: string;
+    invoiceFeeProvision: string;
+    invoiceFeeProvisionTax: string;
+    invoiceFeePlatform: string;
+    invoiceFeePlatformTax: string;
+    invoiceFeeServicing: string;
+    invoiceFeeServicingTax: string;
+    invoiceFeeMonitoring: string;
+    invoiceFeeMonitoringTax: string;
+    invoiceFeeOther: string;
+    invoiceFeeOtherTax: string;
+    invoiceSinkingFund: string;
+    invoiceYield: string;
+    invoiceActualLoss: string;
+    invoicePenalty: string;
+    invoiceTotal: string;
+    invoiceTotalTax: string;
+    invoiceTotalWithTax: string;
+    createdBy: string;
+    createdAt: string;
+  }

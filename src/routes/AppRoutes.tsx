@@ -1,15 +1,16 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Login from '../views/Login';
-import DashboardLayout from '../layouts/DashboardLayout';
-import MonitoringDashboard from '../views/MonitoringDashboard';
+import LoginPage from '../features/auth/pages/LoginPage';
+import DashboardLayout from '../components/layouts/DashboardLayout';
+import MonitoringDashboard from '../features/dashboard/pages/MonitoringDashboard';
 
 // 1. IMPORT Halaman Repayment Dashboard yang Baru Kita Bikin
-import RepaymentDashboard from '../views/repayment/RepaymentDashboard';
-import RepaymentDetail from '../views/repayment/RepaymentDetail';
-import RepaymentSchedule from '../views/repayment/RepaymentSchedule';
-import SecurityCollateral from '../views/repayment/SecurityCollateral';
-import { GlobalModeProvider } from '../context/GlobalModeContext';
+import RepaymentDashboardPage from '../features/repayment-security/pages/RepaymentDashboardPage';
+import RepaymentDetailPage from '../features/repayment-security/pages/RepaymentDetailPage';
+import RepaymentSchedulePage from '../features/repayment-schedule/pages/RepaymentSchedulePage';
+import SecurityCollateralPage from '../features/security-collateral/pages/SecurityCollateralPage';
+import { GlobalModeProvider } from '../contexts/GlobalModeContext';
+
 
 // Komponen Halaman Dummy untuk mengetes apakah redirect login berhasil
 const TestDashboard = () => {
@@ -53,7 +54,7 @@ export default function AppRoutes() {
           <Route path="/" element={<Navigate to="/login" replace />} />
           
           {/* Halaman Utama Login */}
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<LoginPage />} />
           
           {/* Jalur Terproteksi: Struktur Dashboard */}
           <Route path="/repayment" element={<DashboardLayout />}>
@@ -66,13 +67,13 @@ export default function AppRoutes() {
             <Route path="monitoring" element={<MonitoringDashboard />} />
             
             {/* 3. ROUTE AKTIF UNTUK REPAYMENT PENERBIT */}
-            <Route path="securities" element={<RepaymentDashboard />} />
+            <Route path="securities" element={<RepaymentDashboardPage />} />
 
-            <Route path="securities/:id" element={<RepaymentDetail />} />
+            <Route path="securities/:repaymentId" element={<RepaymentDetailPage />} />
 
-            <Route path="securities/:securityId/schedules/:id" element={<RepaymentSchedule />} />
+            <Route path="securities/:repaymentId/schedules/:scheduleId" element={<RepaymentSchedulePage />} />
 
-            <Route path="securities/:id/collaterals" element={<SecurityCollateral />} />
+            <Route path="securities/:repaymentId/collaterals" element={<SecurityCollateralPage />} />
 
       
             

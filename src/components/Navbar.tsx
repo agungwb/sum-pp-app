@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { useGlobalMode } from '../context/GlobalModeContext';
+import { useGlobalMode } from '../contexts/GlobalModeContext';
 import { SafeEditModal } from '../components/ui/SafeEditModal'; // Sesuaikan path import lu bro
 
 interface NavbarProps {
