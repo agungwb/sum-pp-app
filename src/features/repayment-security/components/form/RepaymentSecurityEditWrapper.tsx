@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import RepaymentSecurityForm from './RepaymentSecurityForm';
-import { useSidePanel } from '../../../contexts/SidePanelContext';
-import { repaymentSecurityService } from '../services/repaymentSecurityService'; // Sesuaikan path
+import { useSidePanel } from '../../../../contexts/SidePanelContext';
+import { repaymentSecurityService } from '../../services/repaymentSecurityService'; // Sesuaikan path
+import { RepaymentSecurityEditResponse } from '../../dtos/repayment-security.dto';
 
 interface EditWrapperProps {
   repaymentId: string;
@@ -10,7 +11,7 @@ interface EditWrapperProps {
 export default function RepaymentSecurityEditWrapper({ repaymentId }: EditWrapperProps) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [initialData, setInitialData] = useState<any>(null);
+  const [initialData, setInitialData] = useState<RepaymentSecurityEditResponse | null>(null);
   const [errorFetch, setErrorFetch] = useState<string | null>(null);
 
   useEffect(() => {

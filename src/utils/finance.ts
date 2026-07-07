@@ -40,6 +40,21 @@ export function toDatabasePercentage(percentageValue: number | string | null | u
     return parseFloat((parsed * 100).toFixed(4));
   }
 
+  export function toFrontendPercentageStr(dbValue: number | string | null | undefined): string | undefined {
+    if (dbValue === null || dbValue === undefined || dbValue === '') {
+      return undefined;
+    }
+  
+    const parsed = typeof dbValue === 'string' ? parseFloat(dbValue) : dbValue;
+  
+    if (isNaN(parsed)) {
+      return undefined;
+    }
+  
+    // Menggunakan toFixed untuk menjaga konsistensi presisi desimal saat dikalikan 100
+    return (parsed * 100).toFixed(2);
+  }
+
   /**
  * Menghitung tax dan melakukan pembulatan
  * @param {number} baseValue - Nilai dasar (e.g., contractFeeAdministration)

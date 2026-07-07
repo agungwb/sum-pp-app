@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import logoFundex from '../assets/logo-fundex.svg';
+import logoFundex from '../../assets/logo-fundex.svg';
 
 interface SidebarProps {
   isCollapsed: boolean;

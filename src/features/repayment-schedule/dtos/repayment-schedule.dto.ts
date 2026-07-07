@@ -1,11 +1,16 @@
-export interface ScheduleItem {
+export interface RepaymentScheduleItemDto {
     id: string;
     repaymentSecurityId: string;
-    scheduleOrder: number;
+    scheduleType: string; // Bisa Anda ganti dengan enum ScheduleType jika sudah di-import
+    scheduleSequence: number;
     scheduleDate: string;
-    invoiceDate: string;
-    invoiceStatus: string;
-    invoiceNotes: string;
+    invoiceNumber: string | null;
+    invoiceSentTrial: number;
+    invoiceDate: string | null;
+    invoiceStatus: string; // Bisa Anda ganti dengan enum InvoiceStatus jika sudah di-import
+    invoiceNotes: string | null;
+    
+    // Perhatikan bahwa semua nilai uang (NUMERIC) berupa string dari JSON
     invoiceFeeAdministration: string;
     invoiceFeeAdministrationTax: string;
     invoiceFeeProvision: string;
@@ -25,6 +30,11 @@ export interface ScheduleItem {
     invoiceTotal: string;
     invoiceTotalTax: string;
     invoiceTotalWithTax: string;
+    
     createdBy: string;
     createdAt: string;
+    updatedBy: string;
+    updatedAt: string;
+    deletedBy: string | null;
+    deletedAt: string | null;
   }

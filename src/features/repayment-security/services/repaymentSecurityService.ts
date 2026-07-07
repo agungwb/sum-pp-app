@@ -1,7 +1,7 @@
 // src/features/repayment-security/services/repaymentSecurityService.ts
 import axios from 'axios';
-import { RepaymentSecurity, ApiResponse } from '../types/index';
-import { RepaymentSecurityDTO } from './repayment-security.dto';
+import { RepaymentSecurity, ApiResponse } from '../types/repayment-security.type';
+import { RepaymentSecurityRequest } from '../dtos/repayment-security.dto';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
@@ -27,14 +27,16 @@ export const repaymentSecurityService = {
   },
 
   // POST: Tambah data baru
-  create: async (data: RepaymentSecurityDTO): Promise<ApiResponse<RepaymentSecurity>> => {
+  create: async (data: RepaymentSecurityRequest): Promise<ApiResponse<RepaymentSecurity>> => {
     const response = await apiClient.post('/', data);
     return response.data;
   },
 
   // PUT: Update data yang ada
-  update: async (id: string, data: RepaymentSecurityDTO): Promise<ApiResponse<RepaymentSecurity>> => {
+  update: async (id: string, data: RepaymentSecurityRequest): Promise<ApiResponse<RepaymentSecurity>> => {
     const response = await apiClient.put(`/${id}`, data);
     return response.data;
   }
+
+  
 };

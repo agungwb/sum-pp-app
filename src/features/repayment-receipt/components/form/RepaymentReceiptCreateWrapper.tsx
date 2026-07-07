@@ -1,7 +1,7 @@
 // src/components/repayment/RepaymentReceiptCreateWrapper.tsx
 import React, { useState } from 'react';
 import RepaymentReceiptForm from './RepaymentReceiptForm';
-import { useSidePanel } from '../../../contexts/SidePanelContext'; // Sesuaikan path lo
+import { useSidePanel } from '../../../../contexts/SidePanelContext'; // Sesuaikan path lo
 
 interface CreateWrapperProps {
   repaymentScheduleId?: string; // Optional: Buat auto-fill ID Jadwal 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
+import Sidebar from './Sidebar';
+import Navbar from './Navbar';
 import { SidePanelProvider } from '../../contexts/SidePanelContext';
 import SidePanelLayout from './SidePanelLayout';
 

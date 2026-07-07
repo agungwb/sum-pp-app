@@ -1,6 +1,6 @@
 // src/components/repayment/RepaymentReceiptEditWrapper.tsx
 import React, { useState, useEffect } from 'react';
-import { useSidePanel } from '../../../contexts/SidePanelContext';
+import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import RepaymentReceiptForm from './RepaymentReceiptForm';
 
 interface EditWrapperProps {

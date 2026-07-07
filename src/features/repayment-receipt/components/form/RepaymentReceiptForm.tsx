@@ -1,6 +1,6 @@
 // src/components/repayment/RepaymentReceiptForm.tsx
 import React, { useState, useEffect } from 'react';
-import { useSidePanel } from '../../../contexts/SidePanelContext'; // Sesuaikan path jika berbeda
+import { useSidePanel } from '../../../../contexts/SidePanelContext'; // Sesuaikan path jika berbeda
 
 interface RepaymentReceiptFormProps {
   initialData?: any;

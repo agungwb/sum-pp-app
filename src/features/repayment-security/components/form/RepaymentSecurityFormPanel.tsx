@@ -1,5 +1,5 @@
-// src/components/repayment/RepaymentSecurityFormPanel.tsx
 import React, { useState, useEffect } from 'react';
+import { ContractStatus, SecurityType } from '../types/repayment-security.enum';
 
 interface RepaymentSecurityFormPanelProps {
   isOpen: boolean;
@@ -132,9 +132,9 @@ export default function RepaymentSecurityFormPanel({
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tipe Security</label>
               <select className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-colors text-slate-700 bg-white">
-                <option value="">Pilih Tipe</option>
-                <option value="SUKUK">Sukuk</option>
-                <option value="SAHAM">Saham</option>
+                <option value="">-- Pilih Tipe --</option>
+                <option value={SecurityType.SUKUK}>Sukuk</option>
+                <option value={SecurityType.SAHAM}>Saham</option>
               </select>
             </div>
             <div>
@@ -143,6 +143,12 @@ export default function RepaymentSecurityFormPanel({
                 <option value="PERFORMING">Performing</option>
                 <option value="OBSERVATION">Observation</option>
                 <option value="DEFAULTED">Defaulted</option>
+                <option value="">-- Pilih Status --</option>
+                <option value={ContractStatus.PERFORMING}>Performing</option>
+                <option value={ContractStatus.OBSERVATION}>Observation</option>
+                <option value={ContractStatus.SUBSTANDARD}>Substandard</option>
+                <option value={ContractStatus.DOUBTFUL}>Doubtful</option>
+                <option value={ContractStatus.DEFAULTED}>Defaulted</option>
               </select>
             </div>
           </div>

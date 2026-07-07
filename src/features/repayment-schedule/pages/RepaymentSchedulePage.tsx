@@ -2,13 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import RepaymentReceiptCreateWrapper from '../../repayment-receipt/components/RepaymentReceiptCreateWrapper';
-import RepaymentReceiptEditWrapper from '../../repayment-receipt/components/RepaymentReceiptEditWrapper';
-import RepaymentScheduleEditWrapper from '../components/RepaymentScheduleEditWrapper';
+import RepaymentReceiptCreateWrapper from '../../repayment-receipt/components/form/RepaymentReceiptCreateWrapper';
+import RepaymentReceiptEditWrapper from '../../repayment-receipt/components/form/RepaymentReceiptEditWrapper';
+import RepaymentScheduleEditWrapper from '../components/form/RepaymentScheduleEditWrapper';
 import FeeWithTax from '../../../components/ui/FeeWithTax';
 import { useGlobalMode } from '../../../contexts/GlobalModeContext';
 import { useSidePanel } from '../../../contexts/SidePanelContext';
-import { ScheduleItem } from '../types/schedule-item';
+import { ScheduleItem } from '../types/repayment-schedule.type';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 

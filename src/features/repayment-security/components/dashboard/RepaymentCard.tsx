@@ -2,9 +2,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { RepaymentSecurity, ContractStatus, SecurityType } from '../types/repayment';
-import {useSidePanel} from '../../../contexts/SidePanelContext';
-import RepaymentSecurityCreateWrapper from './RepaymentSecurityCreateWrapper';
-import { toDatabasePercentage, toFrontendPercentage } from '../../../utils/finance';
+import {useSidePanel} from '../../../../contexts/SidePanelContext';
+import RepaymentSecurityCreateWrapper from '../form/RepaymentSecurityCreateWrapper';
+import { toDatabasePercentage, toFrontendPercentage } from '../../../../utils/finance';
 
 interface Props {
   data: RepaymentSecurity | null;

@@ -1,7 +1,6 @@
-// src/components/repayment/RepaymentScheduleEditWrapper.tsx
 import React, { useState, useEffect } from 'react';
 import RepaymentScheduleForm from './RepaymentScheduleForm';
-import { useSidePanel } from '../../../contexts/SidePanelContext';
+import { useSidePanel } from '../../../../contexts/SidePanelContext';
 
 interface EditWrapperProps {
   scheduleId: string;

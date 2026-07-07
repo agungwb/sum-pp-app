@@ -1,6 +1,6 @@
 // src/components/repayment/RepaymentScheduleForm.tsx
 import React, { useState } from 'react';
-import { useSidePanel } from '../../../contexts/SidePanelContext'; // Sesuaikan path jika berbeda
+import { useSidePanel } from '../../../../contexts/SidePanelContext'; // Sesuaikan path jika berbeda
 
 interface RepaymentScheduleFormProps {
   initialData?: any;

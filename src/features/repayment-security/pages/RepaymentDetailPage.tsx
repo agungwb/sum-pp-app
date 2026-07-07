@@ -1,10 +1,10 @@
 // src/pages/repayment/RepaymentDetail.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import RepaymentScheduleCreateWrapper from '../../repayment-schedule/components/RepaymentScheduleCreateWrapper';
-import RepaymentScheduleEditWrapper from '../../repayment-schedule/components/RepaymentScheduleEditWrapper';
-import RepaymentSecurityEditWrapper from '../components/RepaymentSecurityEditWrapper';
-import RepaymentSecurityForm from '../components/RepaymentSecurityForm';
+import RepaymentScheduleCreateWrapper from '../../repayment-schedule/components/form/RepaymentScheduleCreateWrapper';
+import RepaymentScheduleEditWrapper from '../../repayment-schedule/components/form/RepaymentScheduleEditWrapper';
+import RepaymentSecurityEditWrapper from '../components/form/RepaymentSecurityEditWrapper';
+import RepaymentSecurityForm from '../components/form/RepaymentSecurityForm';
 import FeeWithTax from '../../../components/ui/FeeWithTax';
 import InfoRow from '../../../components/ui/InfoRow';
 import { useGlobalMode } from '../../../contexts/GlobalModeContext';
@@ -17,8 +17,6 @@ import { repaymentScheduleService } from '../../repayment-schedule/services/repa
 // import { repaymentReceiptService } from '../../repayment-receipt/services/repaymentReceiptService';
 import { securityCollateralService } from '../../security-collateral/services/securityCollateralService';
 import { SecurityCollateral } from '../../security-collateral/types/collateral-item';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 export default function RepaymentDetailPage() {
   const { repaymentId } = useParams<{ repaymentId: string }>();
@@ -38,17 +36,8 @@ export default function RepaymentDetailPage() {
   const [animatedProgress, setAnimatedProgress] = useState<number>(0);
 
   const { isEditMode } = useGlobalMode();
-
   const { openPanel } = useSidePanel();
-
-  // Di dalam komponen RepaymentDetailPage():
-
-
   
-  // States
-
-
-
   useEffect(() => {
     if (!repaymentId) return;
   

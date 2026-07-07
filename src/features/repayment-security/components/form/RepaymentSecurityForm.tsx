@@ -1,10 +1,13 @@
 // src/components/repayment/RepaymentSecurityForm.tsx
 import React, { useState, useEffect } from 'react';
-import { useSidePanel } from '../../../contexts/SidePanelContext';
-import { RepaymentSecurityDTO, SecurityLookupItem } from '../services/repayment-security.dto';
-import { NumericInput } from '../../../components/repayment/NumericInput';
-import { toFrontendPercentage } from '../../../utils/finance';
-import { formatDateForInput } from '../../../utils/date';
+import { useSidePanel } from '../../../../contexts/SidePanelContext';
+import { RepaymentSecurityEditResponse, RepaymentSecurityRequest, SecurityLookupResponse } from '../../dtos/repayment-security.dto';
+import { NumericInput } from '../../../../components/forms/NumericInput';
+import { toFrontendPercentage, toFrontendPercentageStr } from '../../../../utils/finance';
+import { formatDateForInput } from '../../../../utils/date';
+import { ContractStatus } from '../../types/repayment-security.enum';
+// import * as Big from 'big.js';
+import { Big } from 'big.js'; 
 
 const colSpanClasses: Record<string, string> = {
   "1": "col-span-1",
@@ -83,8 +86,6 @@ const NumberField = ({ label, hasError, value, onValueChange, colSpan = "1", isP
     :
       <NumericInput value={value} onValueChange={onValueChange} hasError={hasError} {...props} />
     }
-
-    
   </div>
 );
 
@@ -117,13 +118,42 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm }: any) => {
   );
 };
 
+export interface RepaymentSecurityFormProps {
+  initialData?: RepaymentSecurityEditResponse | null; // Opsional (jika form bisa dipakai untuk Create juga)
+  onSubmit: (data: RepaymentSecurityEditResponse) => void | Promise<void>;
+  onCancel: () => void;
+  isLoading: boolean;
+}
+
 // --- KOMPONEN UTAMA ---
-export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel, isLoading }: any) {
+export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel, isLoading }: RepaymentSecurityFormProps) {
   // export default function RepaymentSecurityForm({ initialData, onSubmit, isLoading, onCancel }: RepaymentSecurityFormProps) {
   const { closePanel } = useSidePanel();
   const isEditMode = !!initialData?.id;
 
-  const [formData, setFormData] = useState<RepaymentSecurityDTO>({
+  const durationInmonths = Number (initialData?.contractDurationInMonths || 0);
+  const underlyingFund = new Big(initialData?.contractUnderlyingFund || '0');
+  const yieldAmount = new Big(initialData?.contractYieldAmount || '0');
+  const yieldRateAnnually = new Big(initialData?.contractYieldRateAnnually || '0').times(100);
+  const feeAdministration = new Big(initialData?.contractFeeAdministration || '0');
+  const feeAdministrationPercentage = new Big(initialData?.contractFeeAdministrationPercentage || '0').times(100);
+  const feeProvision = new Big(initialData?.contractFeeProvision || '0');
+  const feeProvisionPercentage = new Big(initialData?.contractFeeProvisionPercentage || '0').times(100);
+  const feePlatform = new Big(initialData?.contractFeePlatform || '0');
+  const feePlatformPercentage = new Big(initialData?.contractFeePlatformPercentage || '0').times(100);
+  const feeServicing = new Big(initialData?.contractFeeServicing || '0');
+  const feeServicingPercentage = new Big(initialData?.contractFeeServicingPercentage || '0').times(100);
+  const feeMonitoring = new Big(initialData?.contractFeeMonitoring || '0');
+  const feeMonitoringPercentageMonthly = new Big(initialData?.contractFeeMonitoringPercentageMonthly || '0').times(100);
+  const feeMonitoringMonthly = feeMonitoringPercentageMonthly.times(underlyingFund).div(100);
+  const feeMonitoringPercentage = feeMonitoringPercentageMonthly.times(durationInmonths);
+
+  const maxPrecision = 2;
+  const maxPrecisionPct = 4;
+
+  console.log('initialData?.contractPenaltyPercentageDaily : ',initialData?.contractPenaltyPercentageDaily);
+
+  const [formData, setFormData] = useState<RepaymentSecurityRequest>({
     id: initialData?.id || null, // hidden, null/0 if add mode
     investeeId: initialData?.investeeId || '',
     investeeName: initialData?.investeeName || '',
@@ -142,24 +172,22 @@ export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel
     contractDurationInMonths: initialData?.contractDurationInMonths || 0,
     contractStatus: initialData?.contractStatus || '',
     
-    contractUnderlyingFund: initialData?.contractUnderlyingFund || 0,
-    contractYieldAmount: initialData?.contractYieldAmount || 0,
-    contractYieldRateAnnually: toFrontendPercentage(initialData?.contractYieldRateAnnually) || 0,
-    contractFeeAdministration: initialData?.contractFeeAdministration || 0,
-    contractFeeAdministrationPercentage: toFrontendPercentage(initialData?.contractFeeAdministrationPercentage) || 0,
-    contractFeeProvision: initialData?.contractFeeProvision || 0,
-    contractFeeProvisionPercentage: toFrontendPercentage(initialData?.contractFeeProvisionPercentage) || 0,
-    contractFeePlatform: initialData?.contractFeePlatform || 0,
-    contractFeePlatformPercentage: toFrontendPercentage(initialData?.contractFeePlatformPercentage) || 0,
-    contractFeeServicing: initialData?.contractFeeServicing || 0,
-    contractFeeServicingPercentage: toFrontendPercentage(initialData?.contractFeeServicingPercentage) || 0,
+    contractUnderlyingFund: underlyingFund.round(maxPrecision).toString(),
+    contractYieldAmount: yieldAmount.round(maxPrecision).toString(),
+    contractYieldRateAnnually: yieldRateAnnually.round(maxPrecisionPct).toString(),
+    contractFeeAdministration: feeAdministration.round(maxPrecision).toString(),
+    contractFeeAdministrationPercentage: feeAdministrationPercentage.round(maxPrecisionPct).toString(),
+    contractFeeProvision: feeProvision.round(maxPrecision).toString(),
+    contractFeeProvisionPercentage: feeProvisionPercentage.round(maxPrecisionPct).toString(),
+    contractFeePlatform: feePlatform.round(maxPrecision).toString(),
+    contractFeePlatformPercentage: feePlatformPercentage.round(maxPrecisionPct).toString(),
+    contractFeeServicing: feeServicing.round(maxPrecision).toString(),
+    contractFeeServicingPercentage: feeServicingPercentage.round(maxPrecisionPct).toString(),
+    contractFeeMonitoringMonthly: feeMonitoringMonthly.round(maxPrecision).toString(),
+    contractFeeMonitoringPercentageMonthly: feeMonitoringPercentageMonthly.round(maxPrecisionPct).toString(),
+    contractFeeMonitoring: feeMonitoring.round(maxPrecision).toString(),
+    contractFeeMonitoringPercentage: feeMonitoringPercentage.round(maxPrecisionPct).toString(),
 
-    
-    contractFeeMonitoringPercentageMonthly: toFrontendPercentage(initialData?.contractFeeMonitoringPercentageMonthly) || 0,
-    contractFeeMonitoringMonthly: initialData?.contractFeeMonitoringPercentageMonthly * initialData?.contractUnderlyingFund || 0,
-    contractFeeMonitoringPercentage: toFrontendPercentage(initialData?.contractFeeMonitoringPercentageMonthly * initialData?.contractDurationInMonths) || 0,
-    contractFeeMonitoring: initialData?.contractFeeMonitoring  || 0,
-   
     contractTaxPpn: initialData?.contractTaxPpn || '',
     contractTaxFactor: initialData?.contractTaxFactor || '',
     contractTaxYield: initialData?.contractTaxYield || '',
@@ -175,7 +203,7 @@ export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel
     contractDocumentTitle: initialData?.contractDocumentTitle || '',
     contractDocumentNumber: initialData?.contractDocumentNumber || '',
     contractDocumentUrl: null,
-    restructOrder: initialData?.restructOrder || null,
+    restructOrder: initialData?.restructOrder || 0,
     restructParentSecurityId: initialData?.restructParentSecurityId || null,
     restructOriginalSecurityId: initialData?.restructOriginalSecurityId || null,
 
@@ -185,7 +213,7 @@ export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel
     scheduleInstallmentDate: '',
   });
 
-  const [securities, setSecurities] = useState<SecurityLookupItem[]>([]);
+  const [securities, setSecurities] = useState<SecurityLookupResponse[]>([]);
   const [selectedLookupId, setSelectedLookupId] = useState('');
   const [showErrors, setShowErrors] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -221,19 +249,26 @@ export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel
   useEffect(() => {
     if (formData.contractStartDate && formData.contractEndDate) {
       const duration = countMonths(formData.contractStartDate, formData.contractEndDate);
+      console.log('[onchangedate] formData.contractStartDate : ',formData.contractStartDate);
+      console.log('[onchangedate] formData.contractEndDate : ',formData.contractEndDate);
+      console.log('[onchangedate] duration : ',duration);
       if (duration !== formData.contractDurationInMonths) {
         setFormData(prev => {
-          const fund = prev.contractUnderlyingFund;
-          const rate = prev.contractYieldRateAnnually;
+          const fund = new Big(prev.contractUnderlyingFund || 0);
+          const rate = new Big(prev.contractYieldRateAnnually || 0);
+          const durationInMonths = Number(duration) || 0;
+          const feeMonitoringMonthly = new Big(prev.contractFeeMonitoringMonthly || 0);
+          const feeMonitoringMonthlyPercentage = new Big(prev.contractFeeMonitoringPercentageMonthly || 0);
           
-          const yieldAmt = fund * (rate / 100) * (duration / 12);
+          // fund * (rate / 100) * (duration / 12)
+          const yieldAmt : Big = fund.times(rate.div(100)).div(12).times(durationInMonths);
           
           return {
             ...prev,
-            contractDurationInMonths: duration,
-            contractYieldAmount: yieldAmt,
-            contractFeeMonitoring: prev.contractFeeMonitoringMonthly * duration,
-            contractFeeMonitoringPercentage: prev.contractFeeMonitoringPercentageMonthly * duration
+            contractDurationInMonths: durationInMonths,
+            contractYieldAmount: yieldAmt.round(maxPrecision).toString(),
+            contractFeeMonitoring: feeMonitoringMonthly.times(duration).round(maxPrecision).toString(),
+            contractFeeMonitoringPercentage: feeMonitoringMonthlyPercentage.times(duration).round(maxPrecisionPct).toString(),
           };
         });
       }
@@ -241,28 +276,47 @@ export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel
   }, [formData.contractStartDate, formData.contractEndDate]);
 
   // GROUP 3 KALKULATOR
-  const handleGroup3Change = (field: keyof RepaymentSecurityDTO, val: number) => {
+  const handleGroup3Change = (field: keyof RepaymentSecurityRequest, val: number) => {
     let newData = { ...formData, [field]: val };
-    const fund = field === 'contractUnderlyingFund' ? val : formData.contractUnderlyingFund;
-    const duration = formData.contractDurationInMonths;
+    const fundRaw = field === 'contractUnderlyingFund' ? val : formData.contractUnderlyingFund;
+    const fund = new Big(fundRaw);
+    const duration = new Big(formData.contractDurationInMonths);
 
     if (['contractUnderlyingFund', 'contractYieldRateAnnually'].includes(field)) {
-       const rate = field === 'contractYieldRateAnnually' ? val : formData.contractYieldRateAnnually;
-       newData.contractYieldAmount = fund * (rate / 100) * (duration / 12);
+       const rateRaw = field === 'contractYieldRateAnnually' ? val : formData.contractYieldRateAnnually;
+       const rate = new Big(rateRaw);
+       newData.contractYieldAmount = fund.times(rate.div(100)).times(duration.div(12)).round(maxPrecision).toString();
     }
 
     const calculateFee = (nameBase: string) => {
-      const feeField = `contractFee${nameBase}` as keyof RepaymentSecurityDTO;
-      const pctField = `contractFee${nameBase}Percentage` as keyof RepaymentSecurityDTO;
+      const feeField = `contractFee${nameBase}` as keyof RepaymentSecurityRequest;
+      const pctField = `contractFee${nameBase}Percentage` as keyof RepaymentSecurityRequest;
 
       // console.log('feeField : ',feeField);
       // console.log('pctField : ',pctField);
-      
+
+      // Pastikan variabel 'fund' sudah berupa objek Big sebelum masuk ke blok ini
+      // Contoh: const fund = new Big(fundRawString);
+
       if (field === feeField) {
-        newData[pctField] = fund > 0 ? (val / fund) * 100 : 0 as any;
+        // Logika Lama: fund > 0 ? (val / fund) * 100 : 0
+        // Logika Big.js: Mengonversi val ke string, dibagi fund, dikali 100
+        newData[pctField] = fund.gt(0)
+          ? new Big(val.toFixed(maxPrecision)).div(fund).times(100).round(maxPrecisionPct).toString() // Menghasilkan string persentase (4 desimal)
+          : "0";
+          
       } else if (field === pctField) {
-        newData[feeField] = (val / 100) * fund as any;
+        // Logika Lama: (val / 100) * fund
+        // Logika Big.js: Mengonversi val ke string, dibagi 100, dikali fund
+        newData[feeField] = new Big(val.toFixed(maxPrecisionPct)).div(100).times(fund).round(maxPrecision).toString(); // Menghasilkan string nominal uang (2 desimal)
       }
+
+      
+      // if (field === feeField) {
+      //   newData[pctField] = fund > 0 ? (val / fund) * 100 : 0 as any;
+      // } else if (field === pctField) {
+      //   newData[feeField] = (val / 100) * fund as any;
+      // }
     };
 
     calculateFee('Administration');
@@ -270,30 +324,62 @@ export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel
     calculateFee('Platform');
     calculateFee('Servicing');
 
-    if (field === 'contractFeeMonitoringMonthly') {
-      newData.contractFeeMonitoringPercentageMonthly = fund > 0 ? (val / fund) * 100 : 0;
-      newData.contractFeeMonitoring = val * duration;
-      newData.contractFeeMonitoringPercentage = newData.contractFeeMonitoringPercentageMonthly * duration;
-    } else if (field === 'contractFeeMonitoringPercentageMonthly') {
-      newData.contractFeeMonitoringMonthly = (val / 100) * fund;
-      newData.contractFeeMonitoring = newData.contractFeeMonitoringMonthly * duration;
-      newData.contractFeeMonitoringPercentage = val * duration;
-    }
+// Asumsi persiapan variabel pendukung di luar scope IF:
+// const fund = new Big(field === 'contractUnderlyingFund' ? val.toString() : formData.contractUnderlyingFund);
+const durationBig = new Big(duration.toString());
 
-    if (field === 'contractUnderlyingFund') {
-      newData.contractFeeAdministration = (formData.contractFeeAdministrationPercentage / 100) * fund;
-      newData.contractFeeProvision = (formData.contractFeeProvisionPercentage / 100) * fund;
-      newData.contractFeePlatform = (formData.contractFeePlatformPercentage / 100) * fund;
-      newData.contractFeeServicing = (formData.contractFeeServicingPercentage / 100) * fund;
-      newData.contractFeeMonitoringMonthly = (formData.contractFeeMonitoringPercentageMonthly / 100) * fund;
-      newData.contractFeeMonitoring = newData.contractFeeMonitoringMonthly * duration;
-    }
+  if (field === 'contractFeeMonitoringMonthly') {
+    const valBig = new Big(val.toString());
+    
+    const pctMonthly = fund.gt(0) ? valBig.div(fund).times(100) : new Big('0');
+    newData.contractFeeMonitoringPercentageMonthly = pctMonthly.round(maxPrecisionPct).toString();
+    const feeMonitoring = valBig.times(durationBig);
+    newData.contractFeeMonitoring = feeMonitoring.round(maxPrecision).toString();
+    newData.contractFeeMonitoringPercentage = pctMonthly.times(durationBig).round(maxPrecisionPct).toString();
+  } else if (field === 'contractFeeMonitoringPercentageMonthly') {
+    const valBig = new Big(val.toString());
+    const feeMonthly = valBig.div(100).times(fund);
+    newData.contractFeeMonitoringMonthly = feeMonthly.round(maxPrecision).toString();
+    newData.contractFeeMonitoring = feeMonthly.times(durationBig).round(maxPrecision).toString();
+    newData.contractFeeMonitoringPercentage = valBig.times(durationBig).round(maxPrecisionPct).toString()
+  }
+
+  if (field === 'contractUnderlyingFund') {
+    // Ambil persentase dari formData (string), ubah ke desimal (/100), lalu kalikan dengan fund
+    newData.contractFeeAdministration = new Big(formData.contractFeeAdministrationPercentage).div(100).times(fund).round(maxPrecision).toString()
+    newData.contractFeeProvision = new Big(formData.contractFeeProvisionPercentage).div(100).times(fund).round(maxPrecision).toString();
+    newData.contractFeePlatform = new Big(formData.contractFeePlatformPercentage).div(100).times(fund).round(maxPrecision).toString();
+    newData.contractFeeServicing = new Big(formData.contractFeeServicingPercentage).div(100).times(fund).round(maxPrecision).toString();
+    const feeMonitoringMonthly = new Big(formData.contractFeeMonitoringPercentageMonthly).div(100).times(fund);
+    newData.contractFeeMonitoringMonthly = feeMonitoringMonthly.round(maxPrecision).toString();
+    newData.contractFeeMonitoring = feeMonitoringMonthly.times(durationBig).round(maxPrecision).toString();
+  }
+
+
+    // if (field === 'contractFeeMonitoringMonthly') {
+    //   newData.contractFeeMonitoringPercentageMonthly = fund > 0 ? (val / fund) * 100 : 0;
+    //   newData.contractFeeMonitoring = val * duration;
+    //   newData.contractFeeMonitoringPercentage = newData.contractFeeMonitoringPercentageMonthly * duration;
+    // } else if (field === 'contractFeeMonitoringPercentageMonthly') {
+    //   newData.contractFeeMonitoringMonthly = (val / 100) * fund;
+    //   newData.contractFeeMonitoring = newData.contractFeeMonitoringMonthly * duration;
+    //   newData.contractFeeMonitoringPercentage = val * duration;
+    // }
+
+    // if (field === 'contractUnderlyingFund') {
+    //   newData.contractFeeAdministration = (formData.contractFeeAdministrationPercentage / 100) * fund;
+    //   newData.contractFeeProvision = (formData.contractFeeProvisionPercentage / 100) * fund;
+    //   newData.contractFeePlatform = (formData.contractFeePlatformPercentage / 100) * fund;
+    //   newData.contractFeeServicing = (formData.contractFeeServicingPercentage / 100) * fund;
+    //   newData.contractFeeMonitoringMonthly = (formData.contractFeeMonitoringPercentageMonthly / 100) * fund;
+    //   newData.contractFeeMonitoring = newData.contractFeeMonitoringMonthly * duration;
+    // }
 
     setFormData(newData);
   };
 
   // VALIDASI FORM
-  const isError = (field: keyof RepaymentSecurityDTO) => {
+  const isError = (field: keyof RepaymentSecurityRequest) => {
     if (!showErrors) return false;
     const val = formData[field];
     if (val === '' || val === null || val === undefined) return true;
@@ -314,7 +400,7 @@ export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel
     
     let isValid = true;
     for (const field of required) {
-      const val = formData[field as keyof RepaymentSecurityDTO];
+      const val = formData[field as keyof RepaymentSecurityRequest];
       if (val === '' || val === null || val === undefined) isValid = false;
       if (field === 'contractUnderlyingFund' && val === 0) isValid = false;
     }
@@ -322,7 +408,14 @@ export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel
     if (isValid) setShowConfirmModal(true);
   };
 
-  const isGroup3Active = formData.contractUnderlyingFund > 0 && formData.contractDurationInMonths > 0;
+  // const isGroup3Active = formData.contractUnderlyingFund > 0 && formData.contractDurationInMonths > 0;
+
+// Pastikan datanya valid sebelum dibungkus (mencegah error jika string kosong atau null)
+  const fundStr = formData.contractUnderlyingFund || '0';
+  const durationStr = formData.contractDurationInMonths || '0';
+
+  const isGroup3Active = new Big(fundStr).gt(0) && new Big(durationStr).gt(0);
+
 
   return (
     // Struktur flex-col dengan height penuh agar header dan footer menempel (fixed position / sticky)
@@ -357,7 +450,7 @@ export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel
           <input type="hidden" value={formData.id || ''} />
           <input type="hidden" value={formData.investeeId} />
           <input type="hidden" value={formData.securityId} />
-          <input type="hidden" value={formData.restructOrder || ''} />
+          <input type="hidden" value={formData.restructOrder || 0} />
           <input type="hidden" value={formData.restructParentSecurityId || ''} />
           <input type="hidden" value={formData.restructOriginalSecurityId || ''} />
 
@@ -379,7 +472,7 @@ export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel
                     investeeNameLegal: item.investeeNameLegal,
                     investeeIconUrl: item.investeeIconUrl,
                     securityId: item.securityId,
-                    securityType: item.securityType,
+                    securityType: item?.securityType || '',
                     securityName: item.securityName, 
                     securityCode: item.securityCode,
                     securitySeries: item.securitySeries,
@@ -411,11 +504,11 @@ export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel
             <Input label="Contract Duration (Months)" disabled value={formData.contractDurationInMonths} />
             <Select label="Contract Status" hasError={isError('contractStatus')} value={formData.contractStatus} onChange={(e: any) => setFormData({...formData, contractStatus: e.target.value})}>
               <option value="">-- Pilih Contract Status --</option>
-              <option value="PERFORMING">PERFORMING</option>
-              <option value="OBSERVATION">OBSERVATION</option>
-              <option value="SUBSTANDARD">SUBSTANDARD</option>
-              <option value="DOUBTFUL">DOUBTFUL</option>
-              <option value="DEFAULTED">DEFAULTED</option>
+              <option value={ContractStatus.PERFORMING}>Performing</option>
+              <option value={ContractStatus.OBSERVATION}>Observation</option>
+              <option value={ContractStatus.SUBSTANDARD}>Substandard</option>
+              <option value={ContractStatus.DOUBTFUL}>Doubtful</option>
+              <option value={ContractStatus.DEFAULTED}>Defaulted</option>
             </Select>
           </FormGroup>
 

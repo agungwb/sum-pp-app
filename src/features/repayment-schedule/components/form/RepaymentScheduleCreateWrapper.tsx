@@ -1,7 +1,7 @@
 // src/components/repayment/RepaymentScheduleCreateWrapper.tsx
 import React, { useState } from 'react';
 import RepaymentScheduleForm from './RepaymentScheduleForm';
-import { useSidePanel } from '../../../contexts/SidePanelContext';
+import { useSidePanel } from '../../../../contexts/SidePanelContext';
 
 interface CreateWrapperProps {
   repaymentSecurityId?: string; // Optional: Lempar ID contract jika di-klik dari halaman detail
