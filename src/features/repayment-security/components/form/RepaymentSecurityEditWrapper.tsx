@@ -19,7 +19,7 @@ export default function RepaymentSecurityEditWrapper({ repaymentId }: EditWrappe
       try {
         setErrorFetch(null);
         // Memanggil API GET lewat Service
-        const responseData = await repaymentSecurityService.getDetail(repaymentId);
+        const responseData = await repaymentSecurityService.getRepaymentSecurityDetail(repaymentId);
         
         // Sesuaikan dengan struktur response dari NestJS Anda
         setInitialData(responseData.data.item);
@@ -38,7 +38,7 @@ export default function RepaymentSecurityEditWrapper({ repaymentId }: EditWrappe
     setIsSubmitting(true);
     try {
       // Memanggil API PUT lewat Service
-      await repaymentSecurityService.update(repaymentId, formData);
+      await repaymentSecurityService.updateRepaymentSecurity(repaymentId, formData);
       
       closePanel();
     } catch (error: any) {

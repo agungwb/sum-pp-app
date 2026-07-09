@@ -73,17 +73,37 @@ export interface RepaymentSecurityCardResponse {
   investeeId: string;
   investeeName: string;
   investeeNameLegal: string;
+  investeIconUrl: string;
   securityId: string;
   securityType: string;
-  securityName: string;
-  contractUnderlyingFund: number;
+  securityName: string
+  securityCode: string;
+  securitySeries: number;
+  securityPhase: number
+  securitySequence: number;
+  contractUnderlyingFund: string;
   contractStartDate: string; // Menggunakan string untuk format ISO Date (YYYY-MM-DDTHH:mm:ss.sssZ)
   contractEndDate: string;   // Menggunakan string untuk format ISO Date
   contractDurationInMonths: number;
   contractStatus: string;
-  contractYieldAmount: number;
-  contractYieldRateAnnually: number;
-  sumReceiptSinkingFund: number;
+  contractYieldAmount: string;
+  contractYieldRateAnnually: string;
+  sumReceiptSinkingFund: string;
+}
+
+export interface RepaymentSecuritySummaryResponse {
+  id: string;
+  investeeId: string;
+  investeeName: string;
+  investeeNameLegal: string;
+  investeIconUrl: string;
+  securityId: string;
+  securityType: string;
+  securityName: string;
+  securityCode: string;
+  securitySeries: number;
+  securityPhase: number
+  securitySequence: number;
 }
 
 export interface SecurityLookupResponse {

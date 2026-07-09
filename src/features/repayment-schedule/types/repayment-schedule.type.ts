@@ -55,12 +55,15 @@ export interface RepaymentSchedule {
 
 
 export interface ScheduleItem {
-    id: string;
-    repaymentSecurityId: string;
-    scheduleOrder: number;
-    scheduleDate: string;
-    invoiceDate: string;
-    invoiceStatus: string;
+    id: string; // UUID
+    repaymentSecurityId: string; // UUID
+    scheduleType: ScheduleType | '';
+    scheduleSequence: number;
+    scheduleDate: string; // ISO Date string (YYYY-MM-DD)
+    invoiceNumber: string;
+    invoiceSentTrial: number;
+    invoiceDate: string; // ISO Date string (YYYY-MM-DD)
+    invoiceStatus: InvoiceStatus | '';
     invoiceNotes: string;
     invoiceFeeAdministration: string;
     invoiceFeeAdministrationTax: string;
@@ -85,43 +88,26 @@ export interface ScheduleItem {
     createdAt: string;
   }
 
-  export interface RepaymentScheduleRequest {
-    repaymentSecurityId?: string;
-    scheduleType?: ScheduleType | string;
-    scheduleSequence?: number;
-    scheduleDate?: string;
-    invoiceNumber?: string | null;
-    invoiceSentTrial?: number;
-    invoiceDate?: string;
-    invoiceStatus?: InvoiceStatus | string;
-    invoiceNotes?: string;
-    invoiceFeeAdministration?: string;
-    invoiceFeeAdministrationTax?: string;
-    invoiceFeeProvision?: string;
-    invoiceFeeProvisionTax?: string;
-    invoiceFeePlatform?: string;
-    invoiceFeePlatformTax?: string;
-    invoiceFeeServicing?: string;
-    invoiceFeeServicingTax?: string;
-    invoiceFeeMonitoring?: string;
-    invoiceFeeMonitoringTax?: string;
-    invoiceFeeOther?: string;
-    invoiceFeeOtherTax?: string;
-    invoiceSinkingFund?: string;
-    invoiceYield?: string;
-    invoiceActualLoss?: string;
-    invoicePenalty?: string;
-    invoiceTotal?: string;
-    invoiceTotalTax?: string;
-    invoiceTotalWithTax?: string;
-  }
-  
-  export interface RepaymentScheduleEditResponse extends RepaymentScheduleRequest {
-    id: string;
-    createdBy?: string;
-    createdAt?: string;
-    updatedBy?: string;
-    updatedAt?: string;
-    deletedBy?: string | null;
-    deletedAt?: string | null;
-  }
+export interface InvoiceSummary {
+    scheduleId: string | undefined;
+    scheduleType: ScheduleType | '';
+    invoiceFeeAdministration: string;
+    invoiceFeeAdministrationTax: string;
+    invoiceFeeProvision: string;
+    invoiceFeeProvisionTax: string;
+    invoiceFeePlatform: string;
+    invoiceFeePlatformTax: string;
+    invoiceFeeServicing: string;
+    invoiceFeeServicingTax: string;
+    invoiceFeeMonitoring: string;
+    invoiceFeeMonitoringTax: string;
+    invoiceFeeOther: string;
+    invoiceFeeOtherTax: string;
+    invoiceSinkingFund: string;
+    invoiceYield: string;
+    invoiceActualLoss: string;
+    invoicePenalty: string;
+    invoiceTotal: string;
+    invoiceTotalTax: string;
+    invoiceTotalWithTax: string;
+}

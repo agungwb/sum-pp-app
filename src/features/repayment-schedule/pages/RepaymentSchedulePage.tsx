@@ -8,7 +8,7 @@ import RepaymentScheduleEditWrapper from '../components/form/RepaymentScheduleEd
 import FeeWithTax from '../../../components/ui/FeeWithTax';
 import { useGlobalMode } from '../../../contexts/GlobalModeContext';
 import { useSidePanel } from '../../../contexts/SidePanelContext';
-import { ScheduleItem } from '../types/repayment-schedule.type';
+import { InvoiceSummary, RepaymentSchedule, ScheduleItem } from '../types/repayment-schedule.type';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 
@@ -88,6 +88,30 @@ export default function RepaymentSchedulePage() {
     }).format(numeric);
   };
 
+  const invoiceSummary : InvoiceSummary = {
+    scheduleId: schedule?.id,
+    scheduleType: schedule?.scheduleType || '',
+    invoiceFeeAdministration: schedule?.invoiceFeeAdministration || '0',
+    invoiceFeeAdministrationTax: schedule?.invoiceFeeAdministrationTax || '0',
+    invoiceFeeProvision: schedule?.invoiceFeeProvision || '0',
+    invoiceFeeProvisionTax: schedule?.invoiceFeeProvisionTax || '0',
+    invoiceFeePlatform: schedule?.invoiceFeePlatform || '0',
+    invoiceFeePlatformTax: schedule?.invoiceFeePlatformTax || '0',
+    invoiceFeeServicing: schedule?.invoiceFeeServicing || '0',
+    invoiceFeeServicingTax: schedule?.invoiceFeeServicingTax || '0',
+    invoiceFeeMonitoring: schedule?.invoiceFeeMonitoring || '0',
+    invoiceFeeMonitoringTax: schedule?.invoiceFeeMonitoringTax || '0',
+    invoiceFeeOther: schedule?.invoiceFeeOther || '0',
+    invoiceFeeOtherTax: schedule?.invoiceFeeOtherTax || '0',
+    invoiceSinkingFund: schedule?.invoiceSinkingFund || '0',
+    invoiceYield: schedule?.invoiceYield || '0',
+    invoiceActualLoss: schedule?.invoiceActualLoss || '0',
+    invoicePenalty: schedule?.invoicePenalty || '0',
+    invoiceTotal: schedule?.invoiceTotal || '0',
+    invoiceTotalTax: schedule?.invoiceTotalTax || '0',
+    invoiceTotalWithTax: schedule?.invoiceTotalWithTax || '0',
+  }
+
   // Formatter Tanggal Sederhana
   const formatDate = (dateString: string) => {
     if (!dateString) return '-';
@@ -130,7 +154,7 @@ export default function RepaymentSchedulePage() {
         <div>
            <div className="flex gap-4">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                {schedule.invoiceNotes.toUpperCase()} (Term {schedule.scheduleOrder})
+                {schedule.invoiceNotes.toUpperCase()} (Term {schedule.scheduleSequence})
             </h1>
             {isEditMode && (
                 <span className={`px-2.5 py-1 rounded text-xs font-bold tracking-wider uppercase inline-block border-2 ${
@@ -463,7 +487,7 @@ export default function RepaymentSchedulePage() {
                         {isEditMode && (
                             <td className="py-3 px-3 text-left align-top">
                                 <button 
-                                onClick={() => openPanel(<RepaymentReceiptEditWrapper receiptId={rcpt.id} />)}
+                                onClick={() => openPanel(<RepaymentReceiptEditWrapper receiptId={rcpt.id} invoiceSummary={invoiceSummary} />)}
                                 className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -569,7 +593,7 @@ export default function RepaymentSchedulePage() {
                     <td colSpan={2}></td>
                     <td colSpan={5} className="p-0">
                     <button
-                        onClick={() => openPanel(<RepaymentReceiptCreateWrapper/>)}
+                        onClick={() => openPanel(<RepaymentReceiptCreateWrapper invoiceSummary={invoiceSummary} />)}
                         type="button"
                         className="flex items-center justify-center w-full p-2 m-2 border-2 border-dashed border-amber-300 bg-amber-50/50 text-amber-700 rounded-xl hover:bg-amber-100 hover:border-amber-400 transition-all group focus:outline-none focus:ring-2 focus:ring-amber-200"
                     >

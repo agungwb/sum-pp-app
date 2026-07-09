@@ -17,3 +17,8 @@ export enum ReceiptMethod {
     CORPORATE_CARD = 'CORPORATE_CARD',
     OTHER = 'OTHER', // Ditambahkan untuk mengakomodasi "etc" pada definisi schema
   }
+
+export enum ScheduleType {
+  UPFRONT = 'UPFRONT',
+  INSTALLMENT = 'INSTALLMENT'
+}

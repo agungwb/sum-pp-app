@@ -1,5 +1,16 @@
+// export interface ApiResponse<T> {
+//     statusCode: number;
+//     message: string;
+//     data: T;
+//   }
+
 export interface ApiResponse<T> {
     statusCode: number;
     message: string;
-    data: T;
+    data: {
+      id: string;
+      total: number;
+      item: T;
+      items: T[];
+    }
   }

@@ -14,7 +14,7 @@ export default function RepaymentSecurityCreateWrapper() {
 
     try {
       // Panggil API lewat Service
-      await repaymentSecurityService.create(formData);
+      await repaymentSecurityService.createRepaymentSecurity(formData);
       
       console.log('Data berhasil disimpan');
       closePanel(); // Menutup panel setelah sukses

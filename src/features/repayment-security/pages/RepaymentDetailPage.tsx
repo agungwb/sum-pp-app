@@ -17,6 +17,9 @@ import { repaymentScheduleService } from '../../repayment-schedule/services/repa
 // import { repaymentReceiptService } from '../../repayment-receipt/services/repaymentReceiptService';
 import { securityCollateralService } from '../../security-collateral/services/securityCollateralService';
 import { SecurityCollateral } from '../../security-collateral/types/collateral-item';
+import CheckOrCross from '../components/detail/CheckOrCross';
+import StatusBadge from '../components/detail/StatusBadge';
+import RevenueRow from '../components/detail/RevenueRow';
 
 export default function RepaymentDetailPage() {
   const { repaymentId } = useParams<{ repaymentId: string }>();
@@ -47,11 +50,14 @@ export default function RepaymentDetailPage() {
         
         // Mengambil 4 sumber data sekaligus secara paralel lewat Axios
         const [repaymentSecurityRes, repaymentSchedulesRes, securityCollateralsRes] = await Promise.all([
-          repaymentSecurityService.getDetail(repaymentId),
+          repaymentSecurityService.getRepaymentSecurityDetail(repaymentId),
           repaymentScheduleService.getBySecurityId(repaymentId),
           // repaymentReceiptService.getBySecurityId(repaymentId),
           securityCollateralService.getBySecurityId(repaymentId) // Ambil data collateral di sini
         ]);
+
+        console.log('[RepaymentDetailPage] typeof(repaymentSecurityRes) : ',typeof(repaymentSecurityRes));
+        console.log('[RepaymentDetailPage] repaymentSecurityRes : ',repaymentSecurityRes);
   
         setData(repaymentSecurityRes.data.item);
         setRepaymentSchedules(repaymentSchedulesRes.data.items || []);
@@ -138,7 +144,7 @@ export default function RepaymentDetailPage() {
   const upfrontFee = !upfrontFeeRaw ? null : {
     id: upfrontFeeRaw.id,
     no: 0,
-    dueDate: upfrontFeeRaw.scheduleDate || data.contractStartDate,
+    dueDate: upfrontFeeRaw.scheduleDate || '',
     status: upfrontFeeRaw.invoiceStatus || 'BELUM TERSEDIA',
     admin: parseFloat(upfrontFeeRaw.invoiceFeeAdministration || '0'),
     adminTax: parseFloat(upfrontFeeRaw.invoiceFeeAdministrationTax || '0'),
@@ -160,7 +166,7 @@ export default function RepaymentDetailPage() {
     .map(row => ({
       id: row.id,
       month: row.scheduleSequence,
-      date: formatDate(row.scheduleDate),
+      dueDate: row.scheduleDate || '',
       sf: parseFloat(row.invoiceSinkingFund || '0'),
       yield: parseFloat(row.invoiceYield || '0'),
       monitoring: parseFloat(row.invoiceFeeMonitoring || '0'),
@@ -404,11 +410,6 @@ export default function RepaymentDetailPage() {
 
           </div>
 
-          
-
-
-          
-
           {/* Baris 8: Progress Bar Animasi */}
           <div className="mt-auto pt-3 border-t-2 border-slate-100">
             <div className="flex justify-between text-[10px] font-bold mb-1.5">
@@ -465,7 +466,7 @@ export default function RepaymentDetailPage() {
                   <tr className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-3 px-3 text-left text-slate-800 font-bold align-top">
                       <Link 
-                              to={`${upfrontFee.id}`}
+                              to={`schedules/${upfrontFee.id}`}
                               className="flex items-center gap-1.5 text-[12px] font-bold bg-white text-slate-500 px-2.5 hover:bg-slate-50 hover:text-cyan-600 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-100 cursor-pointer"
                           >
                               Upfront Fee
@@ -565,7 +566,7 @@ export default function RepaymentDetailPage() {
                               </svg>
                           </Link>
                       </td>
-                      <td className="py-3 px-3 align-top">{formatDate(upfrontFee.dueDate)}</td>
+                      <td className="py-3 px-3 align-top">{formatDate(sch.dueDate)}</td>
                       
                       {/* KOLOM EKSISTING */}
                       <td className="py-3 px-3 text-right font-mono">{formatRupiah(sch.sf)}</td>
@@ -713,70 +714,5 @@ export default function RepaymentDetailPage() {
   );
 }
 
-// =============================================================================
-// REUSABLE HELPER COMPONENTS
-// =============================================================================
 
-// Helper: Teks Informasi Flat
 
-// Helper: Baris Revenue Summary
-function RevenueRow({ label, value, percentage, tax }: { label: string; value: number; percentage:number; tax: number }) {
-  const formatRupiah = (numStr: string | number) => {
-    if (numStr === 0 || numStr === '0') return '-';
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(typeof numStr === 'string' ? parseFloat(numStr || '0') : numStr);
-  };
-  
-  return (
-    <div className="flex justify-between items-end border-b border-slate-100 pb-2">
-      <span className="text-[11px] flex-[5] font-semibold text-slate-500">{label}</span>
-      <span className="text-[12px] flex-[3] font-bold font-mono text-slate-800">
-        <FeeWithTax base={value} tax={tax} size='large'/>
-      </span>
-      <span className="text-[11px] flex-[1] font-semibold text-slate-500 text-right">{percentage} %</span>
-    </div>
-  );
-}
-
-// Helper: Status Badge (Menambahkan mapping status API HELD_BY_PLATFORM, SUBMITTED, dll)
-function StatusBadge({ status }: { status: string }) {
-  let color = 'bg-slate-100 text-slate-600 border border-slate-200';
-  
-  // Emerald (Sukses / Terjamin)
-  if (status === 'DIBAYAR' || status === 'DIAMANKAN' || status === 'PAID' || status === 'HELD_BY_PLATFORM' || status === 'LIQUIDATED') {
-    color = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-  }
-  // Amber (Peringatan / Sedang Proses)
-  else if (status === 'TERTUNDA' || status === 'DALAM PROSES' || status === 'OVERDUE' || status === 'UNDER_REVIEW' || status === 'SUBMITTED') {
-    color = 'bg-amber-50 text-amber-700 border border-amber-300';
-  }
-  // Blue (Belum Waktunya / Menunggu / Biasa)
-  else if (status === 'BELUM JATUH TEMPO' || status === 'MENUNGGU VERIFIKASI' || status === 'UNPAID' || status === 'PENDING') {
-    color = 'bg-blue-50 text-blue-600 border border-blue-200';
-  }
-  // Red (Ditolak)
-  else if (status === 'DECLINED') {
-    color = 'bg-rose-50 text-rose-700 border border-rose-200';
-  }
-  
-  // Replace underscores dengan spasi untuk tampilan yang lebih ramah
-  const displayStatus = status ? status.replace(/_/g, ' ') : '-';
-  
-  return (
-    <span className={`px-2 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase inline-block border-2 ${color}`}>
-      {displayStatus}
-    </span>
-  );
-}
-
-// Helper: Checkmark / Cross Icon untuk Table Kolateral
-function CheckOrCross({ isChecked }: { isChecked: boolean }) {
-  return (
-    <div className="flex justify-center">
-      {isChecked ? (
-        <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-      ) : (
-        <svg className="w-4 h-4 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-      )}
-    </div>
-  );
-}

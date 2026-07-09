@@ -10,3 +10,8 @@ export const formatDateForInput = (dateInput: any): string => {
     
     return `${year}-${month}-${day}`; // Menghasilkan format YYYY-MM-DD secara aman
   };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    return dateString.split('T')[0];
+  };

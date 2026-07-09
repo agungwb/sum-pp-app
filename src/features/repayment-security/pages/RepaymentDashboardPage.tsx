@@ -39,7 +39,7 @@ export default function RepaymentDashboardPage() {
         setError(null);
         
         // Memanggil API via Service
-        const responseData = await repaymentSecurityService.getAll();
+        const responseData = await repaymentSecurityService.getRepaymentSecurityCards();
         
         // Sesuaikan dengan struktur Response backend NestJS Anda
         // Misalnya datanya ada di responseData.data atau responseData.item

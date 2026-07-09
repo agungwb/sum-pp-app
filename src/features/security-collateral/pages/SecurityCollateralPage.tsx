@@ -1,10 +1,11 @@
 // src/pages/repayment/SecurityCollateral.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import SecurityCollateralCreateWrapper from '../components/SecurityCollateralCreateWrapper';
-import SecurityCollateralEditWrapper from '../components/SecurityCollateralEditWrapper';
+import SecurityCollateralCreateWrapper from '../components/form/SecurityCollateralCreateWrapper';
+import SecurityCollateralEditWrapper from '../components/form/SecurityCollateralEditWrapper';
 import { useGlobalMode } from '../../../contexts/GlobalModeContext';
 import { useSidePanel } from '../../../contexts/SidePanelContext';
+import { securityCollateralService } from '../services/securityCollateralService';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
@@ -29,26 +30,57 @@ export default function SecurityCollateralPage() {
     contract_status: 'PERFORMING', // Tambahan info contract_status dummy
   };
 
+  // useEffect(() => {
+  //   const fetchCollaterals = async () => {
+  //     try {
+  //       const response = await fetch(`${API_BASE_URL}/repayment/securities/${repaymentId}/collaterals`);
+  //       if (!response.ok) {
+  //         throw new Error('Gagal mengambil data kolateral');
+  //       }
+  //       const result = await response.json();
+  //       setCollaterals(result.data?.items || []);
+  //     } catch (err: any) {
+  //       setError(err.message);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+
+  //   if (repaymentId) {
+  //     fetchCollaterals();
+  //   }
+  // }, [repaymentId]);
+
   useEffect(() => {
-    const fetchCollaterals = async () => {
+    if (!repaymentId) return;
+
+    const fetchCollateralData = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/repayment/securities/${repaymentId}/collaterals`);
-        if (!response.ok) {
-          throw new Error('Gagal mengambil data kolateral');
+        setIsLoading(true);
+        setError(null);
+
+        // Memanggil service terpisah
+        const response = await securityCollateralService.getCollateralsBySecurityId(repaymentId);
+
+        // Berdasarkan api.type.ts Anda, struktur array data dibungkus di dalam response.data.items
+        if (response && response.data) {
+          setCollaterals(response.data.items || []);
+        } else {
+          setError(response.message || 'Gagal memuat data collateral.');
         }
-        const result = await response.json();
-        setCollaterals(result.data?.items || []);
       } catch (err: any) {
-        setError(err.message);
+        console.error('Error fetching collateral:', err);
+        setError(err.response?.data?.message || 'Terjadi kesalahan saat memproses data dari server.');
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (repaymentId) {
-      fetchCollaterals();
-    }
+    fetchCollateralData();
   }, [repaymentId]);
+
+  if (isLoading) return <div className="p-6 text-slate-500 font-medium">Memuat data agunan...</div>;
+  if (error) return <div className="p-6 text-red-500 font-medium">Error: {error}</div>;
 
   const formatRupiah = (num: number) => {
     return new Intl.NumberFormat('id-ID', { 
@@ -170,6 +202,8 @@ export default function SecurityCollateralPage() {
                   </tr>
                 ) : (
                   <>
+
+
                     {collaterals.map((item, index) => (
                       <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                         {/* 1. Kolom Nomor */}
@@ -239,14 +273,26 @@ export default function SecurityCollateralPage() {
                       </tr>
                     ))}
 
-                    {/* Row Tambah Kolateral Baru (Muncul jika isEditMode aktif) sebelum baris total */}
-                    {isEditMode && (
+                    {/* Baris Total di Bagian Bawah Sejajar Kolom Estimasi Nilai */}
+                    <tr className="bg-slate-50 border-t border-slate-200 font-bold">
+                      <td colSpan={3} className="py-3 pl-14 text-center text-slate-900 text-xs uppercase tracking-tight">
+                        Perkiraan total estimasi nilai jaminan
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-emerald-700 text-md">
+                        {formatRupiah(collaterals.reduce((sum, item) => sum + Number(item.collateralValueEstimated || 0), 0))}
+                      </td>
+                      <td colSpan={2} className="bg-slate-50"></td>
+                    </tr>
+                  </>
+                )}
+                {/* Row Tambah Kolateral Baru (Muncul jika isEditMode aktif) sebelum baris total */}
+                {isEditMode && (
                         <tr className="border-t-2 border-slate-200">
                         <td></td>
                         <td colSpan={5} className="p-0">
                         <button
                             type="button"
-                            onClick={() => openPanel(<SecurityCollateralCreateWrapper/>)}
+                            onClick={() => openPanel(<SecurityCollateralCreateWrapper repaymentId={repaymentId}/>)}
                             className="w-full flex items-center justify-center gap-2 py-4 border-2 m-4 border-dashed rounded-lg border-amber-200 bg-amber-50/40 hover:bg-amber-100 text-amber-700 transition-all focus:outline-none focus:ring-2 focus:ring-amber-200 group"
                           >
                             <div className="bg-amber-100 p-1 rounded-full group-hover:bg-amber-500 transition-colors">
@@ -260,19 +306,6 @@ export default function SecurityCollateralPage() {
                         <td></td>
                         </tr>
                     )}
-
-                    {/* Baris Total di Bagian Bawah Sejajar Kolom Estimasi Nilai */}
-                    <tr className="bg-slate-50 border-t border-slate-200 font-bold">
-                      <td colSpan={3} className="py-3 pl-14 text-center text-slate-900 text-xs uppercase tracking-tight">
-                        Perkiraan total estimasi nilai jaminan
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono text-emerald-700 text-md">
-                        {formatRupiah(collaterals.reduce((sum, item) => sum + Number(item.collateralValueEstimated || 0), 0))}
-                      </td>
-                      <td colSpan={2} className="bg-slate-50"></td>
-                    </tr>
-                  </>
-                )}
               </tbody>
             </table>
           </div>
