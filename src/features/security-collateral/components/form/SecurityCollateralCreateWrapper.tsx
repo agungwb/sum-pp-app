@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import SecurityCollateralForm from './SecurityCollateralForm';
 import { securityCollateralService } from '../../services/securityCollateralService';
-import { SecurityCollateralRequest } from '../../dtos/security-collateral.dto';
+import { SecurityCollateralFormRequest } from '../../dtos/security-collateral.dto';
 import { CollateralType, CollateralStatus, VerificationStatus } from '../../types/security-collateral.enum';
 import { useSidePanel } from '../../../../contexts/SidePanelContext'; // Sesuaikan
+import { RepaymentSecuritySummaryResponse } from '../../../repayment-security/dtos/repayment-security.dto';
 
 interface CreateWrapperProps {
-  repaymentSecurityId: string;
+  repaymentSecuritySummary : RepaymentSecuritySummaryResponse;
 }
 
-export default function SecurityCollateralCreateWrapper({ repaymentSecurityId }: CreateWrapperProps) {
+export default function SecurityCollateralCreateWrapper({ repaymentSecuritySummary }: CreateWrapperProps) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const initialData: SecurityCollateralRequest = {
-    repaymentSecurityId: securityId,
+  const initialData: SecurityCollateralFormRequest = {
+    repaymentSecurityId: repaymentSecuritySummary.id,
     collateralType: CollateralType.INVOICE,
     collateralDescription: '',
     collateralValueEstimated: '0',
@@ -43,11 +44,11 @@ export default function SecurityCollateralCreateWrapper({ repaymentSecurityId }:
     verificationValueAt: ''
   };
 
-  const handleCreateSubmit = async (formData: SecurityCollateralRequest) => {
+  const handleCreateSubmit = async (formData: SecurityCollateralFormRequest) => {
     setIsSubmitting(true);
     try {
-      if (!repaymentSecurityId) throw new Error("Security ID tidak ditemukan");
-      await securityCollateralService.createCollateral(repaymentSecurityId, formData);
+      if (!repaymentSecuritySummary.id) throw new Error("Security ID tidak ditemukan");
+      await securityCollateralService.createCollateral(repaymentSecuritySummary.id, formData);
       closePanel();
     } catch (error) {
       console.error("Gagal membuat kolateral baru", error);

@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import logoFundex from '../../assets/logo-fundex.svg';
+import MonitoringLogo from '../ui/MonitoringLogo';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -111,21 +112,13 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             </button>
             
             <h2 className="text-[11px] font-black tracking-tighter text-white text-center leading-none select-none">
-              SUM<span className="text-rose-500">.</span>PP
+              SUM<span className="text-rose-500">.</span>
             </h2>
           </div>
         ) : (
           // Mode Normal: Collapse menu berada di KANAN ATAS (Paling Atas)
           <div className="p-6 pb-4 flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-3xl font-black tracking-tight text-white select-none">
-                SUM<span className="text-rose-500">.</span>PP
-              </h2>
-              <p className="mt-1.5 text-xs font-medium text-slate-400 leading-normal">
-                Sistem Untuk Monitoring - Pembayaran Penerbit
-              </p>
-              <div className="w-8 h-0.5 bg-rose-500/60 mt-3 rounded-full"></div>
-            </div>
+            <MonitoringLogo  />
 
             {/* Poin 1 & 2: Tombol collapse ditaruh paling atas kanan dengan ikon garis list futuristik */}
             <button

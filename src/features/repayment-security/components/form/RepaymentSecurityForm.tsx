@@ -1,113 +1,37 @@
 // src/components/repayment/RepaymentSecurityForm.tsx
 import React, { useState, useEffect } from 'react';
 import { useSidePanel } from '../../../../contexts/SidePanelContext';
-import { RepaymentSecurityEditResponse, RepaymentSecurityRequest, SecurityLookupResponse } from '../../dtos/repayment-security.dto';
+import { RepaymentSecurityEditFormResponse, RepaymentSecurityFormRequest, SecurityLookupResponse } from '../../dtos/repayment-security.dto';
 import { toFrontendPercentage, toFrontendPercentageStr } from '../../../../utils/finance';
 import { formatDateForInput } from '../../../../utils/date';
 import { ContractStatus } from '../../types/repayment-security.enum';
 import { Big } from 'big.js'; 
 import { NumericInput, FormGroup, ConfirmModal, Select, Input, NumberField, Toggle } from '../../../../components/forms/index';
+import { toSafeBig } from '../../../../utils/number';
 
 
 export interface RepaymentSecurityFormProps {
-  initialData?: RepaymentSecurityEditResponse | null; // Opsional (jika form bisa dipakai untuk Create juga)
-  onSubmit: (data: RepaymentSecurityEditResponse) => void | Promise<void>;
+  mode: 'add' | 'edit' ;
+  initialData: RepaymentSecurityFormRequest; // Opsional (jika form bisa dipakai untuk Create juga)
+  onSubmit: (data: RepaymentSecurityEditFormResponse) => void | Promise<void>;
   onCancel: () => void;
   isLoading: boolean;
 }
 
 // --- KOMPONEN UTAMA ---
-export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel, isLoading }: RepaymentSecurityFormProps) {
+export default function RepaymentSecurityForm ({ mode, initialData, onSubmit, onCancel, isLoading }: RepaymentSecurityFormProps) {
   // export default function RepaymentSecurityForm({ initialData, onSubmit, isLoading, onCancel }: RepaymentSecurityFormProps) {
   const { closePanel } = useSidePanel();
-  const isEditMode = !!initialData?.id;
-
-  const durationInmonths = Number (initialData?.contractDurationInMonths || 0);
-  const underlyingFund = new Big(initialData?.contractUnderlyingFund || '0');
-  const yieldAmount = new Big(initialData?.contractYieldAmount || '0');
-  const yieldRateAnnually = new Big(initialData?.contractYieldRateAnnually || '0').times(100);
-  const feeAdministration = new Big(initialData?.contractFeeAdministration || '0');
-  const feeAdministrationPercentage = new Big(initialData?.contractFeeAdministrationPercentage || '0').times(100);
-  const feeProvision = new Big(initialData?.contractFeeProvision || '0');
-  const feeProvisionPercentage = new Big(initialData?.contractFeeProvisionPercentage || '0').times(100);
-  const feePlatform = new Big(initialData?.contractFeePlatform || '0');
-  const feePlatformPercentage = new Big(initialData?.contractFeePlatformPercentage || '0').times(100);
-  const feeServicing = new Big(initialData?.contractFeeServicing || '0');
-  const feeServicingPercentage = new Big(initialData?.contractFeeServicingPercentage || '0').times(100);
-  const feeMonitoring = new Big(initialData?.contractFeeMonitoring || '0');
-  const feeMonitoringPercentageMonthly = new Big(initialData?.contractFeeMonitoringPercentageMonthly || '0').times(100);
-  const feeMonitoringMonthly = feeMonitoringPercentageMonthly.times(underlyingFund).div(100);
-  const feeMonitoringPercentage = feeMonitoringPercentageMonthly.times(durationInmonths);
-
-  const maxPrecision = 2;
-  const maxPrecisionPct = 4;
-
-  console.log('initialData?.contractPenaltyPercentageDaily : ',initialData?.contractPenaltyPercentageDaily);
-
-  const [formData, setFormData] = useState<RepaymentSecurityRequest>({
-    id: initialData?.id || null, // hidden, null/0 if add mode
-    investeeId: initialData?.investeeId || '',
-    investeeName: initialData?.investeeName || '',
-    investeeNameLegal: initialData?.investeeNameLegal || '',
-    investeeIconUrl: initialData?.investeeIconUrl || '',
-    securityId: initialData?.securityId || '',
-    securityType: initialData?.securityType || '',
-    securityName: initialData?.securityName || '',
-    securityCode: initialData?.securityCode || '',
-    securitySeries: initialData?.securitySeries || 0,
-    securityPhase: initialData?.securityPhase || 0,
-    securitySequence: initialData?.securitySequence || 0,
-    
-    contractStartDate: formatDateForInput(initialData?.contractStartDate) || '',
-    contractEndDate: formatDateForInput(initialData?.contractEndDate) || '',
-    contractDurationInMonths: initialData?.contractDurationInMonths || 0,
-    contractStatus: initialData?.contractStatus || '',
-    
-    contractUnderlyingFund: underlyingFund.round(maxPrecision).toString(),
-    contractYieldAmount: yieldAmount.round(maxPrecision).toString(),
-    contractYieldRateAnnually: yieldRateAnnually.round(maxPrecisionPct).toString(),
-    contractFeeAdministration: feeAdministration.round(maxPrecision).toString(),
-    contractFeeAdministrationPercentage: feeAdministrationPercentage.round(maxPrecisionPct).toString(),
-    contractFeeProvision: feeProvision.round(maxPrecision).toString(),
-    contractFeeProvisionPercentage: feeProvisionPercentage.round(maxPrecisionPct).toString(),
-    contractFeePlatform: feePlatform.round(maxPrecision).toString(),
-    contractFeePlatformPercentage: feePlatformPercentage.round(maxPrecisionPct).toString(),
-    contractFeeServicing: feeServicing.round(maxPrecision).toString(),
-    contractFeeServicingPercentage: feeServicingPercentage.round(maxPrecisionPct).toString(),
-    contractFeeMonitoringMonthly: feeMonitoringMonthly.round(maxPrecision).toString(),
-    contractFeeMonitoringPercentageMonthly: feeMonitoringPercentageMonthly.round(maxPrecisionPct).toString(),
-    contractFeeMonitoring: feeMonitoring.round(maxPrecision).toString(),
-    contractFeeMonitoringPercentage: feeMonitoringPercentage.round(maxPrecisionPct).toString(),
-
-    contractTaxPpn: initialData?.contractTaxPpn || '',
-    contractTaxFactor: initialData?.contractTaxFactor || '',
-    contractTaxYield: initialData?.contractTaxYield || '',
-    contractPenaltyPercentageDaily: initialData?.contractPenaltyPercentageDaily || '',
-    
-    contractEscrowBank: initialData?.contractEscrowBank || '',
-    contractEscrowAccount: initialData?.contractEscrowAccount || '',
-    contractVaBank: initialData?.contractVaBank || '',
-    contractVaNumber: initialData?.contractVaNumber || '',
-    contractContactEmail: initialData?.contractContactEmail || '',
-    contractContactWhatsapp: initialData?.contractContactWhatsapp || '',
-    
-    contractDocumentTitle: initialData?.contractDocumentTitle || '',
-    contractDocumentNumber: initialData?.contractDocumentNumber || '',
-    contractDocumentUrl: null,
-    restructOrder: initialData?.restructOrder || 0,
-    restructParentSecurityId: initialData?.restructParentSecurityId || null,
-    restructOriginalSecurityId: initialData?.restructOriginalSecurityId || null,
-
-    scheduleUpfrontFlag: true,
-    scheduleUpfrontDate: '',
-    scheduleInstallmentFlag: true,
-    scheduleInstallmentDate: '',
-  });
+  const [formData, setFormData] = useState<RepaymentSecurityFormRequest>(initialData);
+ 
 
   const [securities, setSecurities] = useState<SecurityLookupResponse[]>([]);
   const [selectedLookupId, setSelectedLookupId] = useState('');
   const [showErrors, setShowErrors] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  const maxPrecision = 2;
+  const maxPrecisionPct = 4;
 
   // FETCH Data Security
   useEffect(() => {
@@ -167,21 +91,21 @@ export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel
   }, [formData.contractStartDate, formData.contractEndDate]);
 
   // GROUP 3 KALKULATOR
-  const handleGroup3Change = (field: keyof RepaymentSecurityRequest, val: number) => {
+  const handleGroup3Change = (field: keyof RepaymentSecurityFormRequest, val: number) => {
     let newData = { ...formData, [field]: val };
     const fundRaw = field === 'contractUnderlyingFund' ? val : formData.contractUnderlyingFund;
-    const fund = new Big(fundRaw);
-    const duration = new Big(formData.contractDurationInMonths);
+    const fund = toSafeBig(fundRaw);
+    const duration = toSafeBig(formData.contractDurationInMonths);
 
     if (['contractUnderlyingFund', 'contractYieldRateAnnually'].includes(field)) {
        const rateRaw = field === 'contractYieldRateAnnually' ? val : formData.contractYieldRateAnnually;
-       const rate = new Big(rateRaw);
+       const rate = toSafeBig(rateRaw);
        newData.contractYieldAmount = fund.times(rate.div(100)).times(duration.div(12)).round(maxPrecision).toString();
     }
 
     const calculateFee = (nameBase: string) => {
-      const feeField = `contractFee${nameBase}` as keyof RepaymentSecurityRequest;
-      const pctField = `contractFee${nameBase}Percentage` as keyof RepaymentSecurityRequest;
+      const feeField = `contractFee${nameBase}` as keyof RepaymentSecurityFormRequest;
+      const pctField = `contractFee${nameBase}Percentage` as keyof RepaymentSecurityFormRequest;
 
       // console.log('feeField : ',feeField);
       // console.log('pctField : ',pctField);
@@ -193,13 +117,13 @@ export default function RepaymentSecurityForm ({ initialData, onSubmit, onCancel
         // Logika Lama: fund > 0 ? (val / fund) * 100 : 0
         // Logika Big.js: Mengonversi val ke string, dibagi fund, dikali 100
         newData[pctField] = fund.gt(0)
-          ? new Big(val.toFixed(maxPrecision)).div(fund).times(100).round(maxPrecisionPct).toString() // Menghasilkan string persentase (4 desimal)
+          ? toSafeBig(val.toFixed(maxPrecision)).div(fund).times(100).round(maxPrecisionPct).toString() // Menghasilkan string persentase (4 desimal)
           : "0";
           
       } else if (field === pctField) {
         // Logika Lama: (val / 100) * fund
         // Logika Big.js: Mengonversi val ke string, dibagi 100, dikali fund
-        newData[feeField] = new Big(val.toFixed(maxPrecisionPct)).div(100).times(fund).round(maxPrecision).toString(); // Menghasilkan string nominal uang (2 desimal)
+        newData[feeField] = toSafeBig(val.toFixed(maxPrecisionPct)).div(100).times(fund).round(maxPrecision).toString(); // Menghasilkan string nominal uang (2 desimal)
       }
 
       
@@ -228,7 +152,7 @@ const durationBig = new Big(duration.toString());
     newData.contractFeeMonitoring = feeMonitoring.round(maxPrecision).toString();
     newData.contractFeeMonitoringPercentage = pctMonthly.times(durationBig).round(maxPrecisionPct).toString();
   } else if (field === 'contractFeeMonitoringPercentageMonthly') {
-    const valBig = new Big(val.toString());
+    const valBig = toSafeBig(val.toString());
     const feeMonthly = valBig.div(100).times(fund);
     newData.contractFeeMonitoringMonthly = feeMonthly.round(maxPrecision).toString();
     newData.contractFeeMonitoring = feeMonthly.times(durationBig).round(maxPrecision).toString();
@@ -237,11 +161,11 @@ const durationBig = new Big(duration.toString());
 
   if (field === 'contractUnderlyingFund') {
     // Ambil persentase dari formData (string), ubah ke desimal (/100), lalu kalikan dengan fund
-    newData.contractFeeAdministration = new Big(formData.contractFeeAdministrationPercentage).div(100).times(fund).round(maxPrecision).toString()
-    newData.contractFeeProvision = new Big(formData.contractFeeProvisionPercentage).div(100).times(fund).round(maxPrecision).toString();
-    newData.contractFeePlatform = new Big(formData.contractFeePlatformPercentage).div(100).times(fund).round(maxPrecision).toString();
-    newData.contractFeeServicing = new Big(formData.contractFeeServicingPercentage).div(100).times(fund).round(maxPrecision).toString();
-    const feeMonitoringMonthly = new Big(formData.contractFeeMonitoringPercentageMonthly).div(100).times(fund);
+    newData.contractFeeAdministration = toSafeBig(formData.contractFeeAdministrationPercentage).div(100).times(fund).round(maxPrecision).toString()
+    newData.contractFeeProvision = toSafeBig(formData.contractFeeProvisionPercentage).div(100).times(fund).round(maxPrecision).toString();
+    newData.contractFeePlatform = toSafeBig(formData.contractFeePlatformPercentage).div(100).times(fund).round(maxPrecision).toString();
+    newData.contractFeeServicing = toSafeBig(formData.contractFeeServicingPercentage).div(100).times(fund).round(maxPrecision).toString();
+    const feeMonitoringMonthly = toSafeBig(formData.contractFeeMonitoringPercentageMonthly).div(100).times(fund);
     newData.contractFeeMonitoringMonthly = feeMonitoringMonthly.round(maxPrecision).toString();
     newData.contractFeeMonitoring = feeMonitoringMonthly.times(durationBig).round(maxPrecision).toString();
   }
@@ -270,7 +194,7 @@ const durationBig = new Big(duration.toString());
   };
 
   // VALIDASI FORM
-  const isError = (field: keyof RepaymentSecurityRequest) => {
+  const isError = (field: keyof RepaymentSecurityFormRequest) => {
     if (!showErrors) return false;
     const val = formData[field];
     if (val === '' || val === null || val === undefined) return true;
@@ -291,7 +215,7 @@ const durationBig = new Big(duration.toString());
     
     let isValid = true;
     for (const field of required) {
-      const val = formData[field as keyof RepaymentSecurityRequest];
+      const val = formData[field as keyof RepaymentSecurityFormRequest];
       if (val === '' || val === null || val === undefined) isValid = false;
       if (field === 'contractUnderlyingFund' && val === 0) isValid = false;
     }
@@ -316,7 +240,7 @@ const durationBig = new Big(duration.toString());
       <div className="shrink-0 border-b border-slate-200 px-5 py-4 bg-white flex items-center justify-between">
         <div>
           <h2 className="text-sm font-bold text-slate-800">
-            {isEditMode ? 'Ubah Repayment Security' : 'Tambah Repayment Security'}
+            {mode==='edit' ? 'Ubah Repayment Security' : 'Tambah Repayment Security'}
           </h2>
           <p className="text-[11px] text-slate-500 mt-0.5">
             Lengkapi data formulir di bawah ini dengan akurat.
@@ -351,6 +275,7 @@ const durationBig = new Big(duration.toString());
               hasError={isError('securityName')}
               value={selectedLookupId} 
               colSpan="2"
+              disabled={mode==='edit'}
               onChange={(e: any) => {
                 const valId = e.target.value;
                 setSelectedLookupId(valId);
@@ -390,9 +315,9 @@ const durationBig = new Big(duration.toString());
           </FormGroup>
 
           <FormGroup title="JANGKA WAKTU">
-            <Input type="date" label="Contract Start Date" hasError={isError('contractStartDate')} value={formData.contractStartDate} onChange={(e: any) => setFormData({...formData, contractStartDate: e.target.value})} />
-            <Input type="date" label="Contract End Date" hasError={isError('contractEndDate')} value={formData.contractEndDate} onChange={(e: any) => setFormData({...formData, contractEndDate: e.target.value})} />
-            <Input label="Contract Duration (Months)" disabled value={formData.contractDurationInMonths} />
+            <Input type="date" label="Contract Start Date" disabled={mode==='edit'} hasError={isError('contractStartDate')} value={formData.contractStartDate} onChange={(e: any) => setFormData({...formData, contractStartDate: e.target.value})} />
+            <Input type="date" label="Contract End Date" disabled={mode==='edit'} hasError={isError('contractEndDate')} value={formData.contractEndDate} onChange={(e: any) => setFormData({...formData, contractEndDate: e.target.value})} />
+            <Input label="Contract Duration (Months)" disabled value={formData.contractDurationInMonths === 0 ? "" : formData.contractDurationInMonths} />
             <Select label="Contract Status" hasError={isError('contractStatus')} value={formData.contractStatus} onChange={(e: any) => setFormData({...formData, contractStatus: e.target.value})}>
               <option value="">-- Pilih Contract Status --</option>
               <option value={ContractStatus.PERFORMING}>Performing</option>
@@ -404,49 +329,49 @@ const durationBig = new Big(duration.toString());
           </FormGroup>
 
           <FormGroup title="PENDANAAN, KUPON/DIVIDEDN, & FEE">
-            <NumberField label="Underlying Fund" hasError={isError('contractUnderlyingFund')} value={formData.contractUnderlyingFund} onValueChange={(v: number) => handleGroup3Change('contractUnderlyingFund', v)} colSpan="2"/>
+            <NumberField label="Underlying Fund" disabled={mode==='edit'} hasError={isError('contractUnderlyingFund')} value={formData.contractUnderlyingFund} onValueChange={(v: number) => handleGroup3Change('contractUnderlyingFund', v)} colSpan="2"/>
             
-            <NumberField label="Yield Rate Annually (%)" disabled={!isGroup3Active} value={formData.contractYieldRateAnnually} onValueChange={(v: number) => handleGroup3Change('contractYieldRateAnnually', v)} isPercentage={true}/>
+            <NumberField label="Yield Rate Annually (%)" disabled={!isGroup3Active || mode==='edit'} value={formData.contractYieldRateAnnually} onValueChange={(v: number) => handleGroup3Change('contractYieldRateAnnually', v)} isPercentage={true}/>
             <NumberField label="Yield Amount" disabled value={formData.contractYieldAmount} onValueChange={() => {}} />
 
-            <NumberField label="Fee Admin (%)" disabled={!isGroup3Active} value={formData.contractFeeAdministrationPercentage} onValueChange={(v: number) => handleGroup3Change('contractFeeAdministrationPercentage', v)} isPercentage={true}/>
-            <NumberField label="Fee Administration" disabled={!isGroup3Active} value={formData.contractFeeAdministration} onValueChange={(v: number) => handleGroup3Change('contractFeeAdministration', v)} />
+            <NumberField label="Fee Admin (%)" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeeAdministrationPercentage} onValueChange={(v: number) => handleGroup3Change('contractFeeAdministrationPercentage', v)} isPercentage={true}/>
+            <NumberField label="Fee Administration" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeeAdministration} onValueChange={(v: number) => handleGroup3Change('contractFeeAdministration', v)} />
            
-            <NumberField label="Fee Provision (%)" disabled={!isGroup3Active} value={formData.contractFeeProvisionPercentage} onValueChange={(v: number) => handleGroup3Change('contractFeeProvisionPercentage', v)} isPercentage={true}/>
-            <NumberField label="Fee Provision" disabled={!isGroup3Active} value={formData.contractFeeProvision} onValueChange={(v: number) => handleGroup3Change('contractFeeProvision', v)} />
+            <NumberField label="Fee Provision (%)" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeeProvisionPercentage} onValueChange={(v: number) => handleGroup3Change('contractFeeProvisionPercentage', v)} isPercentage={true}/>
+            <NumberField label="Fee Provision" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeeProvision} onValueChange={(v: number) => handleGroup3Change('contractFeeProvision', v)} />
            
-            <NumberField label="Fee Platform (%)" disabled={!isGroup3Active} value={formData.contractFeePlatformPercentage} onValueChange={(v: number) => handleGroup3Change('contractFeePlatformPercentage', v)} isPercentage={true}/>
+            <NumberField label="Fee Platform (%)" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeePlatformPercentage} onValueChange={(v: number) => handleGroup3Change('contractFeePlatformPercentage', v)} isPercentage={true}/>
             <NumberField label="Fee Platform" disabled={!isGroup3Active} value={formData.contractFeePlatform} onValueChange={(v: number) => handleGroup3Change('contractFeePlatform', v)} />
                       
-            <NumberField label="Fee Servicing (%)" disabled={!isGroup3Active} value={formData.contractFeeServicingPercentage} onValueChange={(v: number) => handleGroup3Change('contractFeeServicingPercentage', v)} isPercentage={true}/>
-            <NumberField label="Fee Servicing" disabled={!isGroup3Active} value={formData.contractFeeServicing} onValueChange={(v: number) => handleGroup3Change('contractFeeServicing', v)} />
+            <NumberField label="Fee Servicing (%)" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeeServicingPercentage} onValueChange={(v: number) => handleGroup3Change('contractFeeServicingPercentage', v)} isPercentage={true}/>
+            <NumberField label="Fee Servicing" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeeServicing} onValueChange={(v: number) => handleGroup3Change('contractFeeServicing', v)} />
             
-            <NumberField label="Fee Monitoring Monthly (%)" disabled={!isGroup3Active} value={formData.contractFeeMonitoringPercentageMonthly} onValueChange={(v: number) => handleGroup3Change('contractFeeMonitoringPercentageMonthly', v)} isPercentage={true}/>
-            <NumberField label="Fee Monitoring (Monthly)" disabled={!isGroup3Active} value={formData.contractFeeMonitoringMonthly} onValueChange={(v: number) => handleGroup3Change('contractFeeMonitoringMonthly', v)} />
+            <NumberField label="Fee Monitoring Monthly (%)" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeeMonitoringPercentageMonthly} onValueChange={(v: number) => handleGroup3Change('contractFeeMonitoringPercentageMonthly', v)} isPercentage={true}/>
+            <NumberField label="Fee Monitoring (Monthly)" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeeMonitoringMonthly} onValueChange={(v: number) => handleGroup3Change('contractFeeMonitoringMonthly', v)} />
                       
             <NumberField label="Total Fee Monitoring (%)" disabled value={formData.contractFeeMonitoringPercentage} onValueChange={() => {}} isPercentage={true}/>
             <NumberField label="Total Fee Monitoring" disabled value={formData.contractFeeMonitoring} onValueChange={() => {}} />
            </FormGroup>
 
           <FormGroup title="PAJAK DAN DENDA">
-            <Select label="Tax PPN (%)" isPercentage={true} hasError={isError('contractTaxPpn')} value={formData.contractTaxPpn} onChange={(e: any) => setFormData({...formData, contractTaxPpn: e.target.value})}>
+            <Select label="Tax PPN (%)" disabled={mode==='edit'} isPercentage={true} hasError={isError('contractTaxPpn')} value={formData.contractTaxPpn} onChange={(e: any) => setFormData({...formData, contractTaxPpn: e.target.value})}>
               <option value="">-- Pilih Tax PPN --</option>
               <option value="0.1">10</option>
               <option value="0.11">11</option>
               <option value="0.12">12</option>
             </Select>
-            <Select label="Tax Factor" hasError={isError('contractTaxFactor')} value={formData.contractTaxFactor} onChange={(e: any) => setFormData({...formData, contractTaxFactor: e.target.value})}>
+            <Select label="Tax Factor" disabled={mode==='edit'} hasError={isError('contractTaxFactor')} value={formData.contractTaxFactor} onChange={(e: any) => setFormData({...formData, contractTaxFactor: e.target.value})}>
               <option value="">-- Pilih Tax Factor --</option>
               <option value="1">1</option>
               <option value="0.916667">11/12</option>
             </Select>
-            <Select label="Tax Yield (%)" isPercentage={true} hasError={isError('contractTaxYield')} value={formData.contractTaxYield} onChange={(e: any) => setFormData({...formData, contractTaxYield: e.target.value})}>
+            <Select label="Tax Yield (%)" disabled={mode==='edit'} isPercentage={true} hasError={isError('contractTaxYield')} value={formData.contractTaxYield} onChange={(e: any) => setFormData({...formData, contractTaxYield: e.target.value})}>
               <option value="">-- Pilih Tax Yield --</option>
               <option value="0.1">10</option>
               <option value="0.15">15</option>
               <option value="0.2">20</option>
             </Select>
-            <Select label="Penalty Percentage Daily" hasError={isError('contractPenaltyPercentageDaily')} value={formData.contractPenaltyPercentageDaily} onChange={(e: any) => setFormData({...formData, contractPenaltyPercentageDaily: e.target.value})}>
+            <Select label="Penalty Percentage Daily" disabled={mode==='edit'} hasError={isError('contractPenaltyPercentageDaily')} value={formData.contractPenaltyPercentageDaily} onChange={(e: any) => setFormData({...formData, contractPenaltyPercentageDaily: e.target.value})}>
               <option value="">-- Pilih Penalty --</option>
               <option value="0.001">1/1000</option>
               <option value="0.002">2/1000</option>
@@ -483,7 +408,7 @@ const durationBig = new Big(duration.toString());
             
           </FormGroup>
 
-          {!isEditMode && (
+          {mode !== 'edit' && (
             <FormGroup title="BUAT JADWAL TAGIHAN?">
               {/* ---- BARIS 1: UPFRONT FEE ---- */}
               <Toggle 
@@ -542,7 +467,7 @@ const durationBig = new Big(duration.toString());
           disabled={isLoading}
           className="px-6 py-2 text-xs font-bold text-white bg-amber-600 rounded-md shadow hover:bg-amber-700 transition-colors disabled:opacity-50"
         >
-          {isLoading ? 'Menyimpan...' : (isEditMode ? 'Simpan Perubahan' : 'Tambahkan Data')}
+          {isLoading ? 'Menyimpan...' : (mode==='edit' ? 'Simpan Perubahan' : 'Tambahkan Data')}
         </button>
       </div>
 

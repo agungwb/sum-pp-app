@@ -4,18 +4,18 @@ import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { repaymentScheduleService } from '../../services/repaymentScheduleService';
 import { ScheduleType, InvoiceStatus } from '../../types/repayment-schedule.enum';
 import { RepaymentSecuritySummary } from '../../../repayment-security/types/repayment-security.type';
-import { RepaymentScheduleRequest } from '../../dtos/repayment-schedule.dto';
+import { RepaymentScheduleFormRequest } from '../../dtos/repayment-schedule.dto';
 
 interface CreateWrapperProps {
-  repaymentSecSummary: RepaymentSecuritySummary;
+  repaymentSecuritySummary: RepaymentSecuritySummary;
 }
 
-export default function RepaymentScheduleCreateWrapper({ repaymentSecSummary }: CreateWrapperProps) {
+export default function RepaymentScheduleCreateWrapper({ repaymentSecuritySummary }: CreateWrapperProps) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Buat default state yang aman untuk form baru agar kalkulasi Big.js tidak error (NaN)
-  const defaultInitialData: RepaymentScheduleRequest = {
+  const defaultInitialData: RepaymentScheduleFormRequest = {
     scheduleType: '', // Default value
     scheduleSequence: 0, // Default urutan pertama
     scheduleDate: '', 
@@ -45,8 +45,8 @@ export default function RepaymentScheduleCreateWrapper({ repaymentSecSummary }: 
     invoiceTotalWithTax: '0',
   };
 
-  const handleCreateSubmit = async (formData: RepaymentScheduleRequest) => {
-    if (!repaymentSecSummary.id) {
+  const handleCreateSubmit = async (formData: RepaymentScheduleFormRequest) => {
+    if (!repaymentSecuritySummary.id) {
       console.error("Error: repaymentSecurityId tidak ditemukan!");
       return;
     }
@@ -55,9 +55,9 @@ export default function RepaymentScheduleCreateWrapper({ repaymentSecSummary }: 
 
     try {
       // Memanggil fungsi POST API dari service 
-      await repaymentScheduleService.createSchedule(repaymentSecSummary.id, formData);
+      await repaymentScheduleService.createSchedule(repaymentSecuritySummary.id, formData);
       
-      console.log('Berhasil membuat jadwal baru untuk Security ID:', repaymentSecSummary.id);
+      console.log('Berhasil membuat jadwal baru untuk Security ID:', repaymentSecuritySummary.id);
       
       // Bisa tambahkan Toast Notification (Success) di sini
       closePanel(); // Langsung tutup side panel setelah berhasil
@@ -74,7 +74,7 @@ export default function RepaymentScheduleCreateWrapper({ repaymentSecSummary }: 
       <RepaymentScheduleForm 
         mode='add'
         initialData={defaultInitialData}
-        repaymentSecSummary={repaymentSecSummary}
+        repaymentSecuritySummary={repaymentSecuritySummary}
         onSubmit={handleCreateSubmit} 
         isLoading={isSubmitting} 
       />

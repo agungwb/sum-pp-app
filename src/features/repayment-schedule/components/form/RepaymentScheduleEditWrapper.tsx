@@ -2,34 +2,34 @@ import React, { useState, useEffect } from 'react';
 import RepaymentScheduleForm from './RepaymentScheduleForm';
 import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { repaymentScheduleService } from '../../services/repaymentScheduleService';
-import { RepaymentScheduleEditResponse, RepaymentScheduleRequest } from '../../dtos/repayment-schedule.dto';
+import { RepaymentScheduleEditFormResponse, RepaymentScheduleFormRequest } from '../../dtos/repayment-schedule.dto';
 import { RepaymentSecuritySummary } from '../../../repayment-security/types/repayment-security.type';
 import { InvoiceStatus, ScheduleType } from '../../types/repayment-schedule.enum';
 
 
 interface EditWrapperProps {
   scheduleId: string;
-  repaymentSecSummary: RepaymentSecuritySummary;
+  repaymentSecuritySummary: RepaymentSecuritySummary;
 }
 
-export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecSummary}: EditWrapperProps) {
+export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecuritySummary}: EditWrapperProps) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [initialData, setInitialData] = useState<RepaymentScheduleRequest | null>(null);
+  const [initialData, setInitialData] = useState<RepaymentScheduleFormRequest | null>(null);
   
   // State Modal Konfirmasi
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [pendingFormData, setPendingFormData] = useState<RepaymentScheduleRequest | null>(null);
+  const [pendingFormData, setPendingFormData] = useState<RepaymentScheduleFormRequest | null>(null);
 
   useEffect(() => {
     const fetchScheduleData = async () => {
       try {
-        const response = await repaymentScheduleService.getScheduleEditResponse(scheduleId);
+        const response = await repaymentScheduleService.getScheduleEditFormResponse(scheduleId);
         // Ngambil data.item berdasarkan format JSON yang lo kasih
         if (response.data && response.data.item) {
           
-          const repaymentScheduleRes: RepaymentScheduleEditResponse = response.data.item;
-          const currentData: RepaymentScheduleRequest = {
+          const repaymentScheduleRes: RepaymentScheduleEditFormResponse = response.data.item;
+          const currentData: RepaymentScheduleFormRequest = {
             scheduleType: repaymentScheduleRes?.scheduleType || '', // Default value
             scheduleSequence: repaymentScheduleRes?.scheduleSequence || 0, // Default urutan pertama
             scheduleDate: repaymentScheduleRes?.scheduleDate || '', 
@@ -72,7 +72,7 @@ export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecS
   }, [scheduleId]);
 
   // Ini cuma nge-trigger buka modal
-  const handleFormSubmitRequest = (formData: RepaymentScheduleRequest) => {
+  const handleFormSubmitRequest = (formData: RepaymentScheduleFormRequest) => {
     setPendingFormData(formData);
     setShowConfirmModal(true);
   };
@@ -102,7 +102,7 @@ export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecS
         <RepaymentScheduleForm 
           mode='edit'
           initialData={initialData}
-          repaymentSecSummary={repaymentSecSummary}
+          repaymentSecSummary={repaymentSecuritySummary}
           onSubmit={handleFormSubmitRequest} 
           isLoading={isSubmitting} 
         />

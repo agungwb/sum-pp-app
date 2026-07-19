@@ -1,3 +1,5 @@
+import { Big } from "big.js";
+
 /**
  * Mengubah nilai persentase dari Frontend (misal: 2 untuk 2%) 
  * menjadi nilai desimal database (misal: 0.02).
@@ -56,24 +58,49 @@ export function toDatabasePercentage(percentageValue: number | string | null | u
   }
 
   /**
- * Menghitung tax dan melakukan pembulatan
- * @param {number} baseValue - Nilai dasar (e.g., contractFeeAdministration)
- * @param {number} ppn - Tarif PPN (e.g., contractTaxPpn)
- * @param {number} factor - Faktor Pajak (e.g., contractTaxFactor)
- * @returns {number} Nilai tax yang sudah dibulatkan
- */
-export const calculateTax = (baseValue: number, tax: number | null, factor:number ) => {
-    const multiplier = Math.pow(10, 3);
-    const taxWithFactor = (tax || 0) * (factor || 0); 
-    const taxWithFactorRounded = Math.round((taxWithFactor || 0 + Number.EPSILON) * multiplier) / multiplier;
-    const rawTax = (baseValue || 0) * taxWithFactorRounded;
-    
-    // Opsi A: Pembulatan ke kelipatan 10 terdekat (Sesuai instruksi teks: "bulatan puluhan")
-    // 1.000.033,00 -> 1.000.030,00
-    return rawTax;
+   * Menghitung tax dan melakukan pembulatan
+   * @param {number | string} baseValue - Nilai dasar (e.g., contractFeeAdministration)
+   * @param {number | string | null} tax - Tarif PPN (e.g., contractTaxPpn)
+   * @param {number | string} factor - Faktor Pajak (e.g., contractTaxFactor)
+   * @returns {string | null} Nilai tax yang sudah dibulatkan, atau null jika input tidak valid
+   */
+
+  export const calculateTax = (
+    baseValue: number | string | Big | null,
+    tax: number | string | Big | null,
+    factor: number | string | Big | null
+  ): string | null => {
+    try {
+      // 1. Handling Null, Undefined, atau String Kosong
+      // Kita buat helper untuk mendeteksi nilai kosong, tapi angka 0 tetap diizinkan
+      const isInvalid = (val: any) => val === null || val === undefined || val === '';
+      
+      if (isInvalid(baseValue) || isInvalid(tax) || isInvalid(factor)) {
+        return null; // Silakan ganti dengan '-' jika itu lazim di UI Anda
+      }
   
-    // Opsi B: Pembulatan ke kelipatan 1.000 terdekat (Sesuai contoh kasus Anda: 1.000.033 -> 1.000.000)
-    // Jika ini yang dimaksud, ganti baris di atas dengan:
-    // return Math.round(rawTax / 1000) * 1000;
+      // 2. Konversi input ke Big.js instance
+      // Jika input berupa NaN atau string non-angka yang lolos pengecekan di atas,
+      // Big.js akan melempar error dan masuk ke blok catch.
+      const bBaseValue = new Big(baseValue!);
+      const bTax = new Big(tax!); 
+      const bFactor = new Big(factor!);
+  
+      // 3. Hitung taxWithFactor (tax * factor)
+      const taxWithFactor = bTax.times(bFactor);
+  
+      // 4. Pembulatan 3 angka di belakang koma 
+      const taxWithFactorRounded = taxWithFactor.round(3, 1);
+  
+      // 5. Hitung rawTax (baseValue * taxWithFactorRounded)
+      const rawTax = bBaseValue.times(taxWithFactorRounded);
+  
+      // 6. Output adalah string dengan round(2)
+      return rawTax.round(2).toString();
+  
+    } catch (error) {
+      // 7. Penanganan untuk input NaN atau nilai yang tidak valid bagi Big.js
+      return null;
+    }
   };
   

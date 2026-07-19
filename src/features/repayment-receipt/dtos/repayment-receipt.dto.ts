@@ -1,7 +1,7 @@
 // src/dtos/repayment-receipt.dto.ts
 import { ReceiptStatus, ReceiptMethod } from '../types/repayment-receipt.enum';
 
-export interface RepaymentReceiptRequest {
+export interface RepaymentReceiptFormRequest {
   repaymentScheduleId?: string;
   receiptDate: string;
   receiptStatus: ReceiptStatus | string;
@@ -32,7 +32,7 @@ export interface RepaymentReceiptRequest {
   receiptPenalty: string;
 }
 
-export interface RepaymentReceiptEditResponse extends RepaymentReceiptRequest {
+export interface RepaymentReceiptEditFormResponse extends RepaymentReceiptFormRequest {
   id: string;
   createdBy?: string;
   createdAt?: string;

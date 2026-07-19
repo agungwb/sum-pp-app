@@ -1,6 +1,6 @@
 import { InvoiceStatus, ScheduleType } from "../types/repayment-schedule.enum";
 
-export interface RepaymentScheduleItemDto {
+export interface RepaymentScheduleItemResponse {
     id: string;
     repaymentSecurityId: string;
     scheduleType: string; // Bisa Anda ganti dengan enum ScheduleType jika sudah di-import
@@ -41,7 +41,7 @@ export interface RepaymentScheduleItemDto {
     deletedAt: string | null;
   }
 
-  export interface RepaymentScheduleRequest {
+  export interface RepaymentScheduleFormRequest {
     repaymentSecurityId?: string;
     scheduleType?: ScheduleType | '';
     scheduleSequence?: number;
@@ -72,7 +72,7 @@ export interface RepaymentScheduleItemDto {
     invoiceTotalWithTax?: string;
   }
   
-  export interface RepaymentScheduleEditResponse extends RepaymentScheduleRequest {
+  export interface RepaymentScheduleEditFormResponse extends RepaymentScheduleFormRequest {
     id: string;
     createdBy?: string;
     createdAt?: string;
@@ -81,3 +81,42 @@ export interface RepaymentScheduleItemDto {
     deletedBy?: string | null;
     deletedAt?: string | null;
   }
+
+export interface RepaymentScheduleItemWithPenaltyResponse {
+    id: string;
+    repaymentSecurityId: string;
+    scheduleType: string;
+    scheduleSequence: number;
+    scheduleDate: string;
+    invoiceDate: string | null;
+    invoiceStatus: string | null;
+    invoiceFeeAdministration: string;
+    invoiceFeeAdministrationTax: string;
+    invoiceFeeProvision: string;
+    invoiceFeeProvisionTax: string;
+    invoiceFeePlatform: string;
+    invoiceFeePlatformTax: string;
+    invoiceFeeServicing: string;
+    invoiceFeeServicingTax: string;
+    invoiceFeeMonitoring: string;
+    invoiceFeeMonitoringTax: string;
+    invoiceFeeOther: string;
+    invoiceFeeOtherTax: string;
+    invoiceSinkingFund: string;
+    invoiceYield: string;
+    invoiceActualLoss: string;
+    invoicePenalty: string;
+    invoiceTotal: string;
+    invoiceTotalTax: string;
+    invoiceTotalWithTax: string;
+
+    // ==========================================
+    // Outstanding & Penalty Calculators 
+    // ==========================================
+    
+    outstandingTotalWithTax: string;
+    penaltySettled: string;
+    penaltyIsSettled: boolean;
+    penaltyCalculated: string;
+}
+

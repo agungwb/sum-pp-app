@@ -42,15 +42,16 @@ export interface SecurityCollateralDetailResponse {
     deletedBy: string | null;
     deletedAt: string | null;
   }
+  
 
-export interface SecurityCollateralRequest {
+export interface SecurityCollateralFormRequest {
     repaymentSecurityId: string;
     collateralType: string;
     collateralDescription: string;
     collateralValueEstimated: string;
     collateralStatus: string;
     executionTime: string | null;
-    documentUrl: string | File; 
+    documentUrl: File | null; 
     
     // Group Dokumen
     verificationDocumentStatus: string;
@@ -77,7 +78,7 @@ export interface SecurityCollateralRequest {
     verificationValueAt: string;
   }
   
-  export interface SecurityCollateralResponse {
+  export interface SecurityCollateralEditFormResponse {
     id: string;
     repaymentSecurityId: string;
     collateralType: string;

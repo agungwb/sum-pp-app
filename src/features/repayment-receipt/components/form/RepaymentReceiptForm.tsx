@@ -3,23 +3,23 @@ import React, { useState, useEffect } from 'react';
 import Big from 'big.js';
 import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { NumericInput, FormGroup, ConfirmModal, Select, Input, NumberField, Toggle } from '../../../../components/forms/index';
-import { RepaymentReceiptRequest } from '../../dtos/repayment-receipt.dto';
+import { RepaymentReceiptFormRequest } from '../../dtos/repayment-receipt.dto';
 import { ReceiptMethod, ReceiptStatus, ScheduleType } from '../../types/repayment-receipt.enum';
 import { InvoiceSummary } from '../../../repayment-schedule/types/repayment-schedule.type';
 import { formatDateForInput } from '../../../../utils/date';
 
 interface Props {
    mode: 'add' | 'edit';
-  initialData: RepaymentReceiptRequest;
+  initialData: RepaymentReceiptFormRequest;
   invoiceSummary: InvoiceSummary; // Dummy/Target Schedule data for waterfall limits
   scheduleType: ScheduleType;
-  onSubmit: (data: RepaymentReceiptRequest) => void;
+  onSubmit: (data: RepaymentReceiptFormRequest) => void;
   isLoading?: boolean;
 }
 
 export default function RepaymentReceiptForm({ mode, initialData, invoiceSummary, scheduleType, onSubmit, isLoading }: Props) {
   const { closePanel } = useSidePanel();
-  const [formData, setFormData] = useState<RepaymentReceiptRequest>(initialData);
+  const [formData, setFormData] = useState<RepaymentReceiptFormRequest>(initialData);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -99,7 +99,7 @@ export default function RepaymentReceiptForm({ mode, initialData, invoiceSummary
     setFormData(newForm);
   };
 
-  const handleManualNumber = (name: keyof RepaymentReceiptRequest) => (val: number) => {
+  const handleManualNumber = (name: keyof RepaymentReceiptFormRequest) => (val: number) => {
     setFormData({ ...formData, [name]: val.toString() });
   };
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SecurityCollateralRequest } from '../../dtos/security-collateral.dto';
+import { SecurityCollateralFormRequest } from '../../dtos/security-collateral.dto';
 import { CollateralType, CollateralStatus, VerificationStatus } from '../../types/security-collateral.enum';
 
 // Sesuaikan path import komponen UI di bawah ini dengan struktur folder Anda
@@ -10,17 +10,17 @@ type TabType = 'document' | 'legal' | 'field' | 'value';
 
 interface SecurityCollateralFormProps {
   mode: 'add' | 'edit';
-  initialData: SecurityCollateralRequest;
-  onSubmit: (data: SecurityCollateralRequest) => void;
+  initialData: SecurityCollateralFormRequest;
+  onSubmit: (data: SecurityCollateralFormRequest) => void;
   isLoading?: boolean;
 }
 
 export default function SecurityCollateralForm({ mode, initialData, onSubmit, isLoading }: SecurityCollateralFormProps) {
-  const [formData, setFormData] = useState<SecurityCollateralRequest>(initialData);
+  const [formData, setFormData] = useState<SecurityCollateralFormRequest>(initialData);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('document'); // State untuk fitur Tab
 
-  const handleChange = (field: keyof SecurityCollateralRequest, value: any) => {
+  const handleChange = (field: keyof SecurityCollateralFormRequest, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -46,20 +46,20 @@ export default function SecurityCollateralForm({ mode, initialData, onSubmit, is
       <Input 
         label="Waktu Verifikasi" 
         type="date" 
-        value={formatDateForInput(formData[`verification${group}At` as keyof SecurityCollateralRequest] || '')} 
-        onChange={(e: any) => handleChange(`verification${group}At` as keyof SecurityCollateralRequest, e.target.value)} 
+        value={formatDateForInput(formData[`verification${group}At` as keyof SecurityCollateralFormRequest] || '')} 
+        onChange={(e: any) => handleChange(`verification${group}At` as keyof SecurityCollateralFormRequest, e.target.value)} 
       />
   
       <Input 
         label="Diverifikasi Oleh" 
         type="text" 
-        value={formData[`verification${group}By` as keyof SecurityCollateralRequest] || ''} 
-        onChange={(e: any) => handleChange(`verification${group}By` as keyof SecurityCollateralRequest, e.target.value)} 
+        value={formData[`verification${group}By` as keyof SecurityCollateralFormRequest] || ''} 
+        onChange={(e: any) => handleChange(`verification${group}By` as keyof SecurityCollateralFormRequest, e.target.value)} 
       />
       <Select 
         label="Status Verifikasi" 
-        value={formData[`verification${group}Status` as keyof SecurityCollateralRequest] || ''} 
-        onChange={(e: any) => handleChange(`verification${group}Status` as keyof SecurityCollateralRequest, e.target.value)}
+        value={formData[`verification${group}Status` as keyof SecurityCollateralFormRequest] || ''} 
+        onChange={(e: any) => handleChange(`verification${group}Status` as keyof SecurityCollateralFormRequest, e.target.value)}
       >
         <option value="">-- Pilih Status --</option>
         {Object.values(VerificationStatus).map(status => (
@@ -70,8 +70,8 @@ export default function SecurityCollateralForm({ mode, initialData, onSubmit, is
       <TextArea 
         label="Catatan" 
         colSpan="1" 
-        value={formData[`verification${group}Notes` as keyof SecurityCollateralRequest] || ''} 
-        onChange={(e: any) => handleChange(`verification${group}Notes` as keyof SecurityCollateralRequest, e.target.value)} 
+        value={formData[`verification${group}Notes` as keyof SecurityCollateralFormRequest] || ''} 
+        onChange={(e: any) => handleChange(`verification${group}Notes` as keyof SecurityCollateralFormRequest, e.target.value)} 
       />
     </FormGroup>
   );
@@ -105,18 +105,28 @@ export default function SecurityCollateralForm({ mode, initialData, onSubmit, is
             </Select>
 
             <div className="col-span-2">
-               <label className="block text-[10px] font-semibold text-slate-600 mb-1">Upload Dokumen (PDF/JPG/PNG)</label>
-               <input 
-                  type="file" 
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={handleFileChange}
-                  className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 border border-slate-200 rounded-md"
-               />
-               {typeof formData.documentUrl === 'string' && formData.documentUrl !== '' && (
-                 <p className="text-[10px] text-blue-500 mt-1 hover:underline">
-                   <a href={formData.documentUrl} target="_blank" rel="noreferrer">Lihat dokumen saat ini</a>
-                 </p>
-               )}
+              <label className="block text-[10px] font-semibold text-slate-600 mb-1">
+                Upload Dokumen (PDF/JPG/PNG)
+              </label>
+              {/* <input 
+                type="file" 
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => setFormData({
+                  ...formData, 
+                  documentUrl: e.target.files ? e.target.files[0] : null
+                })}
+                className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 border border-slate-200 rounded-md"
+              /> */}
+              
+              {/* Link ini akan tetap muncul jika formData.documentUrl berisi string URL (biasanya saat mode Edit mengambil dari database) */}
+              {typeof formData.documentUrl === 'string' && formData.documentUrl !== '' && (
+                <p className="text-[10px] text-blue-500 mt-1 hover:underline">
+                  <a href={formData.documentUrl} target="_blank" rel="noreferrer">
+                    Lihat dokumen saat ini
+                  </a>
+                </p>
+              )}
+               
             </div>
             
             <TextArea 

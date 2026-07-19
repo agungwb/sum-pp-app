@@ -81,7 +81,19 @@ export default function RepaymentDashboardPage() {
   return (
     // Mengubah mt-16 menjadi mt-24 agar tidak tertutup fixed navbar
     // FIX: Menghapus h-full dan menambahkan pb-12 agar scroll halaman berjalan natural dan tidak terpotong
-    <div className="mt-24 w-full pb-12">
+    <div className="mt-20 w-full p-4">
+       {/* =====================================================================
+          HEADER / TITLE PAGE
+      ====================================================================== */}
+
+      <div className="ml-2">
+        <div className="flex flex-col justify-between items-start mb-2">
+          <div>
+            <h1 className="text-xl font-bold text-slate-800 tracking-tight">DASHBOARD PEMBAYARAN PENERBIT</h1>
+          </div>
+          <p className="text-xs text-slate-400 mt-0.5">Dashboard untuk memantau kewajiban pembayaran penerbit</p>
+        </div>
+      </div>
       
       {/* FILTER SECTION */}
       <div className="mb-6 flex flex-col md:flex-row gap-4 bg-white p-4 rounded-xl border border-slate-200/60 shadow-sm items-center">

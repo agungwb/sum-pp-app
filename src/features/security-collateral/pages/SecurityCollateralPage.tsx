@@ -6,6 +6,12 @@ import SecurityCollateralEditWrapper from '../components/form/SecurityCollateral
 import { useGlobalMode } from '../../../contexts/GlobalModeContext';
 import { useSidePanel } from '../../../contexts/SidePanelContext';
 import { securityCollateralService } from '../services/securityCollateralService';
+import { SecurityCollateralItem } from '../types/security-collateral.type';
+import { repaymentSecurityService } from '../../repayment-security/services/repaymentSecurityService';
+import { SecurityCollateralDetailResponse } from '../dtos/security-collateral.dto';
+import { RepaymentSecuritySummaryResponse } from '../../repayment-security/dtos/repayment-security.dto';
+import { formatRupiah } from '../../../utils/currency';
+import { getStatusStyle } from '../../../utils/styles';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
@@ -13,22 +19,14 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000
 
 export default function SecurityCollateralPage() {
   const { repaymentId } = useParams<{ repaymentId: string }>();
-  const [collaterals, setCollaterals] = useState<CollateralItem[]>([]);
+  const [ collaterals, setCollaterals] = useState<SecurityCollateralDetailResponse[]>([]);
+  const [repaymentSecSummary, setRepaymentSecSummary] = useState<RepaymentSecuritySummaryResponse>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isEditMode } = useGlobalMode();
   const { openPanel } = useSidePanel();
 
-  // Data header (Dummy/Placeholder) untuk info Security
-  const headerData = {
-    investee_id: 'dummy-investee-id',
-    investee_name: 'PT. Solusi Teknologi Digital',
-    investee_name_legal: 'PT. Solusi Teknologi Digital Tbk',
-    security_id: 'dummy-security-id',
-    security_name: 'Sukuk Ijarah Proyek Ekspansi IT',
-    security_type: 'SUKUK',
-    contract_status: 'PERFORMING', // Tambahan info contract_status dummy
-  };
+
 
   // useEffect(() => {
   //   const fetchCollaterals = async () => {
@@ -59,38 +57,30 @@ export default function SecurityCollateralPage() {
         setIsLoading(true);
         setError(null);
 
-        // Memanggil service terpisah
-        const response = await securityCollateralService.getCollateralsBySecurityId(repaymentId);
 
-        // Berdasarkan api.type.ts Anda, struktur array data dibungkus di dalam response.data.items
-        if (response && response.data) {
-          setCollaterals(response.data.items || []);
-        } else {
-          setError(response.message || 'Gagal memuat data collateral.');
-        }
+        const [securityCollateralsRes, repaymentSecSummaryRes, ] = await Promise.all([
+          securityCollateralService.getCollateralsByRepaymentSecurityId(repaymentId),
+          repaymentSecurityService.getRepaymentSecuritySummary(repaymentId),
+        ]);
+
+
+        setCollaterals(securityCollateralsRes.data.items || []);
+        setRepaymentSecSummary(repaymentSecSummaryRes.data.item);
+      
       } catch (err: any) {
         console.error('Error fetching collateral:', err);
-        setError(err.response?.data?.message || 'Terjadi kesalahan saat memproses data dari server.');
+        setError(err.securityCollateralsRes?.data?.message || 'Terjadi kesalahan saat memproses data dari server.');
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchCollateralData();
   }, [repaymentId]);
 
   if (isLoading) return <div className="p-6 text-slate-500 font-medium">Memuat data agunan...</div>;
   if (error) return <div className="p-6 text-red-500 font-medium">Error: {error}</div>;
 
-  const formatRupiah = (num: number) => {
-    return new Intl.NumberFormat('id-ID', { 
-        style: 'currency', 
-        currency: 'IDR', 
-        minimumFractionDigits: 0 
-    }).format(num);
-  };
-
-  const renderBadge = (status: string) => {
+  const renderBadge = (status: string | null) => {
     switch (status) {
       case 'VERIFIED':
         return <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-700">VERIFIED</span>;
@@ -107,7 +97,7 @@ export default function SecurityCollateralPage() {
   };
 
   // Helper render item verifikasi di dalam grid 2x2
-  const renderGridVerificationItem = (label: string, status: string, notes: string | null) => (
+  const renderGridVerificationItem = (label: string | null, status: string | null, notes: string | null) => (
     <div className="flex flex-col border border-slate-100 p-1.5 rounded bg-slate-50/50">
       <div className="flex justify-between items-center gap-1.5 text-[10px]">
         <span className="text-slate-500 font-medium">{label}</span>
@@ -141,26 +131,26 @@ export default function SecurityCollateralPage() {
           <div className="grid grid-cols-[2fr_3fr_1fr_1fr] gap-4">
             <div className="flex flex-col">
               <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Nama Penerbit</span>
-              <span className="text-xs font-bold text-slate-800">{headerData.investee_name}</span>
-              <span className="text-[10px] text-slate-500 mt-0.5">{headerData.investee_name_legal}</span>
+              <span className="text-xs font-bold text-slate-800">{repaymentSecSummary.investeeName}</span>
+              <span className="text-[10px] text-slate-500 mt-0.5">{repaymentSecSummary.investeeName}</span>
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Nama Efek</span>
-              <span className="text-xs font-bold text-slate-800">{headerData.security_name}</span>
+              <span className="text-xs font-bold text-slate-800">{repaymentSecSummary.securityName}</span>
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Tipe Efek</span>
               <div className="mt-0.5">
-                <span className={`px-2 py-1 rounded text-[10px] font-bold ${headerData.security_type === 'SUKUK' ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'}`}>
-                  {headerData.security_type}
+                <span className={`px-2 py-1 rounded text-[10px] font-bold ${repaymentSecSummary.securityType === 'SUKUK' ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'}`}>
+                  {repaymentSecSummary.securityType}
                 </span>
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Status Kontrak</span>
+              <span className={`text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1`}>Status Kontrak</span>
               <div className="mt-0.5">
-                <span className="px-2 py-1 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                  {headerData.contract_status}
+                <span className={`px-2 py-1 rounded text-[10px] font-bold ${getStatusStyle(repaymentSecSummary.contractStatus)}`}>
+                  {repaymentSecSummary.contractStatus}
                 </span>
               </div>
             </div>
@@ -263,7 +253,7 @@ export default function SecurityCollateralPage() {
                         {isEditMode && (
                             <td className="py-3 px-3 text-left align-top">
                                 <button 
-                                  onClick={() => openPanel(<SecurityCollateralEditWrapper collateralId={item.id}/>)}
+                                  onClick={() => openPanel('Ubah Kolateral', <SecurityCollateralEditWrapper collateralId={item.id} repaymentSecuritySummary={repaymentSecSummary}/>)}
                                   className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -292,7 +282,7 @@ export default function SecurityCollateralPage() {
                         <td colSpan={5} className="p-0">
                         <button
                             type="button"
-                            onClick={() => openPanel(<SecurityCollateralCreateWrapper repaymentId={repaymentId}/>)}
+                            onClick={() => openPanel(<SecurityCollateralCreateWrapper repaymentSecuritySummary={repaymentSecSummary}/>)}
                             className="w-full flex items-center justify-center gap-2 py-4 border-2 m-4 border-dashed rounded-lg border-amber-200 bg-amber-50/40 hover:bg-amber-100 text-amber-700 transition-all focus:outline-none focus:ring-2 focus:ring-amber-200 group"
                           >
                             <div className="bg-amber-100 p-1 rounded-full group-hover:bg-amber-500 transition-colors">

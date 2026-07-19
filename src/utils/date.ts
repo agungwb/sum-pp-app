@@ -1,17 +1,47 @@
 export const formatDateForInput = (dateInput: any): string => {
-    if (!dateInput) return '';
-    const d = new Date(dateInput);
-    // Memastikan objek date valid sebelum diformat
-    if (isNaN(d.getTime())) return ''; 
-    
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}`; // Menghasilkan format YYYY-MM-DD secara aman
-  };
+  if (!dateInput) return '';
+  const d = new Date(dateInput);
+  // Memastikan objek date valid sebelum diformat
+  if (isNaN(d.getTime())) return ''; 
+  
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`; // Menghasilkan format YYYY-MM-DD secara aman
+};
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '';
-    return dateString.split('T')[0];
-  };
+// export const formatDate = (dateString?: string) => {
+//     if (!dateString) return '';
+//     return dateString.split('T')[0];
+//   };
+
+export const formatDate = (dateStr?: string | null) => {
+  // 1. Handle null, undefined, atau empty string ("")
+  if (!dateStr) return "-";
+
+  const date = new Date(dateStr);
+
+  // 2. Handle jika string yang dikirim bukan format tanggal yang valid (mencegah "Invalid Date")
+  if (isNaN(date.getTime())) return "-";
+
+  return new Intl.DateTimeFormat('id-ID', { 
+    day: '2-digit', 
+    month: 'short', 
+    year: 'numeric' 
+  }).format(date);
+};
+
+export const formatCompactDate = (dateStr?: string | null) => {
+  if (!dateStr) return "-";
+
+  const date = new Date(dateStr);
+
+  if (isNaN(date.getTime())) return "-";
+
+  return new Intl.DateTimeFormat('id-ID', { 
+    day: 'numeric', 
+    month: 'short', 
+    year: '2-digit' 
+  }).format(date);
+};

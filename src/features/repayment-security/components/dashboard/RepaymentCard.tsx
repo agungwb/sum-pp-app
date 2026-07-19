@@ -1,13 +1,19 @@
 // src/components/repayment/RepaymentCard.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { RepaymentSecurity, ContractStatus, SecurityType } from '../types/repayment';
 import {useSidePanel} from '../../../../contexts/SidePanelContext';
 import RepaymentSecurityCreateWrapper from '../form/RepaymentSecurityCreateWrapper';
 import { toDatabasePercentage, toFrontendPercentage } from '../../../../utils/finance';
+import { formatRupiah } from '../../../../utils/currency';
+import { formatCompactDate } from '../../../../utils/date';
+import ContractStatusBadge from '../badge/ContractStatusBadge';
+import SecurityTypeBadge from '../badge/SecurityTypeBadge';
+import { SecurityType, ContractStatus } from '../../types/repayment-security.enum';
+import { RepaymentSecurity } from '../../types/repayment-security.type';
+import { RepaymentSecurityCardResponse } from '../../dtos/repayment-security.dto';
 
 interface Props {
-  data: RepaymentSecurity | null;
+  data: RepaymentSecurityCardResponse | null;
   url: string;
 }
 
@@ -52,44 +58,12 @@ export default function RepaymentCard({ data, url }: Props) {
   }
   // Formatters
 
-  const formatRupiah = (numStr: string) => {
-    const num = parseFloat(numStr);
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(num);
-  };
 
-  const formatCompactDate = (dateStr: string) => {
-    return new Intl.DateTimeFormat('id-ID', { 
-      day: 'numeric', month: 'short', year: '2-digit' 
-    }).format(new Date(dateStr));
-  };
 
-  // Status Styling Generator
-  const getStatusStyle = (status: ContractStatus) => {
-    const styles: Record<ContractStatus, string> = {
-      PERFORMING: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      OBSERVATION: 'bg-amber-50 text-amber-700 border-amber-300',
-      SUBSTANDARD: 'bg-orange-50 text-orange-700 border-orange-300',
-      DOUBTFUL: 'bg-rose-50 text-rose-700 border-rose-300',
-      DEFAULTED: 'bg-slate-800 text-white border-slate-700',
-      FINISHED: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-    };
-    return styles[status] || 'bg-slate-100 text-slate-600 border-slate-200';
-  };
 
-  // Type Styling
-  const getTypeStyle = (type: SecurityType) => {
-    return type === 'Sukuk' 
-      ? 'bg-blue-50 text-blue-600 border-blue-200' 
-      : 'bg-rose-50 text-rose-600 border-rose-200';
-  };
 
   // Dummy Progress Calculation
-  const sinkingFundProgress = Math.round(100 * Number(data.sumReceiptSinkingFund) / Number(data.contractUnderlyingFund)); 
+  const sinkingFundProgress = Math.round(100 * Number(data.receiptSinkingFundSum) / Number(data.contractUnderlyingFund)); 
   const circleRadius = 14; 
   const circleCircumference = 2 * Math.PI * circleRadius;
   const strokeDashoffset = circleCircumference - (sinkingFundProgress / 100) * circleCircumference;
@@ -103,21 +77,18 @@ export default function RepaymentCard({ data, url }: Props) {
           <h3 className="text-[13px] font-bold text-slate-700 leading-tight truncate group-hover:text-slate-900 transition-colors" title={data.investeeName}>
             {data.investeeName}
           </h3>
-          <p className="text-[9px] text-slate-400 mt-0.5 font-medium truncate" title={data.investeeNameLegal}>
+          <p className="text-[10px] text-slate-400 mt-0.5 font-medium truncate" title={data.investeeNameLegal}>
             {data.investeeNameLegal}
           </p>
         </div>
-        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md border-2 tracking-wide whitespace-nowrap uppercase shrink-0 ${getStatusStyle(data.contractStatus)}`}>
-          {data.contractStatus}
-        </span>
+        <ContractStatusBadge status={data.contractStatus} size='sm' />
+       
       </div>
 
       {/* BODY: Security Info & Financials */}
       <div className="space-y-2 grow">
         <div className="flex items-center gap-1.5">
-          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border-2 shrink-0 ${getTypeStyle(data.securityType)}`}>
-            {data.securityType}
-          </span>
+          <SecurityTypeBadge type={data.securityType} size='sm' /> 
           <span className="text-[11px] font-semibold text-slate-600 truncate" title={data.securityName}>
             {data.securityName}
           </span>
@@ -132,7 +103,7 @@ export default function RepaymentCard({ data, url }: Props) {
           </div>
           <div>
             <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
-              {data.securityType === 'Sukuk' ? 'Kupon' : 'Div. Yield'}
+              {data.securityType === SecurityType.SUKUK ? 'Kupon' : 'Dividen'}
             </p>
             <p className="text-[13px] font-bold text-emerald-600 font-mono mt-0.5">
               {toFrontendPercentage(data.contractYieldRateAnnually)}% <span className="text-[9px] text-slate-400 font-sans font-medium">p.a.</span>
@@ -164,7 +135,7 @@ export default function RepaymentCard({ data, url }: Props) {
         {/* Kolom 2: Doughnut Chart Centered */}
         <div className="flex flex-col items-center justify-between shrink-0">
           <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1">
-            Dana Masuk
+            Sinking Fund
           </span>
           <div className="relative w-8 h-8 flex items-center justify-center">
             <svg className="w-8 h-8 transform -rotate-90">

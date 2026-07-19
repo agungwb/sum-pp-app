@@ -5,11 +5,11 @@ import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { repaymentReceiptService } from '../../services/repaymentReceiptService';
 import { ScheduleType } from '../../types/repayment-receipt.enum';
 import { InvoiceSummary } from '../../../repayment-schedule/types/repayment-schedule.type';
-import { RepaymentReceiptEditResponse, RepaymentReceiptRequest } from '../../dtos/repayment-receipt.dto';
+import { RepaymentReceiptEditFormResponse, RepaymentReceiptFormRequest } from '../../dtos/repayment-receipt.dto';
 
 interface Props {
   receiptId: string; // Mengikuti instruksi GET & PUT URL kamu
-  initialData: RepaymentReceiptRequest;
+  initialData: RepaymentReceiptFormRequest;
   invoiceSummary: InvoiceSummary;
 }
 
@@ -26,11 +26,11 @@ export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary 
         if (response.data && response.data.item) {
           
           
-          const repaymentReceiptRes: RepaymentReceiptEditResponse = response.data.item;
+          const repaymentReceiptRes: RepaymentReceiptEditFormResponse = response.data.item;
 
           console.log('[RepaymentReceiptEditWrapper] repaymentReceiptRes.receiptDate : ',repaymentReceiptRes.receiptDate);
 
-          const currentData: RepaymentReceiptRequest = {
+          const currentData: RepaymentReceiptFormRequest = {
             receiptDate: repaymentReceiptRes?.receiptDate || '',
             receiptStatus: repaymentReceiptRes?.receiptStatus || '',
             receiptMethod: repaymentReceiptRes?.receiptMethod || '',

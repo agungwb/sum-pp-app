@@ -2,11 +2,74 @@ import React, { useState } from 'react';
 import RepaymentSecurityForm from './RepaymentSecurityForm';
 import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { repaymentSecurityService } from '../../services/repaymentSecurityService'; // Sesuaikan path
+import { RepaymentSecurityFormRequest } from '../../dtos/repayment-security.dto';
+
+
 
 export default function RepaymentSecurityCreateWrapper() {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
+
+  const repaymentSecurityData : RepaymentSecurityFormRequest = {
+    id: null, // hidden, null/0 if add mode
+    investeeId: '',
+    investeeName: '',
+    investeeNameLegal: '',
+    investeeIconUrl: '',
+    securityId: '',
+    securityType: '',
+    securityName: '',
+    securityCode: '',
+    securitySeries: null,
+    securityPhase: null,
+    securitySequence: null,
+    
+    contractStartDate: '',
+    contractEndDate: '',
+    contractDurationInMonths: 0,
+    contractStatus: '',
+    
+    contractUnderlyingFund: '',
+    contractYieldAmount: '',
+    contractYieldRateAnnually: '',
+    contractFeeAdministration: '',
+    contractFeeAdministrationPercentage: '',
+    contractFeeProvision: '',
+    contractFeeProvisionPercentage: '',
+    contractFeePlatform: '',
+    contractFeePlatformPercentage: '',
+    contractFeeServicing: '',
+    contractFeeServicingPercentage: '',
+    contractFeeMonitoringMonthly: '',
+    contractFeeMonitoringPercentageMonthly: '',
+    contractFeeMonitoring: '',
+    contractFeeMonitoringPercentage: '',
+
+    contractTaxPpn: '',
+    contractTaxFactor: '',
+    contractTaxYield: '',
+    contractPenaltyPercentageDaily: '',
+    
+    contractEscrowBank: '',
+    contractEscrowAccount: '',
+    contractVaBank: '',
+    contractVaNumber: '',
+    contractContactEmail: '',
+    contractContactWhatsapp: '',
+    
+    contractDocumentTitle: '',
+    contractDocumentNumber: '',
+    contractDocumentUrl: null,
+    restructOrder: 0,
+    restructParentSecurityId: null,
+    restructOriginalSecurityId:  null,
+
+    scheduleUpfrontFlag: true,
+    scheduleUpfrontDate: '',
+    scheduleInstallmentFlag: true,
+    scheduleInstallmentDate: '',
+  }
 
   const handleCreateSubmit = async (formData: any) => {
     setIsSubmitting(true);
@@ -36,8 +99,11 @@ export default function RepaymentSecurityCreateWrapper() {
         </div>
       )}
       <RepaymentSecurityForm 
+        mode='add'
+        initialData={repaymentSecurityData}
         onSubmit={handleCreateSubmit} 
-        isSubmitting={isSubmitting} 
+        onCancel={closePanel} 
+        isLoading={isSubmitting}
       />
     </div>
   );

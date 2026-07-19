@@ -3,7 +3,7 @@ import Big from 'big.js';
 import { useSidePanel } from '../../../../contexts/SidePanelContext';
 
 import { ScheduleType, InvoiceStatus } from '../../types/repayment-schedule.enum';
-import { RepaymentScheduleRequest } from '../../dtos/repayment-schedule.dto';
+import { RepaymentScheduleFormRequest } from '../../dtos/repayment-schedule.dto';
 import { RepaymentSecuritySummary } from '../../../repayment-security/types/repayment-security.type';
 
 // Import Custom Components
@@ -12,17 +12,17 @@ import { formatDateForInput } from '../../../../utils/date';
 
 interface RepaymentScheduleFormProps {
   mode: 'add' | 'edit';
-  initialData: RepaymentScheduleRequest;
-  repaymentSecSummary: RepaymentSecuritySummary;
-  onSubmit: (data: RepaymentScheduleRequest) => void;
+  initialData: RepaymentScheduleFormRequest;
+  repaymentSecuritySummary: RepaymentSecuritySummary;
+  onSubmit: (data: RepaymentScheduleFormRequest) => void;
   isLoading?: boolean;
 }
 
 const TAX_RATE = new Big('0.11'); // 11% PPN (Sesuaikan jika 12%)
 
-export default function RepaymentScheduleForm({ mode, initialData, repaymentSecSummary, onSubmit, isLoading }: RepaymentScheduleFormProps) {
+export default function RepaymentScheduleForm({ mode, initialData, repaymentSecuritySummary, onSubmit, isLoading }: RepaymentScheduleFormProps) {
   const { closePanel } = useSidePanel();
-  const [formData, setFormData] = useState<RepaymentScheduleRequest>(initialData);
+  const [formData, setFormData] = useState<RepaymentScheduleFormRequest>(initialData);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   // Cek apakah modenya edit, field-field tertentu akan di disable
@@ -37,7 +37,7 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecS
     }
   };
 
-  const calculateTaxesAndTotals = (data: RepaymentScheduleRequest): RepaymentScheduleRequest => {
+  const calculateTaxesAndTotals = (data: RepaymentScheduleFormRequest): RepaymentScheduleFormRequest => {
     const feeAdmin = safeBig(data.invoiceFeeAdministration);
     const feeProv = safeBig(data.invoiceFeeProvision);
     const feePlat = safeBig(data.invoiceFeePlatform);
@@ -109,7 +109,7 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecS
     }
   };
 
-  const handleNumericChange = (name: keyof RepaymentScheduleRequest, val: number) => {
+  const handleNumericChange = (name: keyof RepaymentScheduleFormRequest, val: number) => {
     const newData = { ...formData, [name]: val.toString() };
     setFormData(calculateTaxesAndTotals(newData));
   };

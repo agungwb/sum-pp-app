@@ -91,11 +91,11 @@ export default function LoginPage() {
           
           {/* Poin 1: Title "SUM.PP" besar dan Subtitle sistem di bagian atas monitor */}
           <div className="w-full max-w-md text-left mb-6 px-1">
-            <h2 className="text-6xl font-black tracking-tight text-white">
-              SUM<span className="text-rose-500">.</span>PP
+            <h2 className="text-8xl font-black tracking-tight text-white">
+              SUM<span className="text-rose-500">.</span>
             </h2>
-            <p className="mt-2 text-lg font-medium text-slate-400">
-              Sistem Untuk Monitoring - Pembayaran Penerbit
+            <p className="mt-2 text-xl font-medium text-slate-400">
+              Sistem Untuk Monitoring.
             </p>
             <div className="w-10 h-0.5 bg-rose-500/60 mt-3 rounded-full"></div>
           </div>
@@ -117,7 +117,7 @@ export default function LoginPage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-500 animate-ping"></span>
-                <span className="text-[10px] tracking-wider text-rose-400 font-mono font-bold uppercase">LIVE CASHFLOW</span>
+                <span className="text-[10px] tracking-wider text-rose-400 font-mono font-bold uppercase">SISTEM MONITORING</span>
               </div>
             </div>
 
@@ -126,7 +126,7 @@ export default function LoginPage() {
               
               {/* Widget 1: Grafik Arus Kas Naik Turun */}
               <div className="col-span-2 rounded-xl bg-[#060a1f] p-3 border border-slate-800 flex flex-col justify-between h-32 relative">
-                <span className="text-[10px] font-bold text-slate-400 font-mono">INVESTEE PAYOUT RATIO</span>
+                <span className="text-[10px] font-bold text-slate-400 font-mono">PERTUMBUHAN PENERBIT</span>
                 
                 {/* Batang Grafik Bergerak */}
                 <div className="flex items-end justify-between gap-2 h-16 px-2">
@@ -143,16 +143,16 @@ export default function LoginPage() {
                 <div className="relative flex items-center justify-center">
                   {/* Lingkaran Berputar / Pulse */}
                   <div className="w-12 h-12 rounded-full border-2 border-dashed border-rose-500 animate-spin" style={{ animationDuration: '8s' }}></div>
-                  <span className="absolute text-[11px] font-mono font-bold text-white">94.2%</span>
+                  <span className="absolute text-[11px] font-mono font-bold text-white"> 12%</span>
                 </div>
-                <span className="text-[9px] mt-2 font-semibold text-slate-500 uppercase tracking-tight">Sukuk Yield</span>
+                <span className="text-[9px] mt-2 font-semibold text-slate-500 uppercase tracking-tight">Sukuk Rate</span>
               </div>
 
               {/* Widget 3: Garis Tracking Arus Kas Panjang */}
               <div className="col-span-3 rounded-xl bg-[#060a1f] p-3 border border-slate-800 flex items-center justify-between h-14">
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-bold text-slate-500 uppercase">Total Distribution</span>
-                  <span className="text-xs font-mono font-bold text-white mt-0.5">Rp 4.82B</span>
+                  <span className="text-[9px] font-bold text-slate-500 uppercase">Target Distribusi</span>
+                  <span className="text-xs font-mono font-bold text-white mt-0.5">Rp 100.000.000.000,00</span>
                 </div>
                 {/* Mini Waveform SVG */}
                 <svg className="w-24 h-8 text-rose-500" viewBox="0 0 100 30" fill="none">

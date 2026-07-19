@@ -6,7 +6,17 @@ export enum ContractStatus {
     DEFAULTED = 'DEFAULTED',
   }
   
-  export enum SecurityType {
-    SUKUK = 'SUKUK',
-    SAHAM = 'SAHAM',
-  }
+export enum SecurityType {
+  SUKUK = 'SUKUK',
+  SAHAM = 'SAHAM',
+}
+
+export enum InvoiceStatus {
+  DRAFT = 'DRAFT',
+  UNPAID = 'UNPAID',
+  PARTIAL = 'PARTIAL',
+  PAID = 'PAID',
+  OVERDUE = 'OVERDUE',
+  VOID = 'VOID',
+  WRITE_OFF = 'WRITE_OFF',
+}

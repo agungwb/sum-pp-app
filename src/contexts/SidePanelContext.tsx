@@ -6,7 +6,7 @@ interface SidePanelState {
   isOpen: boolean;
   isMinimized: boolean;
   content: ReactNode | null;
-  openPanel: (title: string, content: ReactNode) => void;
+  openPanel: (content: ReactNode) => void;
   closePanel: () => void;
   minimizePanel: () => void;
   restorePanel: () => void;

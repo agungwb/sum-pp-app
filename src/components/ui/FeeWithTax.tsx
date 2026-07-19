@@ -1,44 +1,84 @@
 // src/components/ui/FeeWithTax.tsx
 import React from 'react';
+// Pastikan import Big jika tipenya digunakan
+// import Big from 'big.js'; 
 import { formatRupiah } from '../../utils/currency';
 
-type FeeSize = 'small' | 'small-bold' | 'medium' | 'medium-bold' | 'large' | 'large-bold';
+type FeeSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+type FeeWeight = 'light' | 'normal' | 'semibold' | 'bold' | 'extrabold';
+type FeeColor = 'black' | 'green' | 'blue' | 'red' | 'yellow'; // 👈 Tipe baru untuk warna
 
 interface FeeWithTaxProps {
-  base: number;
-  tax?: number;
-  size?: FeeSize; // 👈 Prop baru untuk mode
+  base: number | string | Big;
+  tax?: number | string | Big;
+  size?: FeeSize; 
+  weight?: FeeWeight;
+  color?: FeeColor; // 👈 Prop baru untuk menentukan warna
+  withRp?: boolean;
 }
 
 const sizeFee: Record<FeeSize, string> = {
-    'small': 'text-[10px] font-normal',
-    'small-bold': 'text-[10px] font-semibold',
-    'medium': 'text-[12px] font-normal',
-    'medium-bold': 'text-[12px] font-semibold',
-    'large': 'text-[14px] font-medium',
-    'large-bold': 'text-[14px] font-bold ',
-  };
+  'xs': 'text-[8px]',
+  'sm': 'text-[10px]',
+  'md': 'text-[12px]',
+  'lg': 'text-[14px]',
+  'xl': 'text-[16px]',
+};
 
 const sizeTax: Record<FeeSize, string> = {
-    'small': 'text-[9px] font-normal',
-    'small-bold': 'text-[9px] font-semibold',
-    'medium': 'text-[10px] font-normal',
-    'medium-bold': 'text-[10px] font-semibold',
-    'large': 'text-[10px] font-medium',
-    'large-bold': 'text-[10px] font-bold ',
-  };
+  'xs': 'text-[8px] font-light',
+  'sm': 'text-[9px] font-normal',
+  'md': 'text-[10px] font-normal',
+  'lg': 'text-[10px] font-medium',
+  'xl': 'text-[11px] font-medium',
+};
 
-export default function FeeWithTax({ base, tax = 0, size = 'medium' }: FeeWithTaxProps) {
+const sizeWeight: Record<FeeWeight, string> = {
+  'light': 'font-light',
+  'normal': 'font-normal',
+  'semibold': 'font-semibold',
+  'bold': 'font-bold',
+  'extrabold': 'font-extrabold',
+};
+
+// 👇 Mapping warna untuk nilai base (utama)
+const colorBaseMap: Record<FeeColor, string> = {
+  black: 'text-slate-800',
+  green: 'text-emerald-700', 
+  blue: 'text-blue-700',
+  red: 'text-rose-700',
+  yellow: 'text-amber-600',
+};
+
+// 👇 Mapping warna untuk nilai pajak (tax)
+const colorTaxMap: Record<FeeColor, string> = {
+  black: 'text-gray-500',
+  green: 'text-emerald-500',
+  blue: 'text-blue-500',
+  red: 'text-rose-500',
+  yellow: 'text-amber-500',
+};
+
+export default function FeeWithTax({ 
+  base, 
+  tax = 0, 
+  size = 'md', 
+  weight = 'normal', 
+  color = 'black', // 👈 Set default warna ke 'black'
+  withRp = true
+}: FeeWithTaxProps) {
   return (
     <div className="flex flex-col items-end">
-      <span className={`font-mono font-bold text-[12px] text-slate-800 ${sizeFee[size]}`}>
-        {formatRupiah(base)}
+      {/* 👈 Implementasi mapping colorBaseMap pada class base */}
+      <span className={`font-mono ${colorBaseMap[color]} ${sizeFee[size]} ${sizeWeight[weight]}`}>
+        {formatRupiah(base, withRp)}
       </span>
       
       {/* Defensive rendering: Hanya render tax jika ada nilainya dan di atas 0 */}
       {tax != null && tax > 0 && (
-        <span className={`absolute fixed mt-4 text-blue-600 font-sans tracking-tight ${sizeTax[size]}`}>
-          +tax {formatRupiah(tax)}
+        // 👈 Implementasi mapping colorTaxMap pada class tax
+        <span className={`absolute fixed mt-4 ${colorTaxMap[color]} font-sans tracking-tight ${sizeTax[size]}`}>
+          +ppn {formatRupiah(tax, withRp)}
         </span>
       )}
     </div>

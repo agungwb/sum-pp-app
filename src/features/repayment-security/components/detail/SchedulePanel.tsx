@@ -1,0 +1,362 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom'; // 👈 Ubah import Link jadi useNavigate
+import RepaymentScheduleCreateWrapper from '../../../repayment-schedule/components/form/RepaymentScheduleCreateWrapper';
+import RepaymentScheduleEditWrapper from '../../../repayment-schedule/components/form/RepaymentScheduleEditWrapper';
+import FeeWithTax from '../../../../components/ui/FeeWithTax';
+import { RepaymentScheduleItemResponse, RepaymentScheduleItemWithPenaltyResponse } from '../../../repayment-schedule/dtos/repayment-schedule.dto';
+import InvoiceStatusBadge from '../badge/InvoiceStatusBadge';
+import { formatDate } from '../../../../utils/date';
+import { formatRupiah } from '../../../../utils/currency';
+import { RepaymentSecurityDetailResponse, RepaymentSecurityWithSinkingFundResponse } from '../../dtos/repayment-security.dto';
+import Penalty from '../../../../components/ui/Penalty';
+import { ScheduleType } from '../../../repayment-schedule/types/repayment-schedule.enum';
+import { Big } from 'big.js';
+import { SafeEditModal } from '../../../../components/modals/SafeEditModal';
+import { toSafeBig } from '../../../../utils/number';
+
+interface RepaymentScheduleTableProps {
+  repaymentSecurity: RepaymentSecurityWithSinkingFundResponse;
+  repaymentSchedules: RepaymentScheduleItemWithPenaltyResponse[];
+  penaltyPercentageDaily: number | string;
+  isEditMode: boolean;
+  openPanel: (title: string, component: React.ReactNode) => void;
+}
+
+export interface ValidationItem {
+  label: string;
+  isMatched: boolean;
+}
+
+/**
+ * Helper untuk menghasilkan pesan error dinamis berdasarkan item yang tidak sesuai (false).
+ * Contoh output: "Sinking Fund, Yield Amount, dan Monitoring Fee tidak sesuai"
+ */
+export const generateMismatchMessage = (items: ValidationItem[]): string => {
+  // Filter hanya item yang isMatched-nya false, lalu ambil label-nya saja
+  const mismatchedItems = items
+    .filter(item => !item.isMatched)
+    .map(item => item.label);
+
+  if (mismatchedItems.length === 0) {
+    return ''; // Semua sesuai, tidak ada pesan error
+  }
+
+  if (mismatchedItems.length === 1) {
+    return `${mismatchedItems[0]} tidak sesuai`;
+  }
+
+  if (mismatchedItems.length === 2) {
+    return `${mismatchedItems[0]} dan ${mismatchedItems[1]} tidak sesuai`;
+  }
+
+  // Jika lebih dari 2, gunakan koma dan "dan" di akhir
+  const lastItem = mismatchedItems.pop();
+  return `${mismatchedItems.join(', ')}, dan ${lastItem} tidak sesuai`;
+};
+
+export default function SchedulePanel({
+  repaymentSecurity,
+  repaymentSchedules,
+  isEditMode,
+  openPanel,
+}: RepaymentScheduleTableProps) {
+  
+  const navigate = useNavigate(); // 👈 Inisialisasi hook navigasi
+
+
+  const upfrontFee = repaymentSchedules
+    .filter(s => s.scheduleType === ScheduleType.UPFRONT)
+    .sort((a, b) => a.scheduleSequence - b.scheduleSequence)
+    .map(row => ({
+      id: row.id,
+      no: row.scheduleSequence,
+      dueDate: row.scheduleDate || '',
+      status: row.invoiceStatus || null,
+      admin: toSafeBig(row.invoiceFeeAdministration),
+      adminTax: toSafeBig(row.invoiceFeeAdministrationTax),
+      provision: toSafeBig(row.invoiceFeeProvision),
+      provisionTax: toSafeBig(row.invoiceFeeProvisionTax),
+      platform: toSafeBig(row.invoiceFeePlatform),
+      platformTax: toSafeBig(row.invoiceFeePlatformTax),
+      servicing: toSafeBig(row.invoiceFeeServicing),
+      servicingTax: toSafeBig(row.invoiceFeeServicingTax),
+      baseTotal: toSafeBig(row.invoiceTotal),
+      taxTotal: toSafeBig(row.invoiceTotalTax),
+      grandTotal: toSafeBig(row.invoiceTotalWithTax),
+    }));
+
+  const installmentsFee = repaymentSchedules
+    .filter(s => s.scheduleType === ScheduleType.INSTALLMENT)
+    .sort((a, b) => a.scheduleSequence - b.scheduleSequence)
+    .map(row => ({
+      id: row.id,
+      month: row.scheduleSequence,
+      dueDate: row.scheduleDate || '',
+      sf: toSafeBig(row.invoiceSinkingFund),
+      yield: toSafeBig(row.invoiceYield),
+      monitoring: toSafeBig(row.invoiceFeeMonitoring),
+      taxMonitoring: toSafeBig(row.invoiceFeeMonitoringTax),
+      baseTotal: toSafeBig(row.invoiceTotal),
+      taxTotal: toSafeBig(row.invoiceTotalTax),
+      grandTotal: toSafeBig(row.invoiceTotalWithTax),
+      outstanding: toSafeBig(row.outstandingTotalWithTax),
+      penaltySettled: toSafeBig(row.penaltySettled),
+      penaltyIsSettled: row.penaltyIsSettled,
+      penaltyCalculated: toSafeBig(row.penaltyCalculated),
+      status: row.invoiceStatus
+    }));
+
+    const totalSinkingFund = installmentsFee.reduce((sum, row) => sum.plus(row.sf), Big(0));
+    const totalYieldAmount = installmentsFee.reduce((sum, row) => sum.plus(row.yield), Big(0));
+    const totalMonitoringFee = installmentsFee.reduce((sum, row) => sum.plus(row.monitoring), Big(0));
+
+    const precision = 0;
+
+    const isSinkingFundMatched = totalSinkingFund.round(precision).eq(toSafeBig(repaymentSecurity.contractUnderlyingFund).round(precision));
+    const isYieldAmountMatched = totalYieldAmount.round(precision).eq(toSafeBig(repaymentSecurity.contractYieldAmount));
+    const isMonitoringFeeMatched = totalMonitoringFee.round(precision).eq(toSafeBig(repaymentSecurity.contractFeeMonitoring));
+
+    const totalCorrectionMessage = generateMismatchMessage([
+      { label: 'Sinking Fund', isMatched: isSinkingFundMatched },
+      { label: 'Yield Amount', isMatched: isYieldAmountMatched },
+      { label: 'Monitoring Fee', isMatched: isMonitoringFeeMatched },
+    ]);
+
+    // const totalTaxMonitoring = installmentsFee.reduce((sum, row) => sum.plus(row.taxMonitoring), Big(0));
+    // const totalGrandTotal = installmentsFee.reduce((sum, row) => sum.plus(row.grandTotal), Big(0));
+
+
+  
+
+  // Fungsi navigasi yang akan dipasang ke 3 kolom pertama
+  const handleRowClick = (id: string) => {
+    navigate(`schedules/${id}`);
+  };
+
+  // Helper Classes: 
+  // - tdLeftClickable: Meniru Sidebar.tsx (border-l-2 dengan warna rose-500) + cursor pointer
+  // - tdClickable: Kolom ke-2 & ke-3 yang bisa diklik
+  // - tdMid: Kolom ke-4 sampai sebelum akhir, tidak bisa diklik tapi tetep dapet efek hover bg-slate-50
+  const tdLeftClickable = "border-b border-slate-100 border-l-2 border-l-transparent group-hover:border-l-rose-500 group-hover:bg-slate-50 transition-all duration-150 cursor-pointer";
+  const tdClickable = "border-b border-slate-100 group-hover:bg-slate-50 transition-all duration-150 cursor-pointer";
+  const tdMid = "border-b border-slate-100 group-hover:bg-slate-50 transition-all duration-150";
+  const tdEdit = "border-b border-slate-100 bg-white group-hover:bg-white"; // Kolom edit tetap netral putih
+
+  return (
+      <div className="bg-white rounded-xl border-2 border-slate-200 shadow-sm overflow-hidden">
+        {/* ROW 1: Tabel Upfront Fee */}
+        <div className="p-5 border-b-2 border-slate-200">
+          <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-3 border-b-2 border-slate-100 pb-2">Pembayaran di Awal (UPFRONT FEE)</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full table-fixed text-left border-collapse whitespace-nowrap">
+              <thead>
+                <tr className="bg-slate-50 text-[9px] text-slate-500 uppercase tracking-wider border-y border-slate-200">
+                  <th className="w-12 py-2 px-2 font-bold text-center">No</th>
+                  <th className="w-16 py-2 px-2 font-bold text-center">Status</th>
+                  <th className="w-28 py-2 px-2 font-bold text-left">Jatuh Tempo</th>
+                  <th className="py-2 px-2 font-bold text-right">Biaya Admin</th>
+                  <th className="py-2 px-2 font-bold text-right">Provisi</th>
+                  <th className="py-2 px-2 font-bold text-right">Biaya Platform</th>
+                  <th className="py-2 px-2 font-bold text-right">Biaya Service</th>
+                  <th className="py-2 px-2 font-bold text-right">Biaya Total</th>
+                  <th className="py-2 px-2 font-bold text-right">Total + Pajak</th>
+                  {isEditMode && <th className="w-12 py-2 px-2 font-bold text-left">Edit</th>}
+                </tr>
+              </thead>
+              <tbody className="text-[11px] font-medium text-slate-700">
+                {!upfrontFee || upfrontFee.length === 0 ? (
+                  <tr>
+                    <td colSpan={isEditMode ? 10 : 9} className="py-4 text-center italic text-slate-400 border-b border-slate-100">
+                      -- Data tidak tersedia --
+                    </td>
+                  </tr>
+                ) : (
+                  upfrontFee.map((uf) => {
+                    return (
+                    <tr className="group">
+                        {/* 3 KOLOM AWAL - CLICKABLE */}
+                        <td className={`py-2 px-2 text-center font-mono font-normal}`} onClick={() => handleRowClick(uf.id)}>
+                          <div className={`rounded-md ${tdLeftClickable}`}>
+                            {`${uf.no})`}
+                          </div>
+                        </td>
+                        <td className={`py-2 px-2 text-left align-top ${tdClickable}`} onClick={() => handleRowClick(uf.id)}>
+                          <InvoiceStatusBadge status={uf.status} size='sm' />
+                        </td>
+                        <td className={`py-2 px-2 align-top ${tdClickable}`} onClick={() => handleRowClick(uf.id)}>
+                          <div className="inline-flex items-center gap-1.5 font-normal text-slate-600 group-hover:font-semibold transition-colors">
+                            {formatDate(uf.dueDate)}
+                            <svg className="w-3.5 h-3.5 text-slate-600 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
+                        </td>
+
+                        {/* SISA KOLOM - NOT CLICKABLE */}
+                        <td className={`py-2 px-2 text-right align-top ${tdMid}`}>
+                          <FeeWithTax base={uf.admin.gt(0)?uf.admin:'-'} tax={uf.adminTax} withRp={false} />
+                        </td>
+                        <td className={`py-2 px-2 text-right align-top ${tdMid}`}>
+                          <FeeWithTax base={uf.provision.gt(0)?uf.provision:'-'} tax={uf.provisionTax} withRp={false} />
+                        </td>
+                        <td className={`py-2 px-2 text-right align-top ${tdMid}`}>
+                          <FeeWithTax base={uf.platform.gt(0)?uf.platform:'-'} tax={uf.platformTax} withRp={false} />
+                        </td>
+                        <td className={`py-2 px-2 text-right align-top ${tdMid}`}>
+                          <FeeWithTax base={uf.servicing.gt(0)?uf.servicing:'-'} tax={uf.servicingTax} withRp={false} />
+                        </td>
+                        <td className={`py-2 px-2 text-right align-top ${tdMid}`}>
+                          <FeeWithTax base={uf.baseTotal} tax={uf.taxTotal} withRp={false} />
+                        </td>
+                        <td className={`py-2 px-2 text-right align-top ${tdMid}`}>
+                          <FeeWithTax base={uf.grandTotal} weight="bold" withRp={false} />
+                        </td>
+                        
+                        {isEditMode && (
+                          <td className={`py-2 px-2 text-left align-top ${tdEdit}`}>
+                              <button className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                  </svg>
+                              </button>
+                          </td>
+                        )}
+                      </tr>
+                    );})
+                  
+                )}
+              </tbody> 
+              
+            </table>
+          </div>
+        </div>
+
+        {/* ROW 2: Tabel Jadwal Bulanan */}
+        <div className="p-5">
+          <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-3 border-b-2 border-slate-100 pb-2">Pembayaran Cicilan Bulanan (INSTALLMENT)</h3>
+          <div className="overflow-x-auto">
+          <table className="w-full table-fixed text-left border-collapse whitespace-nowrap">
+            <thead>
+                <tr className="bg-slate-50 text-[9px] text-slate-500 uppercase tracking-wider border-y border-slate-200">
+                  <th className="w-12 py-2 px-2 font-bold text-center">No</th>
+                  <th className="w-16 py-2 px-2 font-bold text-center">Status</th>
+                  <th className="w-28 py-2 px-2 font-bold text-left">Jatuh Tempo</th>
+                  <th className="py-2 px-2 font-bold text-right">Cicilan Sinking Fund</th>
+                  <th className="py-2 px-2 font-bold text-right">Yield</th>
+                  <th className="py-2 px-2 font-bold text-right">Biaya Pemantauan</th>
+                  <th className="py-2 px-2 font-bold text-right">Total</th>
+                  <th className="py-2 px-2 font-bold text-right">Total + Pajak</th>
+                  <th className="py-2 px-2 font-bold text-right">Denda</th>
+                  {isEditMode && <th className="w-12 py-2 px-2 font-bold text-left">Edit</th>}
+                </tr>
+            </thead>
+            <tbody className="text-[11px] font-medium text-slate-700">
+                {!installmentsFee || installmentsFee.length === 0 ? (
+                  <tr>
+                    <td colSpan={isEditMode ? 10 : 9} className="py-4 text-center italic text-slate-400 border-b border-slate-100">
+                      -- Data tidak tersedia --
+                    </td>
+                  </tr>
+                ) : (
+                  installmentsFee.map((sch) => {
+                  return (
+                      <tr key={sch.month} className="group align-top">
+                        {/* 3 KOLOM AWAL - CLICKABLE */}
+                        <td className={`py-2 px-2 text-center font-mono font-normal}`} onClick={() => handleRowClick(sch.id)}>
+                          <div className={`rounded-md ${tdLeftClickable}`}>
+                            {`${sch.month})`}
+                          </div>
+                        </td>
+                        <td className={`py-2 px-2 text-center font-mono font-bold ${tdClickable}`} onClick={() => handleRowClick(sch.id)}>
+                          <InvoiceStatusBadge status={sch.status} size='sm'/>
+                        </td>
+                        <td className={`py-2 px-2 align-top ${tdClickable}`} onClick={() => handleRowClick(sch.id)}>
+                          <div className="inline-flex items-center gap-1.5 font-normal text-slate-600 group-hover:font-semibold transition-colors">
+                            {`${formatDate(sch.dueDate)}`}
+                            <svg className="w-3.5 h-3.5 text-slate-600 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
+                        </td>
+
+                        {/* SISA KOLOM - NOT CLICKABLE */}
+                        <td className={`py-2 px-2 text-right relative ${tdMid}`}>
+                            <FeeWithTax base={sch.sf} withRp={false} />
+                        </td>
+                        <td className={`py-2 px-2 text-right relative ${tdMid}`}>
+                            <FeeWithTax base={sch.yield} withRp={false} />
+                        </td>
+                        <td className={`py-2 px-2 text-right relative ${tdMid}`}>
+                            <FeeWithTax base={sch.monitoring} tax={sch.taxMonitoring} withRp={false} />
+                        </td>
+                        <td className={`py-2 px-2 text-right relative ${tdMid}`}>
+                            <FeeWithTax base={sch.baseTotal} tax={sch.taxTotal} withRp={false} />
+                        </td>
+                        <td className={`py-2 px-2 text-right relative ${tdMid}`}>
+                            <FeeWithTax base={sch.grandTotal} weight="bold" withRp={false} />
+                        </td>
+                        <td className={`py-2 px-2 text-right font-mono font-bold text-xs text-slate-800 ${tdMid}`}>
+                            <Penalty penalty={sch.penaltyCalculated} mode={sch.penaltyIsSettled ? 'settled' : 'ongoing'} withRp={false} />
+                        </td>
+                        
+                        {isEditMode && (
+                        <td className={`py-2 px-2 text-left align-top ${tdEdit}`}>
+                            <button 
+                            onClick={() => openPanel(<RepaymentScheduleEditWrapper scheduleId={sch.id} repaymentSecSummary={repaymentSecuritySummary}/>)}
+                            className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                        </td>)}
+                      </tr>
+                  );
+                  })
+                )}
+            </tbody>
+            <tfoot>
+                <tr className="bg-slate-50 text-slate-500 tracking-wider border-y border-slate-200">
+                  <td className="w-28 py-2 px-2 pr-10 font-bold text-right text-[14px] " colSpan={3}>TOTAL</td>
+                  <td className="py-2 px-2 font-bold text-right">
+                    <FeeWithTax base={totalSinkingFund} weight='bold' withRp={false} color={`${isSinkingFundMatched?'black':'red'}`}/>
+                  </td>
+                  <td className="py-2 px-2 font-bold text-right">
+                    <FeeWithTax base={totalYieldAmount} weight='bold' withRp={false} color={`${isYieldAmountMatched?'black':'red'}`}/>
+                  </td>
+                  <td className="py-2 px-2 font-bold text-right">
+                    <FeeWithTax base={totalMonitoringFee} weight='bold' withRp={false} color={`${isMonitoringFeeMatched?'black':'red'}`}/>
+                  </td>
+                  <td className="py-2 px-2 pl-10 text-left text-[9px] text-rose-500" colSpan={3}>
+                      {totalCorrectionMessage}
+                  </td>
+                 
+
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        {/* ROW 3: Buat Jadwal Pembayaran Baru (Khusus Edit Mode) */}
+        {isEditMode && (
+          <div className="p-5 border-t-2 border-slate-200">
+            <button
+              type="button"
+              onClick={() => openPanel(<RepaymentScheduleCreateWrapper />)}
+              className="flex items-center justify-center w-full py-4 border-2 border-dashed border-amber-300 bg-amber-50/50 text-amber-700 rounded-xl hover:bg-amber-100 hover:border-amber-400 transition-all group focus:outline-none focus:ring-2 focus:ring-amber-200"
+            >
+              <div className="flex items-center gap-2">
+                <div className="bg-amber-200/60 p-1.5 rounded-full group-hover:bg-amber-300 transition-colors">
+                  <svg className="w-4 h-4 text-amber-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </div>
+                <span className="text-[11px] font-bold tracking-wider">Buat Tagihan Baru</span>
+              </div>
+            </button>
+          </div>
+        )}
+
+      </div>
+  );
+}

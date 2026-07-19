@@ -5,7 +5,7 @@ import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { repaymentReceiptService } from '../../services/repaymentReceiptService';
 import { ReceiptMethod, ReceiptStatus, ScheduleType } from '../../types/repayment-receipt.enum';
 import { InvoiceSummary } from '../../../repayment-schedule/types/repayment-schedule.type';
-import { RepaymentReceiptRequest } from '../../dtos/repayment-receipt.dto';
+import { RepaymentReceiptFormRequest } from '../../dtos/repayment-receipt.dto';
 
 interface Props {
   invoiceSummary: InvoiceSummary;
@@ -16,7 +16,7 @@ export default function RepaymentReceiptCreateWrapper({invoiceSummary }: Props) 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // DUMMY Data Tagihan untuk Acuan Kalkulasi (Anggap data dari Schedule API)
-  const initialData: RepaymentReceiptRequest = {
+  const initialData: RepaymentReceiptFormRequest = {
     receiptDate: '',
     receiptStatus: ReceiptStatus.SUCCESS,
     receiptMethod: ReceiptMethod.BANK_TRANSFER,

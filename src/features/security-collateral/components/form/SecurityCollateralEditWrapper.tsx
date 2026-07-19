@@ -1,27 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import SecurityCollateralForm from './SecurityCollateralForm';
 import { securityCollateralService } from '../../services/securityCollateralService';
-import { SecurityCollateralRequest } from '../../dtos/security-collateral.dto';
+import { SecurityCollateralFormRequest } from '../../dtos/security-collateral.dto';
 import { useSidePanel } from '../../../../contexts/SidePanelContext'; // Sesuaikan
+import { RepaymentSecuritySummaryResponse } from '../../../repayment-security/dtos/repayment-security.dto';
 
 interface EditWrapperProps {
-  securityId: string;
   collateralId: string;
+  repaymentSecuritySummary: RepaymentSecuritySummaryResponse;
 }
 
-export default function SecurityCollateralEditWrapper({ securityId, collateralId }: EditWrapperProps) {
+export default function SecurityCollateralEditWrapper({ collateralId, repaymentSecuritySummary }: EditWrapperProps) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [initialData, setInitialData] = useState<SecurityCollateralRequest | null>(null);
+  const [initialData, setInitialData] = useState<SecurityCollateralFormRequest | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await securityCollateralService.getCollateralsBySecurityId(securityId);
+        const response = await securityCollateralService.getCollateralsByRepaymentSecurityId(repaymentSecuritySummary.id);
         const collateralData = response.data.items.find(item => item.id === collateralId);
         
         if (collateralData) {
-          const requestData: SecurityCollateralRequest = {
+          const requestData: SecurityCollateralFormRequest = {
             repaymentSecurityId: collateralData.repaymentSecurityId,
             collateralType: collateralData.collateralType || 'INVOICE',
             collateralDescription: collateralData.collateralDescription || '',
@@ -57,9 +58,9 @@ export default function SecurityCollateralEditWrapper({ securityId, collateralId
       }
     };
     fetchData();
-  }, [securityId, collateralId]);
+  }, [repaymentSecuritySummary.id, collateralId]);
 
-  const handleEditSubmit = async (formData: SecurityCollateralRequest) => {
+  const handleEditSubmit = async (formData: SecurityCollateralFormRequest) => {
     setIsSubmitting(true);
     try {
       await securityCollateralService.updateCollateral(collateralId, formData);
