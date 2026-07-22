@@ -13,13 +13,14 @@ import { ScheduleType } from '../../../repayment-schedule/types/repayment-schedu
 import { Big } from 'big.js';
 import { SafeEditModal } from '../../../../components/modals/SafeEditModal';
 import { toSafeBig } from '../../../../utils/number';
+import { repaymentSecurityService } from '../../services/repaymentSecurityService';
 
 interface RepaymentScheduleTableProps {
   repaymentSecurity: RepaymentSecurityWithSinkingFundResponse;
   repaymentSchedules: RepaymentScheduleItemWithPenaltyResponse[];
   penaltyPercentageDaily: number | string;
   isEditMode: boolean;
-  openPanel: (title: string, component: React.ReactNode) => void;
+  openPanel: (component: React.ReactNode) => void;
 }
 
 export interface ValidationItem {
@@ -63,6 +64,7 @@ export default function SchedulePanel({
   
   const navigate = useNavigate(); // 👈 Inisialisasi hook navigasi
 
+  
 
   const upfrontFee = repaymentSchedules
     .filter(s => s.scheduleType === ScheduleType.UPFRONT)
@@ -106,6 +108,39 @@ export default function SchedulePanel({
       status: row.invoiceStatus
     }));
 
+    const lastUpfront = repaymentSchedules
+    .filter(s => s.scheduleType === ScheduleType.UPFRONT)
+    .sort((a, b) => a.scheduleSequence - b.scheduleSequence)
+    .map(row => ({
+      id: row.id,
+      repaymentSecurityId: row.repaymentSecurityId,
+      scheduleType: row.scheduleType || null,
+      scheduleSequence: row.scheduleSequence,
+      scheduleDate: row.scheduleDate || '',
+      invoiceNumber: row.invoiceNumber || null,
+      invoiceSentTrial: row.invoiceSentTrial ?? 0,
+      invoiceDate: row.invoiceDate || null,
+      invoiceStatus: row.invoiceStatus || null,
+      invoiceNotes: row.invoiceNotes || null,
+    })).slice(-1)[0];
+
+    const lastInstallment = repaymentSchedules
+    .filter(s => s.scheduleType === ScheduleType.INSTALLMENT)
+    .sort((a, b) => a.scheduleSequence - b.scheduleSequence)
+    .map(row => ({
+      id: row.id,
+      repaymentSecurityId: row.repaymentSecurityId,
+      scheduleType: row.scheduleType || null,
+      scheduleSequence: row.scheduleSequence,
+      scheduleDate: row.scheduleDate || '',
+      invoiceNumber: row.invoiceNumber || null,
+      invoiceSentTrial: row.invoiceSentTrial ?? 0,
+      invoiceDate: row.invoiceDate || null,
+      invoiceStatus: row.invoiceStatus || null,
+      invoiceNotes: row.invoiceNotes || null,
+    })).slice(-1)[0];
+
+
     const totalSinkingFund = installmentsFee.reduce((sum, row) => sum.plus(row.sf), Big(0));
     const totalYieldAmount = installmentsFee.reduce((sum, row) => sum.plus(row.yield), Big(0));
     const totalMonitoringFee = installmentsFee.reduce((sum, row) => sum.plus(row.monitoring), Big(0));
@@ -124,8 +159,6 @@ export default function SchedulePanel({
 
     // const totalTaxMonitoring = installmentsFee.reduce((sum, row) => sum.plus(row.taxMonitoring), Big(0));
     // const totalGrandTotal = installmentsFee.reduce((sum, row) => sum.plus(row.grandTotal), Big(0));
-
-
   
 
   // Fungsi navigasi yang akan dipasang ke 3 kolom pertama
@@ -152,7 +185,7 @@ export default function SchedulePanel({
               <thead>
                 <tr className="bg-slate-50 text-[9px] text-slate-500 uppercase tracking-wider border-y border-slate-200">
                   <th className="w-12 py-2 px-2 font-bold text-center">No</th>
-                  <th className="w-16 py-2 px-2 font-bold text-center">Status</th>
+                  <th className="w-20 py-2 px-2 font-bold text-center">Status</th>
                   <th className="w-28 py-2 px-2 font-bold text-left">Jatuh Tempo</th>
                   <th className="py-2 px-2 font-bold text-right">Biaya Admin</th>
                   <th className="py-2 px-2 font-bold text-right">Provisi</th>
@@ -173,7 +206,7 @@ export default function SchedulePanel({
                 ) : (
                   upfrontFee.map((uf) => {
                     return (
-                    <tr className="group">
+                    <tr key={uf.no} className="group">
                         {/* 3 KOLOM AWAL - CLICKABLE */}
                         <td className={`py-2 px-2 text-center font-mono font-normal}`} onClick={() => handleRowClick(uf.id)}>
                           <div className={`rounded-md ${tdLeftClickable}`}>
@@ -214,7 +247,9 @@ export default function SchedulePanel({
                         
                         {isEditMode && (
                           <td className={`py-2 px-2 text-left align-top ${tdEdit}`}>
-                              <button className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
+                              <button 
+                              onClick={() => openPanel(<RepaymentScheduleEditWrapper scheduleId={uf.id} repaymentSecurity={repaymentSecurity}/>)}
+                              className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
                                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                   </svg>
@@ -239,7 +274,7 @@ export default function SchedulePanel({
             <thead>
                 <tr className="bg-slate-50 text-[9px] text-slate-500 uppercase tracking-wider border-y border-slate-200">
                   <th className="w-12 py-2 px-2 font-bold text-center">No</th>
-                  <th className="w-16 py-2 px-2 font-bold text-center">Status</th>
+                  <th className="w-20 py-2 px-2 font-bold text-center">Status</th>
                   <th className="w-28 py-2 px-2 font-bold text-left">Jatuh Tempo</th>
                   <th className="py-2 px-2 font-bold text-right">Cicilan Sinking Fund</th>
                   <th className="py-2 px-2 font-bold text-right">Yield</th>
@@ -267,7 +302,7 @@ export default function SchedulePanel({
                             {`${sch.month})`}
                           </div>
                         </td>
-                        <td className={`py-2 px-2 text-center font-mono font-bold ${tdClickable}`} onClick={() => handleRowClick(sch.id)}>
+                        <td className={`py-2 px-2 text-left font-mono font-bold ${tdClickable}`} onClick={() => handleRowClick(sch.id)}>
                           <InvoiceStatusBadge status={sch.status} size='sm'/>
                         </td>
                         <td className={`py-2 px-2 align-top ${tdClickable}`} onClick={() => handleRowClick(sch.id)}>
@@ -302,7 +337,7 @@ export default function SchedulePanel({
                         {isEditMode && (
                         <td className={`py-2 px-2 text-left align-top ${tdEdit}`}>
                             <button 
-                            onClick={() => openPanel(<RepaymentScheduleEditWrapper scheduleId={sch.id} repaymentSecSummary={repaymentSecuritySummary}/>)}
+                            onClick={() => openPanel(<RepaymentScheduleEditWrapper scheduleId={sch.id} repaymentSecurity={repaymentSecurity}/>)}
                             className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -314,6 +349,7 @@ export default function SchedulePanel({
                   })
                 )}
             </tbody>
+            {installmentsFee && installmentsFee.length > 0 &&
             <tfoot>
                 <tr className="bg-slate-50 text-slate-500 tracking-wider border-y border-slate-200">
                   <td className="w-28 py-2 px-2 pr-10 font-bold text-right text-[14px] " colSpan={3}>TOTAL</td>
@@ -329,10 +365,9 @@ export default function SchedulePanel({
                   <td className="py-2 px-2 pl-10 text-left text-[9px] text-rose-500" colSpan={3}>
                       {totalCorrectionMessage}
                   </td>
-                 
-
                 </tr>
               </tfoot>
+            }
             </table>
           </div>
         </div>
@@ -342,7 +377,7 @@ export default function SchedulePanel({
           <div className="p-5 border-t-2 border-slate-200">
             <button
               type="button"
-              onClick={() => openPanel(<RepaymentScheduleCreateWrapper />)}
+              onClick={() => openPanel(<RepaymentScheduleCreateWrapper repaymentSecurity={repaymentSecurity} lastUpfront={lastUpfront} lastInstallment={lastInstallment}/>)}
               className="flex items-center justify-center w-full py-4 border-2 border-dashed border-amber-300 bg-amber-50/50 text-amber-700 rounded-xl hover:bg-amber-100 hover:border-amber-400 transition-all group focus:outline-none focus:ring-2 focus:ring-amber-200"
             >
               <div className="flex items-center gap-2">

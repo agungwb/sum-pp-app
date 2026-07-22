@@ -3,26 +3,35 @@ import RepaymentScheduleForm from './RepaymentScheduleForm';
 import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { repaymentScheduleService } from '../../services/repaymentScheduleService';
 import { ScheduleType, InvoiceStatus } from '../../types/repayment-schedule.enum';
-import { RepaymentSecuritySummary } from '../../../repayment-security/types/repayment-security.type';
-import { RepaymentScheduleFormRequest } from '../../dtos/repayment-schedule.dto';
+import { RepaymentScheduleEditFormResponse, RepaymentScheduleFormRequest } from '../../dtos/repayment-schedule.dto';
+import { RepaymentSecurityDetailResponse, RepaymentSecuritySummaryResponse, RepaymentSecurityWithSinkingFundResponse } from '../../../repayment-security/dtos/repayment-security.dto'
+import { RepaymentScheduleSummary } from '../../types/repayment-schedule.type';
+
+
 
 interface CreateWrapperProps {
-  repaymentSecuritySummary: RepaymentSecuritySummary;
+  repaymentSecurity: RepaymentSecurityDetailResponse;
+  lastInstallment?: RepaymentScheduleSummary | null;
+  lastUpfront?: RepaymentScheduleSummary | null;
 }
 
-export default function RepaymentScheduleCreateWrapper({ repaymentSecuritySummary }: CreateWrapperProps) {
+export default function RepaymentScheduleCreateWrapper({ repaymentSecurity, lastUpfront, lastInstallment }: CreateWrapperProps) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Buat default state yang aman untuk form baru agar kalkulasi Big.js tidak error (NaN)
+
+
+
   const defaultInitialData: RepaymentScheduleFormRequest = {
-    scheduleType: '', // Default value
+    repaymentSecurityId: repaymentSecurity.securityId,
+    scheduleType: null, // Default value
     scheduleSequence: 0, // Default urutan pertama
     scheduleDate: '', 
     invoiceDate: '', 
-    invoiceNumber: '',
+    invoiceNumber: '-',
     invoiceSentTrial: 0,
-    invoiceStatus: '', // Default jadwal baru biasanya Draft
+    invoiceStatus: null, // Default jadwal baru biasanya Draft
     invoiceNotes: '',
     invoiceFeeAdministration: '0',
     invoiceFeeAdministrationTax: '0',
@@ -46,18 +55,25 @@ export default function RepaymentScheduleCreateWrapper({ repaymentSecuritySummar
   };
 
   const handleCreateSubmit = async (formData: RepaymentScheduleFormRequest) => {
-    if (!repaymentSecuritySummary.id) {
+    if (!repaymentSecurity.id) {
       console.error("Error: repaymentSecurityId tidak ditemukan!");
       return;
     }
 
     setIsSubmitting(true);
 
+    const payloadData : RepaymentScheduleFormRequest = {
+      ...formData,
+      invoiceStatus: formData.invoiceStatus === '' ? null : formData.invoiceStatus,
+      scheduleType: formData.scheduleType === '' ? null : formData.scheduleType,
+      invoiceNumber: formData.invoiceNumber === '-' ? null : formData.invoiceNumber,
+    };
+
     try {
       // Memanggil fungsi POST API dari service 
-      await repaymentScheduleService.createSchedule(repaymentSecuritySummary.id, formData);
+      await repaymentScheduleService.createRepaymentSchedule(repaymentSecurity.id, payloadData);
       
-      console.log('Berhasil membuat jadwal baru untuk Security ID:', repaymentSecuritySummary.id);
+      console.log('Berhasil membuat jadwal baru untuk Security ID:', repaymentSecurity.id);
       
       // Bisa tambahkan Toast Notification (Success) di sini
       closePanel(); // Langsung tutup side panel setelah berhasil
@@ -74,7 +90,9 @@ export default function RepaymentScheduleCreateWrapper({ repaymentSecuritySummar
       <RepaymentScheduleForm 
         mode='add'
         initialData={defaultInitialData}
-        repaymentSecuritySummary={repaymentSecuritySummary}
+        repaymentSecurity={repaymentSecurity}
+        lastUpfront={lastUpfront}
+        lastInstallment={lastInstallment}
         onSubmit={handleCreateSubmit} 
         isLoading={isSubmitting} 
       />

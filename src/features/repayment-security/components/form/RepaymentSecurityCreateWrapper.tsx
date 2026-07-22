@@ -3,6 +3,7 @@ import RepaymentSecurityForm from './RepaymentSecurityForm';
 import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { repaymentSecurityService } from '../../services/repaymentSecurityService'; // Sesuaikan path
 import { RepaymentSecurityFormRequest } from '../../dtos/repayment-security.dto';
+import { SecurityType } from '../../types/repayment-security.enum';
 
 
 
@@ -12,13 +13,12 @@ export default function RepaymentSecurityCreateWrapper() {
   const [globalError, setGlobalError] = useState<string | null>(null);
 
   const repaymentSecurityData : RepaymentSecurityFormRequest = {
-    id: null, // hidden, null/0 if add mode
     investeeId: '',
     investeeName: '',
     investeeNameLegal: '',
     investeeIconUrl: '',
     securityId: '',
-    securityType: '',
+    securityType: null,
     securityName: '',
     securityCode: '',
     securitySeries: null,
@@ -28,7 +28,7 @@ export default function RepaymentSecurityCreateWrapper() {
     contractStartDate: '',
     contractEndDate: '',
     contractDurationInMonths: 0,
-    contractStatus: '',
+    contractStatus: null,
     
     contractUnderlyingFund: '',
     contractYieldAmount: '',
@@ -71,13 +71,19 @@ export default function RepaymentSecurityCreateWrapper() {
     scheduleInstallmentDate: '',
   }
 
-  const handleCreateSubmit = async (formData: any) => {
+  const handleCreateSubmit = async (formData: RepaymentSecurityFormRequest) => {
     setIsSubmitting(true);
     setGlobalError(null); 
 
+    const payloadData : RepaymentSecurityFormRequest = {
+      ...formData,
+      securityType: formData.securityType === '' ? null : formData.securityType,
+      contractStatus: formData.contractStatus === '' ? null : formData.contractStatus,
+    };
+
     try {
       // Panggil API lewat Service
-      await repaymentSecurityService.createRepaymentSecurity(formData);
+      await repaymentSecurityService.createRepaymentSecurity(payloadData);
       
       console.log('Data berhasil disimpan');
       closePanel(); // Menutup panel setelah sukses

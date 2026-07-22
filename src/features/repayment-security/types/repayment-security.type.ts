@@ -13,12 +13,12 @@ export interface RepaymentSecurityIdentity {
   investeeName: string;
   investeeNameLegal: string;
   investeeIconUrl: string | null;
-  securityType: SecurityType | null;
+  securityType: SecurityType | null | '';
   securityName: string;
   securityCode: string;
-  securitySeries: number;
-  securityPhase: number;
-  securitySequence: number;
+  securitySeries: number | null;
+  securityPhase: number | null;
+  securitySequence: number | null;
 }
 
 // 2. Grup Investasi Utama, Imbal Hasil, dan Tenor
@@ -27,9 +27,9 @@ export interface RepaymentSecurityInvestment {
   contractStartDate: string | null; 
   contractEndDate: string | null; 
   contractDurationInMonths: number | null;
-  contractStatus: ContractStatus | null;
-  contractYieldAmount: number;
-  contractYieldRateAnnually: number;
+  contractStatus: ContractStatus | null | '';
+  contractYieldAmount: string;
+  contractYieldRateAnnually: string;
 }
 
 // 3. Grup Semua Jenis Biaya (Fee)

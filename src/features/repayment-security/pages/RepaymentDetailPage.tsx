@@ -54,7 +54,7 @@ export default function RepaymentDetailPage() {
         // Mengambil 4 sumber data sekaligus secara paralel lewat Axios
         const [repaymentSecurityRes, repaymentSchedulesRes, securityCollateralsRes] = await Promise.all([
           repaymentSecurityService.getRepaymentSecurityWithSinkingFund(repaymentId),
-          repaymentScheduleService.getSchedulesBySecurityId(repaymentId),
+          repaymentScheduleService.getRepaymentSchedulesWithPenalty(repaymentId),
           securityCollateralService.getCollateralsByRepaymentSecurityId(repaymentId) // Ambil data collateral di sini
         ]);
 
@@ -162,12 +162,13 @@ export default function RepaymentDetailPage() {
       {/* =====================================================================
           HEADER / TITLE PAGE
       ====================================================================== */}
+
       <div className="ml-2">
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex flex-col justify-between items-start mb-2">
           <div>
             <h1 className="text-xl font-bold text-slate-800 tracking-tight">DETAIL PEMBAYARAN PENERBIT</h1>
           </div>
-          
+          <p className="text-xs text-slate-400 mt-0.5">Detail jadwal pembayaran penerbit, potensi revenue, dan kolateral</p>
         </div>
       </div>
 
@@ -241,16 +242,24 @@ export default function RepaymentDetailPage() {
             <InfoRow label="Selesai" value={formatDate(repaymentSecurity.contractEndDate)} />
             
             {/* Section Dokumen */}
-            <InfoRow label="Nomor Dokumen Perjanjian" value={repaymentSecurity.contractDocumentNumber} fontMono />
-            <InfoRow label="Judul Dokumen Perjanjian" value={repaymentSecurity.contractDocumentTitle} />
-            
-            <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Unduh Dokumen Perjanjian</span>
-                <a href={repaymentSecurity.contractDocumentUrl} target="_blank" rel="noreferrer" className="text-[12px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 w-fit bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 transition-colors">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                  Unduh Dokumen
-                </a>
+            <div className="flex col-span-2 w-full gap-x-5 gap-y-3">
+              <div className="w-1/2">
+                <InfoRow label="Judul Dokumen Perjanjian" value={repaymentSecurity.contractDocumentTitle} />
               </div>
+              <div className="w-1/2">
+                <InfoRow label="Nomor Dokumen Perjanjian" value={repaymentSecurity.contractDocumentNumber} fontMono />
+                <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-4">Unduh Dokumen Perjanjian</span>
+                    <a href={repaymentSecurity.contractDocumentUrl} target="_blank" rel="noreferrer" className="text-[12px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 w-fit bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 transition-colors">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                      Unduh Dokumen
+                    </a>
+                </div>
+                  
+              </div>
+            </div>
+
+            
           </div>
         </div>
 
@@ -297,7 +306,7 @@ export default function RepaymentDetailPage() {
             <div className="flex justify-between items-end border-t border-slate-100 pt-2">
               <div className="flex flex-col">
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{'Sinking Fund'}</span>
-                <span className="text-[12px] font-mono font-semibold text-slate-700">{formatRupiah(repaymentSecurity.receiptSinkingFundSum, 'zero')}</span>
+                <span className="text-[12px] font-mono font-semibold text-slate-700">{formatRupiah(repaymentSecurity.receiptSinkingFundSum,undefined, 'zero')}</span>
               </div>
               <div className="flex flex-col text-right">
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">% p.a.</span>

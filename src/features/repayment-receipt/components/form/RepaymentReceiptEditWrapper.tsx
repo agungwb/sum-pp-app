@@ -21,7 +21,7 @@ export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary 
   useEffect(() => {
     const fetchReceiptDetail = async () => {
       try {
-        const response = await repaymentReceiptService.getReceiptEditResponse(receiptId);
+        const response = await repaymentReceiptService.getRepaymentReceiptEditForm(receiptId);
 
         if (response.data && response.data.item) {
           
@@ -33,7 +33,7 @@ export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary 
           const currentData: RepaymentReceiptFormRequest = {
             receiptDate: repaymentReceiptRes?.receiptDate || '',
             receiptStatus: repaymentReceiptRes?.receiptStatus || '',
-            receiptMethod: repaymentReceiptRes?.receiptMethod || '',
+            receiptMethod: repaymentReceiptRes?.receiptMethod || null,
             receiptNotes: repaymentReceiptRes?.receiptNotes || '',
             receiptDocumentUrl: repaymentReceiptRes?.receiptDocumentUrl || '',
             receiptTotalWithTax: repaymentReceiptRes?.receiptTotalWithTax || '',
@@ -73,7 +73,7 @@ export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary 
   const handleEditSubmit = async (formData: any) => {
     setIsSubmitting(true);
     try {
-      await repaymentReceiptService.updateReceipt(receiptId, formData);
+      await repaymentReceiptService.updateRepaymentReceipt(receiptId, formData);
       closePanel();
     } catch (error) {
       console.error("Gagal update penerimaan", error);

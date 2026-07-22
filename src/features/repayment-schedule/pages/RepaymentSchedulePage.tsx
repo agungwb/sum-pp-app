@@ -9,6 +9,12 @@ import FeeWithTax from '../../../components/ui/FeeWithTax';
 import { useGlobalMode } from '../../../contexts/GlobalModeContext';
 import { useSidePanel } from '../../../contexts/SidePanelContext';
 import { InvoiceSummary, RepaymentSchedule, ScheduleItem } from '../types/repayment-schedule.type';
+import InvoiceStatusBadge from '../../repayment-security/components/badge/InvoiceStatusBadge';
+import { ScheduleType } from '../types/repayment-schedule.enum';
+import { repaymentScheduleService } from '../services/repaymentScheduleService';
+import { repaymentReceiptService } from '../../repayment-receipt/services/repaymentReceiptService';
+import { repaymentSecurityService } from '../../repayment-security/services/repaymentSecurityService';
+import { RepaymentSecurityDetailResponse } from '../../repayment-security/dtos/repayment-security.dto';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 
@@ -22,7 +28,7 @@ export default function RepaymentSchedulePage() {
   
   const [schedule, setSchedule] = useState<ScheduleItem>();
   const [receipts, setReceipts] = useState<any[]>([]);
-  const [repayment, setRepayment] = useState<any>(null);
+  const [repayment, setRepayment] = useState<RepaymentSecurityDetailResponse>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -34,35 +40,36 @@ export default function RepaymentSchedulePage() {
   const { openPanel } = useSidePanel();
 
     useEffect(() => {
-    const fetchAllDetails = async () => {
-        try {
-        setLoading(true);
-        setError(null);
-
-        // Eksekusi semua request secara paralel menggunakan Axios
-        const [scheduleRes, receiptsRes, repaymentSecurityRes] = await Promise.all([
-            axios.get(`${API_BASE_URL}/repayment/schedules/${scheduleId}`),
-            axios.get(`${API_BASE_URL}/repayment/schedules/${scheduleId}/receipts`),
-            axios.get(`${API_BASE_URL}/repayment/securities/${repaymentId}`)
-        ]);
-
-        // Axios secara otomatis melakukan auto-parse JSON ke properti '.data'
-        // Dan otomatis melempar error jika HTTP Status berstatus 4xx atau 5xx
-        
-        setSchedule(scheduleRes.data?.data?.item || null);
-        setReceipts(receiptsRes.data?.data?.items || []);
-        setRepayment(repaymentSecurityRes.data?.data?.item || null); // Sesuaikan dengan struktur envelope API Anda
-
-        } catch (err: any) {
-        console.error("Gagal memuat detail data repayment:", err);
-        
-        // Mengambil pesan error dari Axios response jika ada, jika tidak pakai fallback
-        const errorMessage = err.response?.data?.message || err.message || 'Terjadi kesalahan sistem';
-        setError(errorMessage);
-        } finally {
-        setLoading(false);
-        }
-    };
+        const fetchAllDetails = async () => {
+            try {
+              setLoading(true);
+              setError(null);
+          
+              // Eksekusi semua request secara paralel memanggil method di service
+              const [scheduleRes, receiptsRes, repaymentSecurityRes] = await Promise.all([
+                repaymentScheduleService.getRepaymentScheduleEditForm(scheduleId),
+                repaymentReceiptService.getRepaymentReceipt(scheduleId),
+                repaymentSecurityService.getRepaymentSecurityDetail(repaymentId)
+              ]);
+          
+              // Catatan: Karena service sudah melakukan "return response.data",
+              // kita tidak perlu memanggil .data dua kali (tidak perlu res.data.data.item).
+              // Sesuaikan kembali properti di bawah ini dengan struktur persis dari ApiResponse kalian.
+              
+              setSchedule(scheduleRes.data.item);
+              setReceipts(receiptsRes.data.items || []);
+              setRepayment(repaymentSecurityRes.data.item);
+          
+            } catch (err: any) {
+              console.error("Gagal memuat detail data repayment:", err);
+              
+              // Mengambil pesan error dari Axios response jika ada, jika tidak pakai fallback
+              const errorMessage = err.response?.data?.message || err.message || 'Terjadi kesalahan sistem';
+              setError(errorMessage);
+            } finally {
+              setLoading(false);
+            }
+          };
 
     // Trigger effect hanya jika kedua ID esensial sudah tersedia
     if (scheduleId && repaymentId) {
@@ -90,7 +97,7 @@ export default function RepaymentSchedulePage() {
 
   const invoiceSummary : InvoiceSummary = {
     scheduleId: schedule?.id,
-    scheduleType: schedule?.scheduleType || '',
+    scheduleType: schedule?.scheduleType || null,
     invoiceFeeAdministration: schedule?.invoiceFeeAdministration || '0',
     invoiceFeeAdministrationTax: schedule?.invoiceFeeAdministrationTax || '0',
     invoiceFeeProvision: schedule?.invoiceFeeProvision || '0',
@@ -153,49 +160,22 @@ export default function RepaymentSchedulePage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-8">
         <div>
            <div className="flex gap-4">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                {schedule.invoiceNotes.toUpperCase()} (Term {schedule.scheduleSequence})
+           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+            {schedule.scheduleType === ScheduleType.INSTALLMENT 
+                ? `INVOICE CICILAN BULAN KE ${schedule.scheduleSequence}`
+                : `INVOICE UPFRONT KE ${schedule.scheduleSequence}`}
             </h1>
-            {isEditMode && (
-                <span className={`px-2.5 py-1 rounded text-xs font-bold tracking-wider uppercase inline-block border-2 ${
-                    schedule.invoiceStatus === 'OVERDUE' 
-                    ? 'bg-amber-50 text-amber-700 border-amber-300' 
-                    : schedule.invoiceStatus === 'PAID' 
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                    : 'bg-blue-50 text-blue-600 border-blue-200'
-                    }`}>
-                    {schedule.invoiceStatus}
-                </span>
-            )}
-            
         </div> 
 
-        <p className="text-xs text-slate-400 mt-0.5">ID Jadwal: {schedule.id}</p>
+        <p className="text-xs text-slate-400 mt-0.5">
+            {schedule.scheduleType === ScheduleType.INSTALLMENT 
+                ? `Detail rincian invoice cicilan dan riwayat pembayaran pada bulan ke ${schedule.scheduleSequence}`
+                : `Detail rincian invoice biaya di awal (upfront fee) dan riwayat pembayaran`}
+        </p>
           
         </div>
         <div>
-            {!isEditMode && (
-                <span className={`px-2.5 py-1 rounded text-xs font-bold tracking-wider uppercase inline-block border-2 ${
-                    schedule.invoiceStatus === 'OVERDUE' 
-                    ? 'bg-amber-50 text-amber-700 border-amber-300' 
-                    : schedule.invoiceStatus === 'PAID' 
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                    : 'bg-blue-50 text-blue-600 border-blue-200'
-                    }`}>
-                    {schedule.invoiceStatus}
-                </span>
-            )}
-          
-            {isEditMode && (
-                <button 
-                    onClick={() => openPanel(<RepaymentScheduleEditWrapper scheduleId={schedule.id} />)}
-                    className="text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-2 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                    Ubah Detail
-                </button>
-            )}
+            <InvoiceStatusBadge status={schedule.invoiceStatus || null} size="lg"/>
         </div>
         
       </div>
@@ -204,11 +184,28 @@ export default function RepaymentSchedulePage() {
       <div className="flex flex-col lg:flex-row gap-4 items-stretch mb-6">
         
         {/* CONTAINER KIRI: DETAIL KOMPONEN TAGIHAN */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col">
-          <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">
-            Rincian Komponen Tagihan
-          </h2>
-          <div className="text-[12px] font-medium space-y-2.5 text-slate-700">
+        <div className="w-full lg:w-2/3 bg-white rounded-xl border-2 border-slate-200 shadow-sm px-4 flex flex-col justify-start">
+            <div className='h-14 flex items-center justify-between border-b-2 border-slate-100'>
+                <h3 className="text-[12px] font-bold text-slate-800 uppercase tracking-wider pt-0.5 shrink-0">
+                    Rincian Komponen Tagihan
+                </h3>
+                <div>
+                {isEditMode && (
+                    <button 
+                        onClick={() => openPanel(<RepaymentScheduleEditWrapper scheduleId={schedule.id} />)}
+                        className="text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-1.5 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        Ubah Detail
+                    </button>
+                )}
+                        
+                </div>
+
+            </div>
+         
+          <div className="text-[12px] font-medium space-y-2.5 text-slate-700 pt-2">
 
             {Number(schedule?.invoiceFeeAdministration) > 0 ? (
                 <div className="flex justify-between items-center p-2 rounded">
@@ -282,12 +279,12 @@ export default function RepaymentSchedulePage() {
 
             <div className="flex justify-between items-center p-2 rounded">
                 <span className="font-semibold text-slate-900">TOTAL</span>
-                <FeeWithTax base={Number(schedule.invoiceTotal)} tax={Number(schedule.invoiceTotalTax)} size='large' />
+                <FeeWithTax base={Number(schedule.invoiceTotal)} tax={Number(schedule.invoiceTotalTax)}  weight="bold" />
             </div>
 
             <div className="flex justify-between items-center p-2 rounded">
                 <span className="font-bold text-slate-900">TOTAL + PAJAK</span>
-                <FeeWithTax base={Number(schedule.invoiceTotalWithTax)} size='large-bold'/>
+                <FeeWithTax base={Number(schedule.invoiceTotalWithTax)} size="lg" weight="bold" />
             </div>
             
           </div>
@@ -301,24 +298,30 @@ export default function RepaymentSchedulePage() {
                 </h2>
                 <div className="text-[11px] font-medium space-y-2 text-slate-600">
                 <div className="flex justify-between">
-                    <span>No Invoice:</span>
+                    <span>Status Invoice</span>
+                    <span className="text-slate-900 font-semibold text-rose-600">
+                    {schedule.invoiceStatus || '-'}
+                    </span>
+                </div>
+                <div className="flex justify-between">
+                    <span>No Invoice</span>
                     <span className="text-slate-900 font-semibold">{schedule.invoiceNumber??'-'}</span>
                 </div>
                 <div className="flex justify-between  border-b-2 pb-4">
-                    <span>Tanggal Invoicing:</span>
-                    <span className="text-slate-900 font-semibold">{formatDate(schedule.invoiceDate)}</span>
+                    <span>Tanggal Invoicing</span>
+                    <span className="text-slate-900 font-semibold">{formatDate(schedule.invoiceDate ?? '')}</span>
                 </div>
                 <div className="flex justify-between pt-2">
-                    <span>Total Tagihan:</span>
-                    <span className="text-slate-900 font-mono">{formatRupiah(schedule.invoiceTotal)}</span>
+                    <span>Total Tagihan</span>
+                    <span className="text-slate-900 font-mono">{formatRupiah(schedule.invoiceTotalWithTax)}</span>
                 </div>
                 <div className="flex justify-between">
-                    <span>Tanggal Jatuh Tempo:</span>
-                    <span className="text-slate-900 font-semibold text-rose-600">{formatDate(schedule.scheduleDate)}</span>
+                    <span>Tanggal Jatuh Tempo</span>
+                    <span className="text-slate-900 font-semibold">{formatDate(schedule.scheduleDate)}</span>
                 </div>
 
                 <div className="flex justify-between border-b-2 pb-4">
-                    <span>Catatan / Notes:</span>
+                    <span>Catatan / Notes</span>
                     <span className="text-slate-900 font-semibold italic">{schedule.invoiceNotes || '-'}</span>
                 </div>
                 
@@ -347,16 +350,10 @@ export default function RepaymentSchedulePage() {
                         </button>
 
                         {/* Note: class text-slate-900 gw hapus karena redundan dan langsung ketimpa sama text-rose-600 */}
-                        <span className="font-semibold text-rose-600">
-                            {repayment.contractVaNumber}
+                        <span className="font-semibold">
+                            {repayment.contractVaNumber} ({repayment.contractVaBank})
                         </span>
                     </div>
-                </div>
-                <div className="flex justify-between">
-                    <span>VA Bank</span>
-                    <span className="text-slate-900 font-semibold text-rose-600">
-                    {repayment.contractVaBank}
-                    </span>
                 </div>
                 <div className="flex justify-between">
                     <span>Escrow Account</span>
@@ -385,22 +382,10 @@ export default function RepaymentSchedulePage() {
                         }   
 
                         {/* Note: class text-slate-900 gw hapus karena redundan dan langsung ketimpa sama text-rose-600 */}
-                        <span className="font-semibold text-rose-600">
-                            {repayment.contractEscrowAccunt || '-'}
+                        <span className="font-semibold">
+                            {repayment.contractEscrowAccunt || '-'} ({repayment.contractEscrowBank})
                         </span>
                     </div>
-                </div>
-                <div className="flex justify-between">
-                    <span>Escrow Bank</span>
-                    <span className="text-slate-900 font-semibold text-rose-600">
-                    {repayment.contractEscrowBank}
-                    </span>
-                </div>
-                <div className="flex justify-between">
-                    <span>Status Invoice:</span>
-                    <span className="text-slate-900 font-semibold text-rose-600">
-                    {schedule.invoiceStatus || '-'}
-                    </span>
                 </div>
                 </div>
             </div>

@@ -1,33 +1,47 @@
 import axios from 'axios';
 import { ApiResponse } from '../../../types/api.type';
-import { RepaymentReceiptFormRequest, RepaymentReceiptEditFormResponse } from '../dtos/repayment-receipt.dto';
+import { RepaymentReceiptFormRequest, RepaymentReceiptEditFormResponse, RepaymentReceiptDetailWithAuditResponse } from '../dtos/repayment-receipt.dto';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const REPAYMENT_SCHEDULE_URL = 'repayment/schedules';
+const REPAYMENT_RECEIPT_URL = 'repayment/receipts';
+
+const apiClient = axios.create({
+  baseURL: `${BASE_URL}`,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
 export const repaymentReceiptService = {
-  getByScheduleId: async (scheduleId: string) => {
-    // Sesuaikan dengan endpoint backend NestJS Anda
-    const response = await axios.get(`${BASE_URL}/repayment/schedules/${scheduleId}/receipts`);
+
+  // DETAIL
+  getRepaymentReceiptEditForm: async (receiptId: string): Promise<ApiResponse<RepaymentReceiptEditFormResponse>> => {
+    // const response = await axios.get(`${BASE_URL}/repayment/receipts/${receiptId}`);
+    const response = await apiClient.get(`/${REPAYMENT_RECEIPT_URL}/${receiptId}`);
+    return response.data;
+  },
+  
+  //LIST
+  getRepaymentReceipt: async (scheduleId: string) => {
+    // const response = await axios.get(`${BASE_URL}/repayment/schedules/${scheduleId}/receipts`);
+    const response = await apiClient.get(`/${REPAYMENT_SCHEDULE_URL}/${scheduleId}/receipts`);
     return response.data;
   },
 
-  createReceipt: async (scheduleId: string, data: RepaymentReceiptFormRequest) => {
-    const response = await axios.post(`${BASE_URL}/repayment/schedules/${scheduleId}/receipts`, data);
+  // CREATE
+  createRepaymentReceipt: async (scheduleId: string, payload: RepaymentReceiptFormRequest): Promise<RepaymentReceiptDetailWithAuditResponse> => {
+    // const response = await axios.post(`${BASE_URL}/repayment/schedules/${scheduleId}/receipts`, data);
+    const response = await apiClient.pst(`/${REPAYMENT_SCHEDULE_URL}/${scheduleId}/receipts`, payload);
     return response.data;
   },
 
-  // PUT/PATCH http://localhost:3000/repayment/schedules/:scheduleId/receipts
-  updateReceipt: async (receiptId: string, data: Partial<RepaymentReceiptFormRequest>) => {
-    const response = await axios.put(`${BASE_URL}/repayment/receipts/${receiptId}`, data);
+  // UPDATE
+  updateRepaymentReceipt: async (receiptId: string, payload: RepaymentReceiptFormRequest): Promise<RepaymentReceiptDetailWithAuditResponse> => {
+    // const response = await axios.put(`${BASE_URL}/repayment/receipts/${receiptId}`, data);
+    const response = await apiClient.put(`/${REPAYMENT_RECEIPT_URL}/${receiptId}`, payload);
     return response.data;
   },
 
-  // GET http://localhost:3000/repayment/schedules/:scheduleId/receipts
-  getReceiptEditResponse: async (receiptId: string): Promise<ApiResponse<RepaymentReceiptEditFormResponse>> => {
-    console.log('[getReceiptEditResponse] receiptId : ',receiptId);
-    const response = await axios.get(`${BASE_URL}/repayment/receipts/${receiptId}`);
-    
-    return response.data;
-  }
   
 };

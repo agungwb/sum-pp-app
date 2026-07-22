@@ -8,12 +8,13 @@ import { ContractStatus } from '../../types/repayment-security.enum';
 import { Big } from 'big.js'; 
 import { NumericInput, FormGroup, ConfirmModal, Select, Input, NumberField, Toggle } from '../../../../components/forms/index';
 import { toSafeBig } from '../../../../utils/number';
+import { repaymentSecurityService } from '../../services/repaymentSecurityService';
 
 
 export interface RepaymentSecurityFormProps {
   mode: 'add' | 'edit' ;
   initialData: RepaymentSecurityFormRequest; // Opsional (jika form bisa dipakai untuk Create juga)
-  onSubmit: (data: RepaymentSecurityEditFormResponse) => void | Promise<void>;
+  onSubmit: (data: RepaymentSecurityFormRequest) => void | Promise<void>;
   onCancel: () => void;
   isLoading: boolean;
 }
@@ -35,20 +36,26 @@ export default function RepaymentSecurityForm ({ mode, initialData, onSubmit, on
 
   // FETCH Data Security
   useEffect(() => {
-    fetch('http://localhost:3000/repayment/securities/lookup')
-      .then(res => res.json())
-      .then(res => {
-        if (res.statusCode === 200) {
+    const fetchLookupData = async () => {
+      try {
+        const res = await repaymentSecurityService.getRepaymentSecurityLookup();
+        
+        if (res.statusCode === 200 && res.data) {
           setSecurities(res.data.items);
-          // Set lookup default ID if editing
+          
+          // Set lookup default ID jika sedang edit
           if (formData.securityCode) {
-             const matched = res.data.items.find((s: any) => s.securityCode === formData.securityCode);
-             if (matched) setSelectedLookupId(matched.id);
+            const matched = res.data.items.find((s: any) => s.securityCode === formData.securityCode);
+            if (matched) setSelectedLookupId(matched.id);
           }
         }
-      })
-      .catch(err => console.error("Failed fetching lookup", err));
-  }, []);
+      } catch (err) {
+        console.error("Failed fetching lookup", err);
+      }
+    };
+  
+    fetchLookupData();
+  }, [formData.securityCode]);
 
   // AUTO CALCULATE DURATION
   const countMonths = (start: string, end: string) => {
@@ -262,7 +269,6 @@ const durationBig = new Big(duration.toString());
         <form className="max-w-6xl mx-auto space-y-8">
           
           {/* HIDDEN FIELD */}
-          <input type="hidden" value={formData.id || ''} />
           <input type="hidden" value={formData.investeeId} />
           <input type="hidden" value={formData.securityId} />
           <input type="hidden" value={formData.restructOrder || 0} />
@@ -273,7 +279,7 @@ const durationBig = new Big(duration.toString());
             <Select 
               label="Nama Efek" 
               hasError={isError('securityName')}
-              value={selectedLookupId} 
+              value={selectedLookupId ?? ''} 
               colSpan="2"
               disabled={mode==='edit'}
               onChange={(e: any) => {
@@ -288,7 +294,7 @@ const durationBig = new Big(duration.toString());
                     investeeNameLegal: item.investeeNameLegal,
                     investeeIconUrl: item.investeeIconUrl,
                     securityId: item.securityId,
-                    securityType: item?.securityType || '',
+                    securityType: item?.securityType || null,
                     securityName: item.securityName, 
                     securityCode: item.securityCode,
                     securitySeries: item.securitySeries,
@@ -318,7 +324,7 @@ const durationBig = new Big(duration.toString());
             <Input type="date" label="Contract Start Date" disabled={mode==='edit'} hasError={isError('contractStartDate')} value={formData.contractStartDate} onChange={(e: any) => setFormData({...formData, contractStartDate: e.target.value})} />
             <Input type="date" label="Contract End Date" disabled={mode==='edit'} hasError={isError('contractEndDate')} value={formData.contractEndDate} onChange={(e: any) => setFormData({...formData, contractEndDate: e.target.value})} />
             <Input label="Contract Duration (Months)" disabled value={formData.contractDurationInMonths === 0 ? "" : formData.contractDurationInMonths} />
-            <Select label="Contract Status" hasError={isError('contractStatus')} value={formData.contractStatus} onChange={(e: any) => setFormData({...formData, contractStatus: e.target.value})}>
+            <Select label="Contract Status" hasError={isError('contractStatus')} value={formData.contractStatus ?? ""} onChange={(e: any) => setFormData({...formData, contractStatus: e.target.value})}>
               <option value="">-- Pilih Contract Status --</option>
               <option value={ContractStatus.PERFORMING}>Performing</option>
               <option value={ContractStatus.OBSERVATION}>Observation</option>
@@ -354,24 +360,24 @@ const durationBig = new Big(duration.toString());
            </FormGroup>
 
           <FormGroup title="PAJAK DAN DENDA">
-            <Select label="Tax PPN (%)" disabled={mode==='edit'} isPercentage={true} hasError={isError('contractTaxPpn')} value={formData.contractTaxPpn} onChange={(e: any) => setFormData({...formData, contractTaxPpn: e.target.value})}>
+            <Select label="Tax PPN (%)" disabled={mode==='edit'} isPercentage={true} hasError={isError('contractTaxPpn')} value={formData.contractTaxPpn ?? ''} onChange={(e: any) => setFormData({...formData, contractTaxPpn: e.target.value})}>
               <option value="">-- Pilih Tax PPN --</option>
               <option value="0.1">10</option>
               <option value="0.11">11</option>
               <option value="0.12">12</option>
             </Select>
-            <Select label="Tax Factor" disabled={mode==='edit'} hasError={isError('contractTaxFactor')} value={formData.contractTaxFactor} onChange={(e: any) => setFormData({...formData, contractTaxFactor: e.target.value})}>
+            <Select label="Tax Factor" disabled={mode==='edit'} hasError={isError('contractTaxFactor')} value={formData.contractTaxFactor ?? ''} onChange={(e: any) => setFormData({...formData, contractTaxFactor: e.target.value})}>
               <option value="">-- Pilih Tax Factor --</option>
               <option value="1">1</option>
               <option value="0.916667">11/12</option>
             </Select>
-            <Select label="Tax Yield (%)" disabled={mode==='edit'} isPercentage={true} hasError={isError('contractTaxYield')} value={formData.contractTaxYield} onChange={(e: any) => setFormData({...formData, contractTaxYield: e.target.value})}>
+            <Select label="Tax Yield (%)" disabled={mode==='edit'} isPercentage={true} hasError={isError('contractTaxYield')} value={formData.contractTaxYield ?? ''} onChange={(e: any) => setFormData({...formData, contractTaxYield: e.target.value})}>
               <option value="">-- Pilih Tax Yield --</option>
               <option value="0.1">10</option>
               <option value="0.15">15</option>
               <option value="0.2">20</option>
             </Select>
-            <Select label="Penalty Percentage Daily" disabled={mode==='edit'} hasError={isError('contractPenaltyPercentageDaily')} value={formData.contractPenaltyPercentageDaily} onChange={(e: any) => setFormData({...formData, contractPenaltyPercentageDaily: e.target.value})}>
+            <Select label="Penalty Percentage Daily" disabled={mode==='edit'} hasError={isError('contractPenaltyPercentageDaily')} value={formData.contractPenaltyPercentageDaily ?? ''} onChange={(e: any) => setFormData({...formData, contractPenaltyPercentageDaily: e.target.value})}>
               <option value="">-- Pilih Penalty --</option>
               <option value="0.001">1/1000</option>
               <option value="0.002">2/1000</option>
@@ -380,12 +386,12 @@ const durationBig = new Big(duration.toString());
           </FormGroup>
 
           <FormGroup title="PEMBAYARAN DAN KONTAK">
-            <Select label="Escrow Bank" hasError={isError('contractEscrowBank')} value={formData.contractEscrowBank} onChange={(e: any) => setFormData({...formData, contractEscrowBank: e.target.value})}>
+            <Select label="Escrow Bank" hasError={isError('contractEscrowBank')} value={formData.contractEscrowBank ?? ''} onChange={(e: any) => setFormData({...formData, contractEscrowBank: e.target.value})}>
               <option value="">-- Pilih Escrow Bank --</option>
               <option value="BJB Syariah">BJB Syariah</option>
               <option value="Bank Mega Syariah">Bank Mega Syariah</option>
             </Select>
-            <Input label="Escrow Account" hasError={isError('contractEscrowAccount')} value={formData.contractEscrowAccount} onChange={(e: any) => setFormData({...formData, contractEscrowAccount: e.target.value})} />
+            <Input label="Escrow Account" hasError={isError('contractEscrowAccount')} value={formData.contractEscrowAccount ?? ''} onChange={(e: any) => setFormData({...formData, contractEscrowAccount: e.target.value})} />
             <Select label="VA Bank" hasError={isError('contractVaBank')} value={formData.contractVaBank} onChange={(e: any) => setFormData({...formData, contractVaBank: e.target.value})}>
               <option value="">-- Pilih VA Bank --</option>
               <option value="BCA">BCA</option>

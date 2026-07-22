@@ -50,13 +50,12 @@ export default function RepaymentSecurityEditWrapper({ repaymentId }: EditWrappe
           const maxPrecisionPct = 4;
 
           const currentData: RepaymentSecurityFormRequest = {
-            id: repaymentSecurityRes?.id || null, // hidden, null/0 if add mode
             investeeId: repaymentSecurityRes?.investeeId || '',
             investeeName: repaymentSecurityRes?.investeeName || '',
             investeeNameLegal: repaymentSecurityRes?.investeeNameLegal || '',
             investeeIconUrl: repaymentSecurityRes?.investeeIconUrl || '',
             securityId: repaymentSecurityRes?.securityId || '',
-            securityType: repaymentSecurityRes?.securityType || '',
+            securityType: repaymentSecurityRes?.securityType || null,
             securityName: repaymentSecurityRes?.securityName || '',
             securityCode: repaymentSecurityRes?.securityCode || '',
             securitySeries: repaymentSecurityRes?.securitySeries || 0,
@@ -66,7 +65,7 @@ export default function RepaymentSecurityEditWrapper({ repaymentId }: EditWrappe
             contractStartDate: formatDateForInput(repaymentSecurityRes?.contractStartDate) || '',
             contractEndDate: formatDateForInput(repaymentSecurityRes?.contractEndDate) || '',
             contractDurationInMonths: repaymentSecurityRes?.contractDurationInMonths || 0,
-            contractStatus: repaymentSecurityRes?.contractStatus || '',
+            contractStatus: repaymentSecurityRes?.contractStatus || null,
             
             contractUnderlyingFund: underlyingFund.round(maxPrecision).toString(),
             contractYieldAmount: yieldAmount.round(maxPrecision).toString(),
@@ -128,11 +127,18 @@ export default function RepaymentSecurityEditWrapper({ repaymentId }: EditWrappe
     }
   }, [repaymentId]);
 
-  const handleEditSubmit = async (formData: any) => {
+  const handleEditSubmit = async (formData: RepaymentSecurityFormRequest) => {
     setIsSubmitting(true);
+
+    const payloadData : RepaymentSecurityFormRequest = {
+      ...formData,
+      securityType: formData.securityType === '' ? null : formData.securityType,
+      contractStatus: formData.contractStatus === '' ? null : formData.contractStatus,
+    };
+
     try {
       // Memanggil API PUT lewat Service
-      await repaymentSecurityService.updateRepaymentSecurity(repaymentId, formData);
+      await repaymentSecurityService.updateRepaymentSecurity(repaymentId, payloadData);
       
       closePanel();
     } catch (error: any) {

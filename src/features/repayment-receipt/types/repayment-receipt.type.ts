@@ -1,44 +1,54 @@
 import { ReceiptMethod, ReceiptStatus } from './repayment-receipt.enum';
 
-export interface RepaymentReceipt {
+export interface RepaymentReceiptID {
   // Identifiers & Relations
   id: string; // UUID
-  repaymentScheduleId: string; // UUID
+}
 
+export interface RepaymentReceiptParent {
+  repaymentScheduleId: string; // UUID
+}
+
+export interface RepaymentReceiptInfo {
   // Receipt Core Info
   receiptDate: string; // ISO Date string
   receiptStatus: ReceiptStatus;
   receiptNotes: string | null;
-  receiptMethod: ReceiptMethod | null;
+  receiptMethod: ReceiptMethod | null | '';
   receiptDocumentUrl: string | null;
+}
 
+export interface RepaymentReceiptPayment {
   // Fees & Revenues (Real Cash Received)
-  receiptFeeAdministration: number;
-  receiptFeeProvision: number;
-  receiptFeePlatform: number;
-  receiptFeeServicing: number;
-  receiptFeeMonitoring: number;
-  receiptFeeOther: number;
+  receiptFeeAdministration: string;
+  receiptFeeProvision: string;
+  receiptFeePlatform: string;
+  receiptFeeServicing: string;
+  receiptFeeMonitoring: string;
+  receiptFeeOther: string;
 
   // Taxes (Real Cash Cleared)
-  receiptFeeAdministrationTax: number;
-  receiptFeeProvisionTax: number;
-  receiptFeePlatformTax: number;
-  receiptFeeServicingTax: number;
-  receiptFeeMonitoringTax: number;
-  receiptFeeOtherTax: number;
+  receiptFeeAdministrationTax: string;
+  receiptFeeProvisionTax: string;
+  receiptFeePlatformTax: string;
+  receiptFeeServicingTax: string;
+  receiptFeeMonitoringTax: string;
+  receiptFeeOtherTax: string;
 
   // Investments, Yields, Penalties (Real Cash Allocations)
-  receiptSinkingFund: number;
-  receiptYield: number;
-  receiptActualLoss: number;
-  receiptPenalty: number;
+  receiptSinkingFund: string;
+  receiptYield: string;
+  receiptActualLoss: string;
+  receiptPenalty: string;
 
   // Totals
-  receiptTotal: number;
-  receiptTotalTax: number;
-  receiptTotalWithTax: number;
+  receiptTotal: string;
+  receiptTotalTax: string;
+  receiptTotalWithTax: string;
+}
 
+
+export interface RepaymentReceiptAuditTrail {
   // Audit Trails
   createdBy: string;
   createdAt: string; // ISO Datetime string
@@ -47,3 +57,10 @@ export interface RepaymentReceipt {
   deletedBy: string | null;
   deletedAt: string | null; // ISO Datetime string
 }
+
+export interface RepaymentReceipt 
+extends RepaymentReceiptID,
+        RepaymentReceiptParent,
+        RepaymentReceiptInfo,
+        RepaymentReceiptPayment,
+        RepaymentReceiptAuditTrail{}

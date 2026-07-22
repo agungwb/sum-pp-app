@@ -1,5 +1,5 @@
 import { ContractStatus, SecurityType } from "../types/repayment-security.enum";
-import { RepaymentSecurityContactAndBank, RepaymentSecurityDocuments, RepaymentSecurityFees, RepaymentSecurityID, RepaymentSecurityIdentity, RepaymentSecurityInvestment, RepaymentSecurityPenaltiesAndTaxes, RepaymentSecurityRouting } from "../types/repayment-security.type";
+import { RepaymentSecurityAuditTrail, RepaymentSecurityContactAndBank, RepaymentSecurityDocuments, RepaymentSecurityFees, RepaymentSecurityID, RepaymentSecurityIdentity, RepaymentSecurityInvestment, RepaymentSecurityPenaltiesAndTaxes, RepaymentSecurityRestructuring, RepaymentSecurityRouting } from "../types/repayment-security.type";
 
 // export interface RepaymentSecurityDetailResponse {
   
@@ -13,6 +13,16 @@ export interface RepaymentSecurityDetailResponse
           RepaymentSecurityPenaltiesAndTaxes, 
           RepaymentSecurityContactAndBank, 
           RepaymentSecurityDocuments {}
+
+export interface RepaymentSecurityDetailWithAuditResponse 
+extends RepaymentSecurityID,
+        RepaymentSecurityIdentity, 
+        RepaymentSecurityInvestment, 
+        RepaymentSecurityFees, 
+        RepaymentSecurityPenaltiesAndTaxes, 
+        RepaymentSecurityContactAndBank, 
+        RepaymentSecurityDocuments,
+        RepaymentSecurityAuditTrail {}
 
 export interface RepaymentSecurityWithSinkingFundResponse 
   extends RepaymentSecurityDetailResponse {
@@ -38,131 +48,160 @@ export interface SecurityLookupResponse
           RepaymentSecurityIdentity {
 }
 
-export interface RepaymentSecurityFormRequest {
-    id: string | null;
-    investeeId: string;
-    investeeName: string;
-    investeeNameLegal: string;
-    investeeIconUrl: string;
-    securityId: string;
-    securityType: SecurityType | '';
-    securityName: string;
-    securityCode: string;
-    securitySeries: number | null;
-    securityPhase: number | null;
-    securitySequence: number | null;
-  
-    contractStartDate: string;
-    contractEndDate: string;
-    contractDurationInMonths: number;
-    contractStatus: ContractStatus | '';
-  
-    contractUnderlyingFund: string;
-    contractYieldAmount: string;
-    contractYieldRateAnnually: string;
-    contractFeeAdministration: string;
-    contractFeeAdministrationPercentage: string;
-    contractFeeProvision: string;
-    contractFeeProvisionPercentage: string;
-    contractFeePlatform: string;
-    contractFeePlatformPercentage: string;
-    contractFeeServicing: string;
-    contractFeeServicingPercentage: string;
-    contractFeeMonitoringMonthly: string;
-    contractFeeMonitoringPercentageMonthly: string;
-    contractFeeMonitoring: string;
-    contractFeeMonitoringPercentage: string;
-  
-    contractTaxPpn: string;
-    contractTaxFactor: string;
-    contractTaxYield: string;
-    contractPenaltyPercentageDaily: string;
-  
-    contractEscrowBank: string;
-    contractEscrowAccount: string;
-    contractVaBank: string;
-    contractVaNumber: string;
-    contractContactEmail: string;
-    contractContactWhatsapp: string;
-  
-    contractDocumentTitle: string;
-    contractDocumentNumber: string;
-    contractDocumentUrl: File | null;
-    restructOrder: number | null;
-    restructParentSecurityId: string | null;
-    restructOriginalSecurityId: string | null;
-
-    scheduleUpfrontFlag: boolean;
-    scheduleInstallmentFlag: boolean;
-    scheduleUpfrontDate: string;
-    scheduleInstallmentDate: string;
-
-  }
-
   // file: repayment-security-item.dto.ts
 
-export interface RepaymentSecurityEditFormResponse {
-  id: string;
-  investeeId: string;
-  investeeName: string;
-  investeeNameLegal: string;
-  investeeIconUrl: string | null;
+  export interface RepaymentSecurityFormRequest 
+  extends RepaymentSecurityIdentity, 
+          RepaymentSecurityInvestment, 
+          RepaymentSecurityFees, 
+          RepaymentSecurityPenaltiesAndTaxes, 
+          RepaymentSecurityContactAndBank, 
+          Omit<RepaymentSecurityDocuments, 'contractDocumentUrl'>, 
+          RepaymentSecurityRestructuring {
+
+      contractFeeMonitoringMonthly: string;
+      contractFeeMonitoringPercentage: string;
+
+      contractDocumentUrl: File | null;
+      scheduleUpfrontFlag: boolean;
+      scheduleInstallmentFlag: boolean;
+      scheduleUpfrontDate: string;
+      scheduleInstallmentDate: string;
+
+          }
+
+  export interface RepaymentSecurityEditFormResponse 
+  extends RepaymentSecurityIdentity, 
+          RepaymentSecurityInvestment, 
+          RepaymentSecurityFees, 
+          RepaymentSecurityPenaltiesAndTaxes, 
+          RepaymentSecurityContactAndBank, 
+          RepaymentSecurityDocuments, 
+          RepaymentSecurityRestructuring {}
+
+// export interface RepaymentSecurityFormRequest {
+//     id: string | null;
+//     investeeId: string;
+//     investeeName: string;
+//     investeeNameLegal: string;
+//     investeeIconUrl: string;
+//     securityId: string;
+//     securityType: SecurityType | null;
+//     securityName: string;
+//     securityCode: string;
+//     securitySeries: number | null;
+//     securityPhase: number | null;
+//     securitySequence: number | null;
   
-  securityId: string;
-  securityType: SecurityType | null; // Union literal type untuk auto-complete
-  securityName: string;
-  securityCode: string;
-  securitySeries: number;
-  securityPhase: number;
-  securitySequence: number;
+//     contractStartDate: string;
+//     contractEndDate: string;
+//     contractDurationInMonths: number;
+//     contractStatus: ContractStatus | '';
   
-  contractDocumentTitle: string | null;
-  contractDocumentNumber: string | null;
-  contractDocumentUrl: string | null;
+//     contractUnderlyingFund: string;
+//     contractYieldAmount: string;
+//     contractYieldRateAnnually: string;
+//     contractFeeAdministration: string;
+//     contractFeeAdministrationPercentage: string;
+//     contractFeeProvision: string;
+//     contractFeeProvisionPercentage: string;
+//     contractFeePlatform: string;
+//     contractFeePlatformPercentage: string;
+//     contractFeeServicing: string;
+//     contractFeeServicingPercentage: string;
+//     contractFeeMonitoringMonthly: string;
+//     contractFeeMonitoringPercentageMonthly: string;
+//     contractFeeMonitoring: string;
+//     contractFeeMonitoringPercentage: string;
   
-  contractUnderlyingFund: string; // Bentuk nominal di JSON berupa string
-  contractStartDate: string; // Format ISO Date string
-  contractEndDate: string; // Format ISO Date string
-  contractDurationInMonths: number;
-  contractStatus: ContractStatus | null;
+//     contractTaxPpn: string;
+//     contractTaxFactor: string;
+//     contractTaxYield: string;
+//     contractPenaltyPercentageDaily: string;
   
-  contractYieldAmount: string;
-  contractYieldRateAnnually: string;
+//     contractEscrowBank: string;
+//     contractEscrowAccount: string;
+//     contractVaBank: string;
+//     contractVaNumber: string;
+//     contractContactEmail: string;
+//     contractContactWhatsapp: string;
   
-  contractFeeAdministration: string;
-  contractFeeAdministrationPercentage: string;
-  contractFeeProvision: string;
-  contractFeeProvisionPercentage: string;
-  contractFeePlatform: string;
-  contractFeePlatformPercentage: string;
-  contractFeeServicing: string;
-  contractFeeServicingPercentage: string;
-  contractFeeMonitoring: string;
-  contractFeeMonitoringPercentageMonthly: string;
+//     contractDocumentTitle: string;
+//     contractDocumentNumber: string;
+//     contractDocumentUrl: File | null;
+//     restructOrder: number | null;
+//     restructParentSecurityId: string | null;
+//     restructOriginalSecurityId: string | null;
+
+//     scheduleUpfrontFlag: boolean;
+//     scheduleInstallmentFlag: boolean;
+//     scheduleUpfrontDate: string;
+//     scheduleInstallmentDate: string;
+
+  // }
+
+// export interface RepaymentSecurityEditFormResponse {
+//   id: string;
+//   investeeId: string;
+//   investeeName: string;
+//   investeeNameLegal: string;
+//   investeeIconUrl: string | null;
   
-  contractPenaltyPercentageDaily: string;
+//   securityId: string;
+//   securityType: SecurityType | null; // Union literal type untuk auto-complete
+//   securityName: string;
+//   securityCode: string;
+//   securitySeries: number;
+//   securityPhase: number;
+//   securitySequence: number;
   
-  contractTaxPpn: string;
-  contractTaxYield: string;
-  contractTaxFactor: string;
+//   contractDocumentTitle: string | null;
+//   contractDocumentNumber: string | null;
+//   contractDocumentUrl: string | null;
   
-  contractEscrowBank: string;
-  contractEscrowAccount: string;
-  contractVaBank: string;
-  contractVaNumber: string;
-  contractContactEmail: string;
-  contractContactWhatsapp: string;
+//   contractUnderlyingFund: string; // Bentuk nominal di JSON berupa string
+//   contractStartDate: string; // Format ISO Date string
+//   contractEndDate: string; // Format ISO Date string
+//   contractDurationInMonths: number;
+//   contractStatus: ContractStatus | null;
   
-  restructOrder: number;
-  restructParentSecurityId: string | null;
-  restructOriginalSecurityId: string | null;
+//   contractYieldAmount: string;
+//   contractYieldRateAnnually: string;
   
-  createdBy: string;
-  createdAt: string; // Format ISO Date string
-  updatedBy: string;
-  updatedAt: string; // Format ISO Date string
-  deletedBy: string | null;
-  deletedAt: string | null;
-}
+//   contractFeeAdministration: string;
+//   contractFeeAdministrationPercentage: string;
+//   contractFeeProvision: string;
+//   contractFeeProvisionPercentage: string;
+//   contractFeePlatform: string;
+//   contractFeePlatformPercentage: string;
+//   contractFeeServicing: string;
+//   contractFeeServicingPercentage: string;
+//   contractFeeMonitoring: string;
+//   contractFeeMonitoringPercentageMonthly: string;
+  
+//   contractPenaltyPercentageDaily: string;
+  
+//   contractTaxPpn: string;
+//   contractTaxYield: string;
+//   contractTaxFactor: string;
+  
+//   contractEscrowBank: string;
+//   contractEscrowAccount: string;
+//   contractVaBank: string;
+//   contractVaNumber: string;
+//   contractContactEmail: string;
+//   contractContactWhatsapp: string;
+  
+//   restructOrder: number;
+//   restructParentSecurityId: string | null;
+//   restructOriginalSecurityId: string | null;
+  
+//   createdBy: string;
+//   createdAt: string; // Format ISO Date string
+//   updatedBy: string;
+//   updatedAt: string; // Format ISO Date string
+//   deletedBy: string | null;
+//   deletedAt: string | null;
+// }
 
   

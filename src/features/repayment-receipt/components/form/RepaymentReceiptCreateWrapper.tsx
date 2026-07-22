@@ -46,7 +46,7 @@ export default function RepaymentReceiptCreateWrapper({invoiceSummary }: Props) 
   const handleCreateSubmit = async (formData: any) => {
     setIsSubmitting(true);
     try {
-      await repaymentReceiptService.createReceipt(invoiceSummary.scheduleId, formData);
+      await repaymentReceiptService.createRepaymentReceipt(invoiceSummary.scheduleId, formData);
       closePanel();
     } catch (error) {
       console.error("Gagal create penerimaan", error);

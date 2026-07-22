@@ -1,3 +1,5 @@
+
+
 export const formatDateForInput = (dateInput: any): string => {
   if (!dateInput) return '';
   const d = new Date(dateInput);
@@ -10,11 +12,6 @@ export const formatDateForInput = (dateInput: any): string => {
   
   return `${year}-${month}-${day}`; // Menghasilkan format YYYY-MM-DD secara aman
 };
-
-// export const formatDate = (dateString?: string) => {
-//     if (!dateString) return '';
-//     return dateString.split('T')[0];
-//   };
 
 export const formatDate = (dateStr?: string | null) => {
   // 1. Handle null, undefined, atau empty string ("")
@@ -44,4 +41,13 @@ export const formatCompactDate = (dateStr?: string | null) => {
     month: 'short', 
     year: '2-digit' 
   }).format(date);
+};
+
+export const toDate = (dateInput: any): Date | null => {
+  if (!dateInput) return null;
+  const d = new Date(dateInput);
+  
+  if (isNaN(d.getTime())) return null;
+  
+  return d;
 };

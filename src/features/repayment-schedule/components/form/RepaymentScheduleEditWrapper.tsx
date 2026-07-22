@@ -3,40 +3,39 @@ import RepaymentScheduleForm from './RepaymentScheduleForm';
 import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { repaymentScheduleService } from '../../services/repaymentScheduleService';
 import { RepaymentScheduleEditFormResponse, RepaymentScheduleFormRequest } from '../../dtos/repayment-schedule.dto';
-import { RepaymentSecuritySummary } from '../../../repayment-security/types/repayment-security.type';
 import { InvoiceStatus, ScheduleType } from '../../types/repayment-schedule.enum';
+import { RepaymentSecurityDetailResponse } from '../../../repayment-security/dtos/repayment-security.dto';
 
 
 interface EditWrapperProps {
   scheduleId: string;
-  repaymentSecuritySummary: RepaymentSecuritySummary;
+  repaymentSecurity: RepaymentSecurityDetailResponse;
 }
 
-export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecuritySummary}: EditWrapperProps) {
+export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecurity}: EditWrapperProps) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialData, setInitialData] = useState<RepaymentScheduleFormRequest | null>(null);
   
   // State Modal Konfirmasi
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [pendingFormData, setPendingFormData] = useState<RepaymentScheduleFormRequest | null>(null);
 
   useEffect(() => {
     const fetchScheduleData = async () => {
       try {
-        const response = await repaymentScheduleService.getScheduleEditFormResponse(scheduleId);
+        const response = await repaymentScheduleService.getRepaymentScheduleEditForm(scheduleId);
         // Ngambil data.item berdasarkan format JSON yang lo kasih
         if (response.data && response.data.item) {
           
           const repaymentScheduleRes: RepaymentScheduleEditFormResponse = response.data.item;
           const currentData: RepaymentScheduleFormRequest = {
-            scheduleType: repaymentScheduleRes?.scheduleType || '', // Default value
+            repaymentSecurityId: repaymentSecurity.id,
+            scheduleType: repaymentScheduleRes?.scheduleType || null, // Default value
             scheduleSequence: repaymentScheduleRes?.scheduleSequence || 0, // Default urutan pertama
             scheduleDate: repaymentScheduleRes?.scheduleDate || '', 
             invoiceDate: repaymentScheduleRes?.invoiceDate || '', 
-            invoiceNumber: repaymentScheduleRes?.invoiceNumber || '',
+            invoiceNumber: repaymentScheduleRes?.invoiceNumber || '-',
             invoiceSentTrial: repaymentScheduleRes?.invoiceSentTrial || 0,
-            invoiceStatus: repaymentScheduleRes?.invoiceStatus || '', // Default jadwal baru biasanya Draft
+            invoiceStatus: repaymentScheduleRes?.invoiceStatus || null, // Default jadwal baru biasanya Draft
             invoiceNotes: repaymentScheduleRes?.invoiceNotes || '',
             invoiceFeeAdministration: repaymentScheduleRes?.invoiceFeeAdministration || '0',
             invoiceFeeAdministrationTax: repaymentScheduleRes?.invoiceFeeAdministrationTax || '0',
@@ -71,28 +70,35 @@ export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecu
     }
   }, [scheduleId]);
 
-  // Ini cuma nge-trigger buka modal
-  const handleFormSubmitRequest = (formData: RepaymentScheduleFormRequest) => {
-    setPendingFormData(formData);
-    setShowConfirmModal(true);
-  };
+  const handleUpdateSubmit = async (formData: RepaymentScheduleFormRequest) => {
 
-  // Ini baru beneran execute API Call PUT
-  const confirmAndSubmit = async () => {
-    if (!pendingFormData) return;
-    
+    if (!repaymentSecurity.id) {
+      console.error("Error: repaymentSecurityId tidak ditemukan!");
+      return;
+    }
+
     setIsSubmitting(true);
-    setShowConfirmModal(false);
+
+    const payloadData : RepaymentScheduleFormRequest = {
+      ...formData,
+      invoiceStatus: formData.invoiceStatus === '' ? null : formData.invoiceStatus,
+      scheduleType: formData.scheduleType === '' ? null : formData.scheduleType,
+      invoiceNumber: formData.invoiceNumber === '-' ? null : formData.invoiceNumber,
+    };
 
     try {
-      await repaymentScheduleService.updateSchedule(scheduleId, pendingFormData);
-      console.log('Update Success for ID:', scheduleId);
-      closePanel();
+      // Memanggil fungsi POST API dari service 
+      await repaymentScheduleService.updateRepaymentSchedule(scheduleId, payloadData);
+      
+      console.log('Berhasil mengedit jadwal untuk Schedule ID:', scheduleId);
+      
+      // Bisa tambahkan Toast Notification (Success) di sini
+      closePanel(); // Langsung tutup side panel setelah berhasil
     } catch (error) {
-      console.error("Gagal update jadwal", error);
+      console.error("Gagal mengedit jadwal :", error);
+      // Bisa tambahkan Toast Notification (Error) di sini
     } finally {
       setIsSubmitting(false);
-      setPendingFormData(null);
     }
   };
 
@@ -102,8 +108,8 @@ export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecu
         <RepaymentScheduleForm 
           mode='edit'
           initialData={initialData}
-          repaymentSecSummary={repaymentSecuritySummary}
-          onSubmit={handleFormSubmitRequest} 
+          repaymentSecurity={repaymentSecurity}
+          onSubmit={handleUpdateSubmit} 
           isLoading={isSubmitting} 
         />
       ) : (
@@ -113,35 +119,7 @@ export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecu
         </div>
       )}
 
-      {/* Modal Konfirmasi Bawaan Tailwind */}
-      {showConfirmModal && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-5">
-              <h3 className="text-sm font-bold text-slate-800 mb-2">Konfirmasi Perubahan</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Apakah Anda yakin ingin menyimpan perubahan pada jadwal pembayaran ini? Pastikan nominal yang dimasukkan sudah benar.
-              </p>
-            </div>
-            <div className="flex bg-slate-50 border-t border-slate-100 px-4 py-3 justify-end gap-2">
-              <button
-                onClick={() => setShowConfirmModal(false)}
-                className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded hover:bg-slate-50 transition-colors"
-                disabled={isSubmitting}
-              >
-                Batal
-              </button>
-              <button
-                onClick={confirmAndSubmit}
-                className="px-3 py-1.5 text-xs font-medium text-white bg-amber-600 rounded hover:bg-amber-700 transition-colors"
-                disabled={isSubmitting}
-              >
-                Ya, Simpan
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 }
