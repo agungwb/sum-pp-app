@@ -8,6 +8,19 @@ extends RepaymentScheduleID,
         RepaymentScheduleInvoiceInfo,
         RepaymentScheduleInvoiceFee {}
 
+export interface RepaymentScheduleDetailWithPenaltyResponse 
+extends RepaymentScheduleID,
+        RepaymentScheduleParent,
+        RepaymentScheduleInfo,
+        RepaymentScheduleInvoiceFee,
+        RepaymentScheduleInvoiceInfo {
+        outstandingTotalWithTax: string;
+        penaltySettled: string;
+        penaltyIsSettled: boolean;
+        penaltyCalculated: string;
+          
+      }
+
 export interface RepaymentScheduleDetailWithAuditResponse
 extends RepaymentScheduleID,
         RepaymentScheduleParent,
@@ -22,93 +35,14 @@ extends RepaymentScheduleID,
         RepaymentScheduleInfo,
         RepaymentScheduleInvoiceInfo,
         RepaymentScheduleInvoiceFee,
-        RepaymentScheduleAuditTrail
-
-{
-    // id: string;
-
-    // repaymentSecurityId: string;
-
-    // scheduleType: string; // Bisa Anda ganti dengan enum ScheduleType jika sudah di-import
-    // scheduleSequence: number;
-    // scheduleDate: string;
-
-    // invoiceNumber: string | null;
-    // invoiceSentTrial: number;
-    // invoiceDate: string | null;
-    // invoiceStatus: string; // Bisa Anda ganti dengan enum InvoiceStatus jika sudah di-import
-    // invoiceNotes: string | null;
-    
-    // // Perhatikan bahwa semua nilai uang (NUMERIC) berupa string dari JSON
-    // invoiceFeeAdministration: string;
-    // invoiceFeeAdministrationTax: string;
-    // invoiceFeeProvision: string;
-    // invoiceFeeProvisionTax: string;
-    // invoiceFeePlatform: string;
-    // invoiceFeePlatformTax: string;
-    // invoiceFeeServicing: string;
-    // invoiceFeeServicingTax: string;
-    // invoiceFeeMonitoring: string;
-    // invoiceFeeMonitoringTax: string;
-    // invoiceFeeOther: string;
-    // invoiceFeeOtherTax: string;
-    // invoiceSinkingFund: string;
-    // invoiceYield: string;
-    // invoiceActualLoss: string;
-    // invoicePenalty: string;
-    // invoiceTotal: string;
-    // invoiceTotalTax: string;
-    // invoiceTotalWithTax: string;
-    
-    // createdBy: string;
-    // createdAt: string;
-    // updatedBy: string;
-    // updatedAt: string;
-    // deletedBy: string | null;
-    // deletedAt: string | null;
-  }
+        RepaymentScheduleAuditTrail {}
 
   export interface RepaymentScheduleFormRequest 
   extends RepaymentScheduleParent,
           RepaymentScheduleInfo,
           RepaymentScheduleInvoiceInfo,
-          RepaymentScheduleInvoiceFee
-  {
-    // repaymentSecurityId?: string;
+          RepaymentScheduleInvoiceFee {}
 
-    // scheduleType?: ScheduleType | '';
-    // scheduleSequence?: number;
-    // scheduleDate?: string;
-
-    // invoiceNumber?: string | null;
-    // invoiceSentTrial?: number;
-    // invoiceDate?: string;
-    // invoiceStatus?: InvoiceStatus | '';
-    // invoiceNotes?: string;
-
-    // invoiceFeeAdministration?: string;
-    // invoiceFeeAdministrationTax?: string;
-    // invoiceFeeProvision?: string;
-    // invoiceFeeProvisionTax?: string;
-    // invoiceFeePlatform?: string;
-    // invoiceFeePlatformTax?: string;
-    // invoiceFeeServicing?: string;
-    // invoiceFeeServicingTax?: string;
-    // invoiceFeeMonitoring?: string;
-    // invoiceFeeMonitoringTax?: string;
-    // invoiceFeeOther?: string;
-    // invoiceFeeOtherTax?: string;
-    // invoiceSinkingFund?: string;
-    // invoiceYield?: string;
-    // invoiceActualLoss?: string;
-    // invoicePenalty?: string;
-    // invoiceTotal?: string;
-    // invoiceTotalTax?: string;
-    // invoiceTotalWithTax?: string;
-  }
-
-  
-  
   export interface RepaymentScheduleEditFormResponse 
   extends RepaymentScheduleParent,
           RepaymentScheduleInfo,
@@ -116,48 +50,7 @@ extends RepaymentScheduleID,
           RepaymentScheduleInvoiceFee {}
 
   export interface RepaymentScheduleItemWithPenaltyResponse 
-  extends RepaymentScheduleID,
-          RepaymentScheduleParent,
-          RepaymentScheduleInfo,
-          RepaymentScheduleInvoiceFee,
-          RepaymentScheduleInvoiceInfo {
-    outstandingTotalWithTax: string;
-    penaltySettled: string;
-    penaltyIsSettled: boolean;
-    penaltyCalculated: string;
-    // id: string;
-    // repaymentSecurityId: string;
-    // scheduleType: string;
-    // scheduleSequence: number;
-    // scheduleDate: string;
-
-    // invoiceDate: string | null;
-    // invoiceStatus: string | null;
-
-    // invoiceFeeAdministration: string;
-    // invoiceFeeAdministrationTax: string;
-    // invoiceFeeProvision: string;
-    // invoiceFeeProvisionTax: string;
-    // invoiceFeePlatform: string;
-    // invoiceFeePlatformTax: string;
-    // invoiceFeeServicing: string;
-    // invoiceFeeServicingTax: string;
-    // invoiceFeeMonitoring: string;
-    // invoiceFeeMonitoringTax: string;
-    // invoiceFeeOther: string;
-    // invoiceFeeOtherTax: string;
-    // invoiceSinkingFund: string;
-    // invoiceYield: string;
-    // invoiceActualLoss: string;
-    // invoicePenalty: string;
-    // invoiceTotal: string;
-    // invoiceTotalTax: string;
-    // invoiceTotalWithTax: string;
-
-    // ==========================================
-    // Outstanding & Penalty Calculators 
-    // ==========================================
-    
+  extends RepaymentScheduleDetailWithPenaltyResponse {}
     
 }
 

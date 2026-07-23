@@ -1,4 +1,4 @@
-
+import { differenceInDays, startOfDay, isValid } from 'date-fns';
 
 export const formatDateForInput = (dateInput: any): string => {
   if (!dateInput) return '';
@@ -50,4 +50,34 @@ export const toDate = (dateInput: any): Date | null => {
   if (isNaN(d.getTime())) return null;
   
   return d;
+};
+
+/**
+ * Menghitung selisih hari antara dua tanggal (dateLeft - dateRight).
+ * Jika input null, otomatis diganti menjadi hari ini.
+ * Jika format tanggal tidak valid, mengembalikan null.
+ * 
+ * @param dateLeft - Tanggal pertama (String, Date, atau Null)
+ * @param dateRight - Tanggal kedua (String, Date, atau Null)
+ * @returns number | null - Jumlah selisih hari, atau null jika tanggal tidak valid
+ */
+export const calculateDays = (
+  dateLeft: string | Date | null,
+  dateRight: string | Date | null
+): number | null => {
+  // 1. Jika null, jalankan fallback ke hari ini
+  const parsedLeft = dateLeft ? new Date(dateLeft) : new Date();
+  const parsedRight = dateRight ? new Date(dateRight) : new Date();
+
+  // 2. Validasi apakah tanggalnya valid menggunakan isValid dari date-fns
+  // (Fungsi isValid otomatis mengecek isNaN di balik layar)
+  if (!isValid(parsedLeft) || !isValid(parsedRight)) {
+    return null; 
+  }
+
+  // 3. Jika valid, hitung selisih harinya
+  return differenceInDays(
+    startOfDay(parsedLeft),
+    startOfDay(parsedRight)
+  );
 };

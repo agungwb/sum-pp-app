@@ -2,6 +2,7 @@
 // REUSABLE HELPER COMPONENTS
 // =============================================================================
 
+import { Big } from "big.js";
 import FeeWithTax from "../../../../components/ui/FeeWithTax";
 import { formatPercentage } from "../../../../utils/currency";
 
@@ -27,9 +28,9 @@ const sizePct: Record<FeeSize, string> = {
 // Helper: Teks Informasi Flat
 interface RevenueRowProps {
     label: string; 
-    value: string | number; 
-    percentage?: string | number; 
-    tax?: string | number ;
+    value: string | number | Big; 
+    percentage?: string | number | Big; 
+    tax?: string | number | Big;
     size?: FeeSize; // 👈 Prop baru untuk mode
     weight?: FeeWeight;
     withRp?: boolean;
@@ -43,7 +44,7 @@ export default function RevenueRow({ label, value, percentage, tax, size = 'md',
         <span className="text-[12px] flex-[3] font-bold font-mono text-slate-800">
           <FeeWithTax base={value} tax={tax} size={size} weight={weight} withRp={withRp}/>
         </span>
-        <span className={`text-[11px] flex-[1] font-semibold text-slate-500 text-right ${sizePct[size]}`}>{formatPercentage(percentage)}</span>
+        <span className={`text-[11px] flex-[1] font-semibold text-slate-500 text-right ${sizePct[size]}`}>{formatPercentage(percentage ?? null)}</span>
       </div>
     );
   }

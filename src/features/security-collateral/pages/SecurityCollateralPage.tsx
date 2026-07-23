@@ -283,14 +283,14 @@ export default function SecurityCollateralPage() {
                         <button
                             type="button"
                             onClick={() => openPanel(<SecurityCollateralCreateWrapper repaymentSecuritySummary={repaymentSecSummary}/>)}
-                            className="w-full flex items-center justify-center gap-2 py-4 border-2 m-4 border-dashed rounded-lg border-amber-200 bg-amber-50/40 hover:bg-amber-100 text-amber-700 transition-all focus:outline-none focus:ring-2 focus:ring-amber-200 group"
+                            className="w-full flex items-center justify-center gap-2 py-4 border-2 m-3 border-dashed rounded-lg border-amber-200 bg-amber-50/40 hover:bg-amber-100 text-amber-700 transition-all focus:outline-none focus:ring-2 focus:ring-amber-200 group"
                           >
                             <div className="bg-amber-100 p-1 rounded-full group-hover:bg-amber-500 transition-colors">
-                              <svg className="w-5 h-5 text-amber-600 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <svg className="w-4 h-4 text-amber-600 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                               </svg>
                             </div>
-                            <span className="font-semibold text-sm">Tambah kolateral baru</span>
+                            <span className="font-semibold text-xs">Tambah kolateral baru</span>
                           </button>
                         </td>
                         <td></td>

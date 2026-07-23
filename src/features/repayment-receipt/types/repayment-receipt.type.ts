@@ -15,7 +15,7 @@ export interface RepaymentReceiptInfo {
   receiptStatus: ReceiptStatus;
   receiptNotes: string | null;
   receiptMethod: ReceiptMethod | null | '';
-  receiptDocumentUrl: string | null;
+  receiptDocumentUrl: File | null;
 }
 
 export interface RepaymentReceiptPayment {

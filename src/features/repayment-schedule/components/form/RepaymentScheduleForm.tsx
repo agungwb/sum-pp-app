@@ -8,7 +8,7 @@ import { RepaymentScheduleFormRequest } from '../../dtos/repayment-schedule.dto'
 
 // Import Custom Components
 import { NumericInput, FormGroup, ConfirmModal, Select, Input, NumberField, Toggle } from '../../../../components/forms/index';
-import { formatDateForInput, toD, toDate } from '../../../../utils/date';
+import { calculateDays, formatDateForInput, toD, toDate } from '../../../../utils/date';
 import { RepaymentSecurityDetailResponse, RepaymentSecuritySummaryResponse } from '../../../repayment-security/dtos/repayment-security.dto';
 import { toSafeBig } from '../../../../utils/number';
 import { RepaymentScheduleSummary } from '../../types/repayment-schedule.type';
@@ -36,6 +36,9 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
 
   // Cek jika status invoice dipilih dan bernilai selain DRAFT atau kosong
   const isInvoiceNonDraft = Boolean(formData.invoiceStatus && formData.invoiceStatus !== InvoiceStatus.DRAFT);
+
+  const daysOverdue = isEditMode ? calculateDays(null, formData.scheduleDate) : 0;
+  const isInvoiceOverdue = !!daysOverdue && daysOverdue > 0;
 
   const taxPpn = toSafeBig(repaymentSecurity.contractTaxPpn);
   const taxFactor = toSafeBig(repaymentSecurity.contractTaxFactor);
@@ -275,7 +278,7 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
               <NumberField label="Tax Servicing" value={Number(formData.invoiceFeeServicingTax || 0)} onValueChange={() => {}} disabled />
 
               {/* Pemisah untuk kelompok Fee Other */}
-              <div className="col-span-2 w-full border-t border-slate-200 mt-2 pt-4"></div>
+              <div className="col-span-2 w-full border-b border-slate-200 mt-2 pt-4"></div>
 
               {/* invoiceFeeOther ikut gabung di grup UPFRONT */}
               <NumberField label="Fee Other" value={Number(formData.invoiceFeeOther || 0)} onValueChange={(val: number) => handleNumericChange('invoiceFeeOther', val)} disabled={isInvoiceNonDraft} />
@@ -304,8 +307,8 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
           {/* DENDA & KERUGIAN (Hanya Muncul Jika Schedule Type Dipilih) */}
           {formData.scheduleType && (
             <FormGroup title="DENDA & KERUGIAN">
-              <NumberField label="Actual Loss" value={Number(formData.invoiceActualLoss || 0)} onValueChange={(val: number) => handleNumericChange('invoiceActualLoss', val)} disabled={isEditMode || isInvoiceNonDraft} />
-              <NumberField label="Penalty" value={Number(formData.invoicePenalty || 0)} onValueChange={(val: number) => handleNumericChange('invoicePenalty', val)} disabled={isEditMode || isInvoiceNonDraft} />
+              <NumberField label="Actual Loss" value={Number(formData.invoiceActualLoss || 0)} onValueChange={(val: number) => handleNumericChange('invoiceActualLoss', val)} disabled={!isEditMode ||  !isInvoiceOverdue} />
+              <NumberField label="Penalty" value={Number(formData.invoicePenalty || 0)} onValueChange={(val: number) => handleNumericChange('invoicePenalty', val)} disabled={true} />
             </FormGroup>
           )}
 

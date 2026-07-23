@@ -4,19 +4,18 @@ import RepaymentReceiptForm from './RepaymentReceiptForm';
 import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { repaymentReceiptService } from '../../services/repaymentReceiptService';
 import { ScheduleType } from '../../types/repayment-receipt.enum';
-import { InvoiceSummary } from '../../../repayment-schedule/types/repayment-schedule.type';
+import { InvoiceSummary, InvoiceSummaryWithPenaltyBig } from '../../../repayment-schedule/types/repayment-schedule.type';
 import { RepaymentReceiptEditFormResponse, RepaymentReceiptFormRequest } from '../../dtos/repayment-receipt.dto';
 
 interface Props {
   receiptId: string; // Mengikuti instruksi GET & PUT URL kamu
-  initialData: RepaymentReceiptFormRequest;
-  invoiceSummary: InvoiceSummary;
+  invoiceSummary: InvoiceSummaryWithPenaltyBig;
 }
 
 export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary }: Props) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [initialData, setInitialData] = useState<any>(null);
+  const [initialData, setInitialData] = useState<RepaymentReceiptFormRequest | null>(null);
 
   useEffect(() => {
     const fetchReceiptDetail = async () => {
@@ -31,11 +30,12 @@ export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary 
           console.log('[RepaymentReceiptEditWrapper] repaymentReceiptRes.receiptDate : ',repaymentReceiptRes.receiptDate);
 
           const currentData: RepaymentReceiptFormRequest = {
+            repaymentScheduleId: repaymentReceiptRes?.repaymentScheduleId,
             receiptDate: repaymentReceiptRes?.receiptDate || '',
             receiptStatus: repaymentReceiptRes?.receiptStatus || '',
             receiptMethod: repaymentReceiptRes?.receiptMethod || null,
             receiptNotes: repaymentReceiptRes?.receiptNotes || '',
-            receiptDocumentUrl: repaymentReceiptRes?.receiptDocumentUrl || '',
+            receiptDocumentUrl: newrepaymentReceiptRes?.receiptDocumentUrl || '',
             receiptTotalWithTax: repaymentReceiptRes?.receiptTotalWithTax || '',
             receiptTotal: repaymentReceiptRes?.receiptTotal || '',
             receiptTotalTax: repaymentReceiptRes?.receiptTotalTax || '',
@@ -88,8 +88,7 @@ export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary 
         <RepaymentReceiptForm 
           mode='edit'
           initialData={initialData}
-          invoiceSummary={invoiceSummary }
-          scheduleType={ScheduleType.UPFRONT} // Dummy
+          invoiceSummary={invoiceSummary}
           onSubmit={handleEditSubmit} 
           isLoading={isSubmitting} 
         />

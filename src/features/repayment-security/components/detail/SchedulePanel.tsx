@@ -374,21 +374,19 @@ export default function SchedulePanel({
 
         {/* ROW 3: Buat Jadwal Pembayaran Baru (Khusus Edit Mode) */}
         {isEditMode && (
-          <div className="p-5 border-t-2 border-slate-200">
+          <div className="p-5 border-t-2 border-slate-200 mr-10">
             <button
-              type="button"
-              onClick={() => openPanel(<RepaymentScheduleCreateWrapper repaymentSecurity={repaymentSecurity} lastUpfront={lastUpfront} lastInstallment={lastInstallment}/>)}
-              className="flex items-center justify-center w-full py-4 border-2 border-dashed border-amber-300 bg-amber-50/50 text-amber-700 rounded-xl hover:bg-amber-100 hover:border-amber-400 transition-all group focus:outline-none focus:ring-2 focus:ring-amber-200"
-            >
-              <div className="flex items-center gap-2">
-                <div className="bg-amber-200/60 p-1.5 rounded-full group-hover:bg-amber-300 transition-colors">
-                  <svg className="w-4 h-4 text-amber-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                type="button"
+                onClick={() => openPanel(<RepaymentScheduleCreateWrapper repaymentSecurity={repaymentSecurity} lastUpfront={lastUpfront} lastInstallment={lastInstallment}/>)}
+                className="w-full flex items-center justify-center gap-2 py-3 border-2 m-4 border-dashed rounded-lg border-amber-200 bg-amber-50/40 hover:bg-amber-100 text-amber-700 transition-all focus:outline-none focus:ring-2 focus:ring-amber-200 group"
+              >
+                <div className="bg-amber-100 p-1 rounded-full group-hover:bg-amber-500 transition-colors">
+                  <svg className="w-4 h-4 text-amber-600 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                   </svg>
                 </div>
-                <span className="text-[11px] font-bold tracking-wider">Buat Tagihan Baru</span>
-              </div>
-            </button>
+                <span className="font-semibold text-xs">Buat Tagihan Baru</span>
+              </button>
           </div>
         )}
 

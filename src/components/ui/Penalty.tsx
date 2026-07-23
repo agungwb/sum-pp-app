@@ -14,10 +14,10 @@ interface PenaltyProps {
 
 const sizePenalty: Record<Size, string> = {
   'xs': 'text-[8px]',
-  'sm': 'text-[9px]',
-  'md': 'text-[11px]',
-  'lg': 'text-[13px]',
-  'xl': 'text-[15px]',
+  'sm': 'text-[10px]',
+  'md': 'text-[12px]',
+  'lg': 'text-[14px]',
+  'xl': 'text-[16px]',
 };
 
 export default function Penalty({ 
@@ -46,8 +46,8 @@ export default function Penalty({
         );
       case 'ongoing':
         return (
-          <span className={`font-mono font-normal text-red-400 ${sizePenalty[size]}`}>
-            {formatRupiah(penalty, withRp)}<sup className="ml-0.5">*</sup>
+          <span className={`font-mono font-normal text-red-500 ${sizePenalty[size]}`}>
+            <sup className="ml-0.5">*</sup>{formatRupiah(penalty, withRp)}
           </span>
         );
       case 'normal':

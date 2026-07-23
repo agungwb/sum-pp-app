@@ -1,3 +1,4 @@
+import { Big } from 'big.js';
 import { InvoiceStatus, ScheduleType } from './repayment-schedule.enum';
 
 export interface RepaymentScheduleID {
@@ -55,6 +56,35 @@ export interface RepaymentScheduleInvoiceFee {
   invoiceTotalWithTax: string;
 }
 
+export interface RepaymentScheduleInvoiceFeeBig {
+  // Fees & Revenues (Net Base)
+  invoiceFeeAdministration: Big;
+  invoiceFeeProvision: Big;
+  invoiceFeePlatform: Big;
+  invoiceFeeServicing: Big;
+  invoiceFeeMonitoring: Big;
+  invoiceFeeOther: Big;
+
+  // Taxes
+  invoiceFeeAdministrationTax: Big;
+  invoiceFeeProvisionTax: Big;
+  invoiceFeePlatformTax: Big;
+  invoiceFeeServicingTax: Big;
+  invoiceFeeMonitoringTax: Big;
+  invoiceFeeOtherTax: Big;
+
+  // Investments & Penalties
+  invoiceSinkingFund: Big;
+  invoiceYield: Big;
+  invoiceActualLoss: Big;
+  invoicePenalty: Big;
+
+  // Totals
+  invoiceTotal: Big;
+  invoiceTotalTax: Big;
+  invoiceTotalWithTax: Big;
+}
+
 export interface RepaymentScheduleAuditTrail {
   // Audit Trails
   createdBy: string;
@@ -81,70 +111,20 @@ extends RepaymentScheduleID,
 
 
 export interface InvoiceSummary 
-extends RepaymentScheduleInfo, 
-        RepaymentScheduleInvoiceFee{
-          scheduleId: string | undefined;
+extends 
+        RepaymentScheduleID,
+        RepaymentScheduleInfo, 
+        RepaymentScheduleInvoiceFee {}
+
+export interface InvoiceSummaryWithPenaltyBig 
+extends 
+        RepaymentScheduleID,
+        RepaymentScheduleInfo, 
+        RepaymentScheduleInvoiceFeeBig {
+        outstandingTotalWithTax: Big;
+        penaltySettled: Big;
+        penaltyIsSettled: boolean;
+        penaltyCalculated: Big;
+        taxPpn: Big;
+        taxFactor: Big;
         }
-
-// export interface ScheduleItem {
-//     id: string; // UUID
-
-//     repaymentSecurityId: string; // UUID
-
-//     scheduleType: ScheduleType | '';
-//     scheduleSequence: number;
-//     scheduleDate: string; // ISO Date string (YYYY-MM-DD)
-
-//     invoiceNumber: string;
-//     invoiceSentTrial: number;
-//     invoiceDate: string; // ISO Date string (YYYY-MM-DD)
-//     invoiceStatus: InvoiceStatus | '';
-//     invoiceNotes: string;
-
-//     invoiceFeeAdministration: string;
-//     invoiceFeeAdministrationTax: string;
-//     invoiceFeeProvision: string;
-//     invoiceFeeProvisionTax: string;
-//     invoiceFeePlatform: string;
-//     invoiceFeePlatformTax: string;
-//     invoiceFeeServicing: string;
-//     invoiceFeeServicingTax: string;
-//     invoiceFeeMonitoring: string;
-//     invoiceFeeMonitoringTax: string;
-//     invoiceFeeOther: string;
-//     invoiceFeeOtherTax: string;
-//     invoiceSinkingFund: string;
-//     invoiceYield: string;
-//     invoiceActualLoss: string;
-//     invoicePenalty: string;
-//     invoiceTotal: string;
-//     invoiceTotalTax: string;
-//     invoiceTotalWithTax: string;
-
-//     createdBy: string;
-//     createdAt: string;
-//   }
-
-// export interface InvoiceSummaryOld {
-//     scheduleId: string | undefined;
-//     scheduleType: ScheduleType | '';
-//     invoiceFeeAdministration: string;
-//     invoiceFeeAdministrationTax: string;
-//     invoiceFeeProvision: string;
-//     invoiceFeeProvisionTax: string;
-//     invoiceFeePlatform: string;
-//     invoiceFeePlatformTax: string;
-//     invoiceFeeServicing: string;
-//     invoiceFeeServicingTax: string;
-//     invoiceFeeMonitoring: string;
-//     invoiceFeeMonitoringTax: string;
-//     invoiceFeeOther: string;
-//     invoiceFeeOtherTax: string;
-//     invoiceSinkingFund: string;
-//     invoiceYield: string;
-//     invoiceActualLoss: string;
-//     invoicePenalty: string;
-//     invoiceTotal: string;
-//     invoiceTotalTax: string;
-//     invoiceTotalWithTax: string;
-// }

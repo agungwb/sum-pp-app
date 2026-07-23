@@ -4,11 +4,11 @@ import RepaymentReceiptForm from './RepaymentReceiptForm';
 import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { repaymentReceiptService } from '../../services/repaymentReceiptService';
 import { ReceiptMethod, ReceiptStatus, ScheduleType } from '../../types/repayment-receipt.enum';
-import { InvoiceSummary } from '../../../repayment-schedule/types/repayment-schedule.type';
+import { InvoiceSummary, InvoiceSummaryWithPenaltyBig } from '../../../repayment-schedule/types/repayment-schedule.type';
 import { RepaymentReceiptFormRequest } from '../../dtos/repayment-receipt.dto';
 
 interface Props {
-  invoiceSummary: InvoiceSummary;
+  invoiceSummary: InvoiceSummaryWithPenaltyBig;
 }
 
 export default function RepaymentReceiptCreateWrapper({invoiceSummary }: Props) {
@@ -19,7 +19,7 @@ export default function RepaymentReceiptCreateWrapper({invoiceSummary }: Props) 
   const initialData: RepaymentReceiptFormRequest = {
     receiptDate: '',
     receiptStatus: ReceiptStatus.SUCCESS,
-    receiptMethod: ReceiptMethod.BANK_TRANSFER,
+    receiptMethod: null,
     receiptNotes: '',
     receiptDocumentUrl: '',
     receiptTotalWithTax: '0',
@@ -46,7 +46,7 @@ export default function RepaymentReceiptCreateWrapper({invoiceSummary }: Props) 
   const handleCreateSubmit = async (formData: any) => {
     setIsSubmitting(true);
     try {
-      await repaymentReceiptService.createRepaymentReceipt(invoiceSummary.scheduleId, formData);
+      await repaymentReceiptService.createRepaymentReceipt(invoiceSummary.id, formData);
       closePanel();
     } catch (error) {
       console.error("Gagal create penerimaan", error);
@@ -60,7 +60,6 @@ export default function RepaymentReceiptCreateWrapper({invoiceSummary }: Props) 
       mode='add'
       initialData={initialData}
       invoiceSummary={invoiceSummary}
-      scheduleType={ScheduleType.INSTALLMENT}
       onSubmit={handleCreateSubmit} 
       isLoading={isSubmitting} 
     />

@@ -23,7 +23,7 @@ export const repaymentReceiptService = {
   },
   
   //LIST
-  getRepaymentReceipt: async (scheduleId: string) => {
+  getRepaymentReceipts: async (scheduleId: string) => {
     // const response = await axios.get(`${BASE_URL}/repayment/schedules/${scheduleId}/receipts`);
     const response = await apiClient.get(`/${REPAYMENT_SCHEDULE_URL}/${scheduleId}/receipts`);
     return response.data;
@@ -32,7 +32,7 @@ export const repaymentReceiptService = {
   // CREATE
   createRepaymentReceipt: async (scheduleId: string, payload: RepaymentReceiptFormRequest): Promise<RepaymentReceiptDetailWithAuditResponse> => {
     // const response = await axios.post(`${BASE_URL}/repayment/schedules/${scheduleId}/receipts`, data);
-    const response = await apiClient.pst(`/${REPAYMENT_SCHEDULE_URL}/${scheduleId}/receipts`, payload);
+    const response = await apiClient.post(`/${REPAYMENT_SCHEDULE_URL}/${scheduleId}/receipts`, payload);
     return response.data;
   },
 
