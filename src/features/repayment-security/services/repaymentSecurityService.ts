@@ -52,7 +52,7 @@ export const repaymentSecurityService = {
     return response.data;
   },
 
-  getRepaymentSecuritySummary2: async (id: string): Promise<ApiResponse<RepaymentSecuritySummaryResponse>> => {
+  getRepaymentSecuritySummary: async (id: string): Promise<ApiResponse<RepaymentSecuritySummaryResponse>> => {
     const response = await apiClient.get(`/${id}`, {
       params: {
         mode: 'summary', 
@@ -61,7 +61,7 @@ export const repaymentSecurityService = {
     return response.data;
   },
 
-  getRepaymentSecuritySummary: async (id: string): Promise<ApiResponse<RepaymentSecuritySummaryResponse>> => {
+  getRepaymentSecuritySummary2: async (id: string): Promise<ApiResponse<RepaymentSecuritySummaryResponse>> => {
     const response = await apiClient.get(`/${id}/summary`);
     return response.data;
   },

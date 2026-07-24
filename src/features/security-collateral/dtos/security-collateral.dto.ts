@@ -1,35 +1,37 @@
 // src/modules/security-collateral/dtos/security-collateral.dto.ts
 
+import { CollateralStatus, VerificationStatus } from "../types/security-collateral.enum";
+
 export interface SecurityCollateralDetailResponse {
     id: string;
     repaymentSecurityId: string;
     collateralType: string;
     collateralDescription: string | null;
     collateralValueEstimated: string; // Kolom keuangan dikirim/diterima sebagai string
-    collateralStatus: string | null;
+    collateralStatus: CollateralStatus | null | '';
     executionTime: string | null;
     documentUrl: string | null;
   
     // Tab Verifikasi Dokumen
-    verificationDocumentStatus: string | null;
+    verificationDocumentStatus: VerificationStatus | null | '';
     verificationDocumentNotes: string | null;
     verificationDocumentBy: string | null;
     verificationDocumentAt: string | null;
   
     // Tab Verifikasi Lapangan (Field)
-    verificationFieldStatus: string | null;
+    verificationFieldStatus: VerificationStatus | null | '';
     verificationFieldNotes: string | null;
     verificationFieldBy: string | null;
     verificationFieldAt: string | null;
   
     // Tab Verifikasi Legal
-    verificationLegalStatus: string | null;
+    verificationLegalStatus: VerificationStatus | null | '';
     verificationLegalNotes: string | null;
     verificationLegalBy: string | null;
     verificationLegalAt: string | null;
   
     // Tab Verifikasi Nilai (Value)
-    verificationValueStatus: string | null;
+    verificationValueStatus: VerificationStatus | null | '';
     verificationValueNotes: string | null;
     verificationValueBy: string | null;
     verificationValueAt: string | null;

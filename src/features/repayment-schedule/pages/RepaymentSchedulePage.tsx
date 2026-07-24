@@ -176,11 +176,11 @@ export default function RepaymentSchedulePage() {
       </div>
 
       {/* LAYOUT CONTAINER SUMMARY & DETAIL */}
-      <div className="flex flex-col lg:flex-row gap-4 items-stretch mb-6">
+      <div className="flex flex-col lg:flex-row gap-4 items-start mb-6">
         
         {/* CONTAINER KIRI: DETAIL KOMPONEN TAGIHAN */}
-        <div className="w-full lg:w-2/3 bg-white rounded-xl border-2 border-slate-200 shadow-sm px-4 flex flex-col justify-start">
-          <div className='h-14 flex items-center justify-between border-b-2 border-slate-100'>
+        <div className="w-full lg:w-2/3 bg-white rounded-xl border-2 border-slate-200 shadow-sm px-4 flex flex-col justify-between self-stretch">
+          <div className='h-14 flex items-center justify-between border-b-2 border-slate-100 shrink-0'>
             <h3 className="text-[12px] font-bold text-slate-800 uppercase tracking-wider pt-0.5 shrink-0">
               Rincian Komponen Tagihan
             </h3>
@@ -198,114 +198,120 @@ export default function RepaymentSchedulePage() {
             </div>
           </div>
          
-          <div className="text-[13px] font-medium space-y-2.5 text-slate-700 pt-2 pb-4">
-            {invoiceSummary.invoiceFeeAdministration.gt(0) && (
-              <div className="flex justify-between items-center p-2 rounded">
-                <span className="font-normal text-slate-900">Biaya Administrasi</span>
-                <FeeWithTax base={invoiceSummary.invoiceFeeAdministration} tax={invoiceSummary.invoiceFeeAdministrationTax} />
-              </div>
-            )}
-
-            {invoiceSummary.invoiceFeeProvision.gt(0) && (
-              <div className="flex justify-between items-center p-2 rounded">
-                <span className="font-normal text-slate-900">Biaya Provisi</span>
-                <FeeWithTax base={invoiceSummary.invoiceFeeProvision} tax={invoiceSummary.invoiceFeeProvisionTax} />
-              </div>
-            )}
-
-            {invoiceSummary.invoiceFeePlatform.gt(0) && (
-              <div className="flex justify-between items-center p-2 rounded">
-                <span className="font-normal text-slate-900">Biaya Platform</span>
-                <FeeWithTax base={invoiceSummary.invoiceFeePlatform} tax={invoiceSummary.invoiceFeePlatformTax} />
-              </div>
-            )}
-
-            {invoiceSummary.invoiceFeeServicing.gt(0) && (
-              <div className="flex justify-between items-center p-2 rounded">
-                <span className="font-normal text-slate-900">Biaya Servicing</span>
-                <FeeWithTax base={invoiceSummary.invoiceFeeServicing} tax={invoiceSummary.invoiceFeeServicingTax} />
-              </div>
-            )}
-
-            {invoiceSummary.invoiceFeeMonitoring.gt(0) && (
-              <div className="flex justify-between items-center p-2 rounded">
-                <span className="font-normal text-slate-900">Biaya Monitoring</span>
-                <FeeWithTax base={invoiceSummary.invoiceFeeMonitoring} tax={invoiceSummary.invoiceFeeMonitoringTax} />
-              </div>
-            )}
-
-            {invoiceSummary.invoiceFeeOther.gt(0) && (
-              <div className="flex justify-between items-center p-2 rounded">
-                <span className="font-normal text-slate-900">Biaya Lain-lain</span>
-                <FeeWithTax base={invoiceSummary.invoiceFeeOther} tax={invoiceSummary.invoiceFeeOtherTax} />
-              </div>
-            )}
-
-            {invoiceSummary.invoiceSinkingFund.gt(0) && (
-              <div className="flex justify-between items-center p-2 rounded">
-                <span className="font-normal text-slate-900">Cicilan Sinking Fund</span>
-                <FeeWithTax base={invoiceSummary.invoiceSinkingFund} />
-              </div>
-            )}
-
-            {invoiceSummary.invoiceYield.gt(0) && (
-              <div className="flex justify-between items-center p-2 rounded">
-                <span className="font-normal text-slate-900">Imbal hasil / Kupon</span>
-                <FeeWithTax base={invoiceSummary.invoiceYield} />
-              </div>
-            )}
-
-            {invoiceSummary.invoicePenalty.gt(0) && (
-              <div className="flex justify-between items-center p-2 rounded">
-                <span className="font-normal text-slate-900">Denda</span>
-                <FeeWithTax base={invoiceSummary.invoicePenalty} />
-              </div>
-            )}
-
-            {invoiceSummary.invoiceActualLoss.gt(0) && (
-              <div className="flex justify-between items-center p-2 rounded">
-                <span className="font-normal text-slate-900">Kerugian Riil</span>
-                <FeeWithTax base={invoiceSummary.invoiceActualLoss} />
-              </div>
-            )}
-
-            <div className="mt-4 border-slate-300 flex flex-col bg-blue-50 border-t-2 border-dashed">
-                <div className="flex justify-between items-center p-2 rounded border-t border-slate-100 mt-1.5">
-                <span className="font-semibold text-slate-900">TOTAL</span>
-                <FeeWithTax base={invoiceSummary.invoiceTotal} tax={invoiceSummary.invoiceTotalTax} weight="bold" />
-                </div>
-
+          <div className="grow flex flex-col justify-between text-[13px] font-medium text-slate-700 pt-2 pb-4">
+            <div className="space-y-1.5">
+                {invoiceSummary.invoiceFeeAdministration.gt(0) && (
                 <div className="flex justify-between items-center p-2 rounded">
-                <span className="font-bold text-slate-900">TOTAL + PPN</span>
-                <FeeWithTax base={invoiceSummary.invoiceTotalWithTax} size="lg" weight="bold" />
+                    <span className="font-normal text-slate-900">Biaya Administrasi</span>
+                    <FeeWithTax base={invoiceSummary.invoiceFeeAdministration} tax={invoiceSummary.invoiceFeeAdministrationTax} />
                 </div>
+                )}
+
+                {invoiceSummary.invoiceFeeProvision.gt(0) && (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-normal text-slate-900">Biaya Provisi</span>
+                    <FeeWithTax base={invoiceSummary.invoiceFeeProvision} tax={invoiceSummary.invoiceFeeProvisionTax} />
+                </div>
+                )}
+
+                {invoiceSummary.invoiceFeePlatform.gt(0) && (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-normal text-slate-900">Biaya Platform</span>
+                    <FeeWithTax base={invoiceSummary.invoiceFeePlatform} tax={invoiceSummary.invoiceFeePlatformTax} />
+                </div>
+                )}
+
+                {invoiceSummary.invoiceFeeServicing.gt(0) && (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-normal text-slate-900">Biaya Servicing</span>
+                    <FeeWithTax base={invoiceSummary.invoiceFeeServicing} tax={invoiceSummary.invoiceFeeServicingTax} />
+                </div>
+                )}
+
+                {invoiceSummary.invoiceFeeMonitoring.gt(0) && (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-normal text-slate-900">Biaya Monitoring</span>
+                    <FeeWithTax base={invoiceSummary.invoiceFeeMonitoring} tax={invoiceSummary.invoiceFeeMonitoringTax} />
+                </div>
+                )}
+
+                {invoiceSummary.invoiceFeeOther.gt(0) && (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-normal text-slate-900">Biaya Lain-lain</span>
+                    <FeeWithTax base={invoiceSummary.invoiceFeeOther} tax={invoiceSummary.invoiceFeeOtherTax} />
+                </div>
+                )}
+
+                {invoiceSummary.invoiceSinkingFund.gt(0) && (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-normal text-slate-900">Cicilan Sinking Fund</span>
+                    <FeeWithTax base={invoiceSummary.invoiceSinkingFund} />
+                </div>
+                )}
+
+                {invoiceSummary.invoiceYield.gt(0) && (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-normal text-slate-900">Imbal hasil / Kupon</span>
+                    <FeeWithTax base={invoiceSummary.invoiceYield} />
+                </div>
+                )}
+
+                {invoiceSummary.invoicePenalty.gt(0) && (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-normal text-slate-900">Denda</span>
+                    <FeeWithTax base={invoiceSummary.invoicePenalty} />
+                </div>
+                )}
+
+                {invoiceSummary.invoiceActualLoss.gt(0) && (
+                <div className="flex justify-between items-center p-2 rounded">
+                    <span className="font-normal text-slate-900">Kerugian Riil</span>
+                    <FeeWithTax base={invoiceSummary.invoiceActualLoss} />
+                </div>
+                )}
+
             </div>
+            
+            {/* WRAPPER BAGIAN BAWAH (TOTAL & DENDA) */}
+            <div>
+              <div className="mt-4 border-slate-300 flex flex-col bg-blue-50 border-t-2 border-dashed space-y-1.5">
+                  <div className="flex justify-between items-center p-2 rounded border-t border-slate-100 mt-1.5">
+                  <span className="font-semibold text-slate-900">TOTAL</span>
+                  <FeeWithTax base={invoiceSummary.invoiceTotal} tax={invoiceSummary.invoiceTotalTax} weight="bold" />
+                  </div>
 
-            { !!daysOverdue && daysOverdue > 0 && (
-                <div className="mt-4 border-rose-200 flex flex-col bg-red-50 border-t-2 border-dashed">
-                    <div className="flex justify-between items-center p-2 rounded border-t border-slate-100 mt-1.5">
-                    <span className="font-normal ">Denda (total {daysOverdue} hari)</span>
+                  <div className="flex justify-between items-center p-2 rounded">
+                  <span className="font-bold text-slate-900">TOTAL + PPN</span>
+                  <FeeWithTax base={invoiceSummary.invoiceTotalWithTax} size="lg" weight="bold" />
+                  </div>
+              </div>
 
-                    <Penalty penalty={penalty} size="md" mode={invoiceSummary.penaltyIsSettled ? 'settled' : 'ongoing'}/>
-                    </div>
+              { !!daysOverdue && daysOverdue > 0 && invoiceSummary.scheduleType == ScheduleType.INSTALLMENT && (
+                  <div className="mt-4 border-rose-200 flex flex-col bg-red-50 border-t-2 border-dashed space-y-1">
+                      <div className="flex justify-between items-center p-2 rounded border-t border-slate-100 mt-1">
+                      <span className="font-normal ">Denda (total {daysOverdue} hari)</span>
 
-                    <div className="flex justify-between items-center p-2 rounded border-t border-slate-100">
-                    <span className="font-normal ">Kerugian Riil</span>
-                    <FeeWithTax base={actualLoss} />
-                    </div>
+                      <Penalty penalty={penalty} size="md" mode={invoiceSummary.penaltyIsSettled ? 'settled' : 'ongoing'}/>
+                      </div>
 
-                    <div className="flex justify-between items-center p-2 rounded">
-                    <span className="font-bold text-slate-900">TOTAL + PPN + Denda + Kerugian Riil</span>
-                    <FeeWithTax base={invoiceTotalWithTaxAndPenalty} size="lg" weight="bold" />
-                    </div>
-                </div>
-            )}
+                      <div className="flex justify-between items-center p-2 rounded border-t border-slate-100">
+                      <span className="font-normal ">Kerugian Riil</span>
+                      <FeeWithTax base={actualLoss} />
+                      </div>
+
+                      <div className="flex justify-between items-center p-2 rounded">
+                      <span className="font-bold text-slate-900">TOTAL + PPN + Denda + Kerugian Riil</span>
+                      <FeeWithTax base={invoiceTotalWithTaxAndPenalty} size="lg" weight="bold" />
+                      </div>
+                  </div>
+              )}
+            </div>
             
           </div>
         </div>
 
         {/* CONTAINER KANAN: RINGKASAN AKUMULASI (SUMMARY) */}
-        <div className="w-full lg:w-1/3 bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col justify-between">
+        <div className="w-full lg:w-1/3 bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col justify-between self-start">
           <div>
             <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">
               Ringkasan Invoice

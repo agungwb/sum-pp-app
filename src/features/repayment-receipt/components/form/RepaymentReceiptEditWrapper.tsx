@@ -35,7 +35,7 @@ export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary 
             receiptStatus: repaymentReceiptRes?.receiptStatus || '',
             receiptMethod: repaymentReceiptRes?.receiptMethod || null,
             receiptNotes: repaymentReceiptRes?.receiptNotes || '',
-            receiptDocumentUrl: newrepaymentReceiptRes?.receiptDocumentUrl || '',
+            receiptDocumentUrl: repaymentReceiptRes?.receiptDocumentUrl || '',
             receiptTotalWithTax: repaymentReceiptRes?.receiptTotalWithTax || '',
             receiptTotal: repaymentReceiptRes?.receiptTotal || '',
             receiptTotalTax: repaymentReceiptRes?.receiptTotalTax || '',

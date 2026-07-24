@@ -6,7 +6,7 @@ import { formatRupiah } from '../../utils/currency';
 
 type FeeSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 type FeeWeight = 'light' | 'normal' | 'semibold' | 'bold' | 'extrabold';
-type FeeColor = 'black' | 'green' | 'blue' | 'red' | 'yellow'; // 👈 Tipe baru untuk warna
+type FeeColor = 'black' | 'green' | 'blue' | 'red' | 'yellow' | 'gray'; // 👈 Tipe baru untuk warna
 
 interface FeeWithTaxProps {
   base: number | string | Big;
@@ -33,6 +33,15 @@ const sizeTax: Record<FeeSize, string> = {
   'xl': 'text-[11px] font-medium',
 };
 
+// 👈 Mapping margin-top dinamis agar jarak merapat saat ukuran mengecil
+const sizeTaxMargin: Record<FeeSize, string> = {
+  'xs': 'mt-[9px]',
+  'sm': 'mt-[12px]',
+  'md': 'mt-[16px]',
+  'lg': 'mt-[18px]',
+  'xl': 'mt-[120px]',
+};
+
 const sizeWeight: Record<FeeWeight, string> = {
   'light': 'font-light',
   'normal': 'font-normal',
@@ -48,6 +57,7 @@ const colorBaseMap: Record<FeeColor, string> = {
   blue: 'text-blue-700',
   red: 'text-rose-700',
   yellow: 'text-amber-600',
+  grey: 'text-gray-600',
 };
 
 // 👇 Mapping warna untuk nilai pajak (tax)
@@ -57,6 +67,7 @@ const colorTaxMap: Record<FeeColor, string> = {
   blue: 'text-blue-500',
   red: 'text-rose-500',
   yellow: 'text-amber-500',
+  grey: 'text-gray-500',
 };
 
 export default function FeeWithTax({ 
@@ -64,11 +75,11 @@ export default function FeeWithTax({
   tax = 0, 
   size = 'md', 
   weight = 'normal', 
-  color = 'black', // 👈 Set default warna ke 'black'
+  color = 'black', 
   withRp = true
 }: FeeWithTaxProps) {
   return (
-    <div className="flex flex-col items-end">
+    <div className="relative flex flex-col items-end">
       {/* 👈 Implementasi mapping colorBaseMap pada class base */}
       <span className={`font-mono ${colorBaseMap[color]} ${sizeFee[size]} ${sizeWeight[weight]}`}>
         {formatRupiah(base, withRp)}
@@ -76,31 +87,11 @@ export default function FeeWithTax({
       
       {/* Defensive rendering: Hanya render tax jika ada nilainya dan di atas 0 */}
       {tax != null && tax > 0 && (
-        // 👈 Implementasi mapping colorTaxMap pada class tax
-        <span className={`absolute fixed mt-4 ${colorTaxMap[color]} font-sans tracking-tight ${sizeTax[size]}`}>
+        // 👈 Menggunakan sizeTaxMargin[size] untuk jarak dinamis & menghapus class 'fixed'
+        <span className={`absolute ${sizeTaxMargin[size]} ${colorTaxMap[color]} font-sans tracking-tight ${sizeTax[size]}`}>
           +ppn {formatRupiah(tax, withRp)}
         </span>
       )}
     </div>
   );
 }
-
-// function FeeWithTax({ base, tax=0, isTotal = false }: { base: number; tax?: number; isTotal?: boolean }) {
-//     const formatRupiah = (num: number) => {
-//       if (num === 0) return '-';
-//       return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
-//     };
-    
-//     return (
-//       <div className="flex flex-col items-end">
-//         <span className={`font-mono ${isTotal ? 'font-bold text-[12px] text-slate-800' : 'text-[12px]'}`}>
-//           {formatRupiah(base)}
-//         </span>
-//         {tax != null && tax > 0 && (
-//           <span className="absolute mt-4 placeholder:text-[8px] text-rose-700 font-sans font-normal text-[9px] tracking-tight font-light">
-//             +tax {formatRupiah(tax)}
-//           </span>
-//         )}
-//       </div>
-//     );
-// }

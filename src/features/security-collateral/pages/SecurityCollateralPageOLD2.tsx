@@ -87,28 +87,6 @@ export default function SecurityCollateralPage() {
 
   const totalCollateralValue = collaterals.reduce((sum, item) => sum + Number(item.collateralValueEstimated || 0), 0);
 
-  // Helper render item verifikasi di dalam grid 2x2
-  const renderGridVerificationItem = (label: string | null, status: string | null, notes: string | null) => (
-    <div className="w-full flex flex-col border border-slate-100 p-1.5 rounded-lg bg-slate-50/50 mb-0.5">
-      <div className="flex items-center gap-1.5 text-[10px]">
-        {/* Lebar 1/4 (25%) */}
-        <span className="w-2/5 text-slate-500 font-medium">
-          {label}
-        </span>
-        
-        {/* Lebar 1/4 (25%) */}
-        <span className="w-2/5">
-          <VerificationStatusBadge status={status} size="xs" />
-        </span>
-        
-        {/* Lebar 2/4 atau 1/2 (50%) */}
-        <span className="w-3/5 text-[10px] text-slate-600 italic mt-0.5 leading-tight" title={notes}>
-          <span className="font-bold">Notes: </span>{notes}
-          this is just test
-        </span>
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-slate-50 pt-24 pb-8 px-4 md:px-8">
@@ -164,13 +142,20 @@ export default function SecurityCollateralPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="w-12 py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">No</th>
-                    <th className="w-18 py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center ">Status</th>
-                    <th className="w-4/12 py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider ">Detail Jaminan</th>
-                    <th className="w-7/12 py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider ">Status Verifikasi</th>
-                    <th className="w-1/12 py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right ">Estimasi Nilai</th>
-                    <th className="w-12 py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center ">View Dokumen</th>
-                    {isEditMode && (<th className="w-16 py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center ">Edit</th>)}
+                    <th rowSpan={2} className="w-12 px-2 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">No</th>
+                    <th rowSpan={2} className="w-2/6 px-2 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-4">Detail <br /> Jaminan</th>
+                    <th colSpan={4} className="w-3/6 px-2 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Status Verifikasi</th>
+                    <th rowSpan={2} className="w-1/6 px-2 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center ">Estimasi <br /> Nilai</th>
+                    <th rowSpan={2} className="w-28 px-2 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center ">Status <br /> Jaminan</th>
+                    <th rowSpan={2} className="w-28 px-2 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center ">View <br /> Dokumen</th>
+                    {isEditMode && (<th rowSpan={2} className="w-16 py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center ">Edit</th>)}
+                </tr>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                    
+                    <th className="w-1/4 px-2 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Dokumen</th>
+                    <th className="w-1/4 px-2 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Legalitas</th>
+                    <th className="w-1/4 px-2 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Nilai</th>
+                    <th className="w-1/4 px-2 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Lapangan</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -193,17 +178,12 @@ export default function SecurityCollateralPage() {
                     {collaterals.map((item, index) => (
                       <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                         {/* 1. Kolom Nomor */}
-                        <td className="py-3 px-4 align-top text-center text-xs font-medium text-slate-500">
+                        <td className="px-2 py-2 align-top text-center text-xs font-medium text-slate-500">
                           {index + 1}
-                        </td>
-
-                        {/* 5. Kolom Status */}
-                        <td className="py-3 px-4 align-top text-center">
-                          <CollateralStatusBadge status={item.collateralStatus || null} size="sm"/>
                         </td>
                         
                         {/* 2. Kolom Detail Jaminan */}
-                        <td className="py-3 px-4 align-top">
+                        <td className="px-2 py-2 align-top">
                           <div className="flex flex-col">
                             <span className="text-xs font-bold text-slate-800 mb-1">{item.collateralType.replace('_', ' ')}</span>
                             <span className="text-[11px] text-slate-600 leading-relaxed">{item.collateralDescription}</span>
@@ -211,24 +191,42 @@ export default function SecurityCollateralPage() {
                         </td>
                         
                         {/* 3. Kolom Status Verifikasi (Grid Berukuran 2x2) */}
-                        <td className="py-3 px-4 align-top">
-                          <div className="flex flex-col max-w-sm">
-                            {renderGridVerificationItem('Verifikasi Dokumen', item.verificationDocumentStatus, item.verificationDocumentNotes)}
-                            {renderGridVerificationItem('Verifikasi Lapangan', item.verificationFieldStatus, item.verificationFieldNotes)}
-                            {renderGridVerificationItem('Verifikasi Legal', item.verificationLegalStatus, item.verificationLegalNotes)}
-                            {renderGridVerificationItem('Verifikasi Nilai', item.verificationValueStatus, item.verificationValueNotes)}
+                        <td className="px-2 py-2 align-top ">
+                          <div className="flex flex-col">
+                            <div>
+                              <VerificationStatusBadge status={item.verificationDocumentStatus} size="xs"/>
+                            </div>
+                            <div className="w-3/5 text-[8px] text-slate-600 italic mt-0.5 leading-tight">
+                              <span className="font-bold">Notes: </span>
+                              {item.verificationDocumentNotes}
+                            </div>
                           </div>
+                          
+                        </td>
+                        <td className="px-2 py-2 align-top">
+                          <VerificationStatusBadge status={item.verificationFieldStatus} size="xs"/>
+                        </td>
+                        <td className="px-2 py-2 align-top">
+                          <VerificationStatusBadge status={item.verificationLegalStatus} size="xs"/>
+                        </td>
+                        <td className="px-2 py-2 align-top">
+                          <VerificationStatusBadge status={item.verificationValueStatus} size="xs"/>
                         </td>
 
                         {/* 4. Kolom Estimasi Nilai */}
-                        <td className="py-3 px-4 align-top text-right">
+                        <td className="px-2 py-2 align-top text-right">
                           <span className="text-xs font-mono font-semibold text-slate-800">
                             <FeeWithTax base={item.collateralValueEstimated} />
                           </span>
                         </td>
                         
+                        {/* 5. Kolom Status */}
+                        <td className="px-2 py-2 align-top text-center">
+                          <CollateralStatusBadge status={item.collateralStatus || null} size="sm"/>
+                        </td>
+                        
                         {/* 6. Kolom View Dokumen */}
-                        <td className="py-3 px-4 align-top text-center">
+                        <td className="px-2 py-2 align-top text-center">
                           {item.documentUrl ? (
                             <a 
                               href={item.documentUrl} 
@@ -247,7 +245,7 @@ export default function SecurityCollateralPage() {
                           )}
                         </td>
                         {isEditMode && (
-                            <td className="py-3 px-3 text-left align-top">
+                            <td className="px-2 py-2 text-left align-top">
                                 <button 
                                   onClick={() => openPanel(<SecurityCollateralEditWrapper collateralId={item.id} repaymentSecuritySummary={repaymentSecSummary}/>)}
                                   className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
@@ -268,7 +266,7 @@ export default function SecurityCollateralPage() {
                                           <td colSpan={3} className="py-3 pl-14 text-center text-slate-900 text-xs uppercase tracking-tight">
                         Perkiraan total estimasi nilai jaminan
                       </td>
-                      <td className="py-3 px-4 text-right font-monotext-md">
+                      <td className="px-2 py-2 text-right font-monotext-md">
                         <FeeWithTax base={totalCollateralValue} size="lg"/>
                       </td>
                       <td colSpan={2} className="bg-slate-50"></td>

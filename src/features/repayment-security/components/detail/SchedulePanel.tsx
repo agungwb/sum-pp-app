@@ -14,6 +14,7 @@ import { Big } from 'big.js';
 import { SafeEditModal } from '../../../../components/modals/SafeEditModal';
 import { toSafeBig } from '../../../../utils/number';
 import { repaymentSecurityService } from '../../services/repaymentSecurityService';
+import { InvoiceStatus } from '../../types/repayment-security.enum';
 
 interface RepaymentScheduleTableProps {
   repaymentSecurity: RepaymentSecurityWithSinkingFundResponse;
@@ -141,9 +142,9 @@ export default function SchedulePanel({
     })).slice(-1)[0];
 
 
-    const totalSinkingFund = installmentsFee.reduce((sum, row) => sum.plus(row.sf), Big(0));
-    const totalYieldAmount = installmentsFee.reduce((sum, row) => sum.plus(row.yield), Big(0));
-    const totalMonitoringFee = installmentsFee.reduce((sum, row) => sum.plus(row.monitoring), Big(0));
+    const totalSinkingFund = installmentsFee.reduce((sum, row) => sum.plus(row.status!==InvoiceStatus.VOID && row.status!==InvoiceStatus.WRITE_OFF ? row.sf : Big(0)), Big(0));
+    const totalYieldAmount = installmentsFee.reduce((sum, row) => sum.plus(row.status!==InvoiceStatus.VOID && row.status!==InvoiceStatus.WRITE_OFF ? row.yield : Big(0)), Big(0));
+    const totalMonitoringFee = installmentsFee.reduce((sum, row) => sum.plus(row.status!==InvoiceStatus.VOID && row.status!==InvoiceStatus.WRITE_OFF ? row.monitoring:  Big(0)), Big(0));
 
     const precision = 0;
 
@@ -267,18 +268,18 @@ export default function SchedulePanel({
         </div>
 
         {/* ROW 2: Tabel Jadwal Bulanan */}
-        <div className="p-5">
-          <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-3 border-b-2 border-slate-100 pb-2">Pembayaran Cicilan Bulanan (INSTALLMENT)</h3>
+        <div className="px-4 py-2">
+          <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider my-3 border-b-2 border-slate-100 pb-2">Pembayaran Cicilan Bulanan (INSTALLMENT)</h3>
           <div className="overflow-x-auto">
-          <table className="w-full table-fixed text-left border-collapse whitespace-nowrap">
+            <table className="w-full table-fixed text-left border-collapse whitespace-nowrap">
             <thead>
                 <tr className="bg-slate-50 text-[9px] text-slate-500 uppercase tracking-wider border-y border-slate-200">
                   <th className="w-12 py-2 px-2 font-bold text-center">No</th>
                   <th className="w-20 py-2 px-2 font-bold text-center">Status</th>
                   <th className="w-28 py-2 px-2 font-bold text-left">Jatuh Tempo</th>
-                  <th className="py-2 px-2 font-bold text-right">Cicilan Sinking Fund</th>
+                  <th className="py-2 px-2 font-bold text-right">Cicilan <br />Sinking Fund</th>
                   <th className="py-2 px-2 font-bold text-right">Yield</th>
-                  <th className="py-2 px-2 font-bold text-right">Biaya Pemantauan</th>
+                  <th className="py-2 px-2 font-bold text-right">Biaya <br />Pemantauan</th>
                   <th className="py-2 px-2 font-bold text-right">Total</th>
                   <th className="py-2 px-2 font-bold text-right">Total + Pajak</th>
                   <th className="py-2 px-2 font-bold text-right">Denda</th>
@@ -295,7 +296,7 @@ export default function SchedulePanel({
                 ) : (
                   installmentsFee.map((sch) => {
                   return (
-                      <tr key={sch.month} className="group align-top">
+                      <tr key={sch.month} className={`group align-top ${sch.status===InvoiceStatus.VOID || sch.status===InvoiceStatus.WRITE_OFF ?"[&>*:nth-child(n+4)]:opacity-30":"" }`}>
                         {/* 3 KOLOM AWAL - CLICKABLE */}
                         <td className={`py-2 px-2 text-center font-mono font-normal}`} onClick={() => handleRowClick(sch.id)}>
                           <div className={`rounded-md ${tdLeftClickable}`}>
@@ -365,30 +366,31 @@ export default function SchedulePanel({
                   <td className="py-2 px-2 pl-10 text-left text-[9px] text-rose-500" colSpan={3}>
                       {totalCorrectionMessage}
                   </td>
+                  {isEditMode && (<td></td>)}
                 </tr>
               </tfoot>
             }
             </table>
+            {/* ROW 3: Buat Jadwal Pembayaran Baru (Khusus Edit Mode) */}
+            {isEditMode && (
+              <div className="border-t-2 border-slate-200 flex items-center justify-center">
+                <button
+                    type="button"
+                    onClick={() => openPanel(<RepaymentScheduleCreateWrapper repaymentSecurity={repaymentSecurity} lastUpfront={lastUpfront} lastInstallment={lastInstallment}/>)}
+                    className="w-11/12 py-4 m-4 last:flex items-center justify-center border-2 border-dashed rounded-lg border-amber-200 bg-amber-50/40 hover:bg-amber-100 text-amber-700 transition-all focus:outline-none focus:ring-2 focus:ring-amber-200 group">
+                    <div className="bg-amber-100 p-1 rounded-full group-hover:bg-amber-500 transition-colors">
+                      <svg className="w-4 h-4 text-amber-600 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </div>
+                    <span className="font-semibold text-xs pl-1"> Buat Jadwal Tagihan Baru</span>
+                  </button>
+                </div>
+            )}
           </div>
         </div>
 
-        {/* ROW 3: Buat Jadwal Pembayaran Baru (Khusus Edit Mode) */}
-        {isEditMode && (
-          <div className="p-5 border-t-2 border-slate-200 mr-10">
-            <button
-                type="button"
-                onClick={() => openPanel(<RepaymentScheduleCreateWrapper repaymentSecurity={repaymentSecurity} lastUpfront={lastUpfront} lastInstallment={lastInstallment}/>)}
-                className="w-full flex items-center justify-center gap-2 py-3 border-2 m-4 border-dashed rounded-lg border-amber-200 bg-amber-50/40 hover:bg-amber-100 text-amber-700 transition-all focus:outline-none focus:ring-2 focus:ring-amber-200 group"
-              >
-                <div className="bg-amber-100 p-1 rounded-full group-hover:bg-amber-500 transition-colors">
-                  <svg className="w-4 h-4 text-amber-600 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                  </svg>
-                </div>
-                <span className="font-semibold text-xs">Buat Tagihan Baru</span>
-              </button>
-          </div>
-        )}
+        
 
       </div>
   );
