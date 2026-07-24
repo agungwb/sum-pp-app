@@ -44,7 +44,8 @@ export const formatRupiah = (
 
 export const formatPercentage = (
   value: number | string | Big | null,
-  fallbackReturn: 'dash' | 'zero' = 'dash' // 👈 Prop baru ditambahkan di sini
+  fallbackReturn: 'dash' | 'zero' = 'dash', 
+  precision: number = 2 // 👈 Parameter baru ditambahkan di sini dengan default 2
 ): string => {
   // Menentukan nilai yang dikembalikan jika data kosong atau tidak valid
   // Catatan: Anda bisa mengganti '0' menjadi '0%' jika ingin tetap ada simbol persen saat nilainya nol.
@@ -67,9 +68,9 @@ export const formatPercentage = (
 
   // 4. Format menjadi persentase
   return new Intl.NumberFormat('id-ID', { 
-    style: 'percent', // 👈 Otomatis mengalikan dengan 100 dan menambah simbol '%'
+    style: 'percent', 
     minimumFractionDigits: 0, 
-    maximumFractionDigits: 2,
+    maximumFractionDigits: precision, // 👈 Implementasi precision di sini
   }).format(num);
 };
    // Formatters

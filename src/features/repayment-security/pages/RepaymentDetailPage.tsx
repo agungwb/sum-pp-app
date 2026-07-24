@@ -378,7 +378,7 @@ export default function RepaymentDetailPage() {
                 className={`${
                   progressPercentage.lt(100) ? "bg-orange-500" : "bg-green-500"
                 } h-full rounded-full transition-all duration-1000 ease-out`}
-                style={{ width: `${formatPercentage(progressPercentage,'zero')}` }}
+                style={{ width: `${formatPercentage(progressPercentage,'zero',0)}` }}
               ></div>
             </div>
           </div>

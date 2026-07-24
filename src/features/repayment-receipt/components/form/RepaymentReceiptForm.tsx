@@ -41,40 +41,67 @@ export default function RepaymentReceiptForm({ mode, initialData, invoiceSummary
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Kalkulasi Sentral: Menghitung pajak individu dan merekap semua total (Bottom-Up)
-  const calculateTaxesAndTotals = (data: RepaymentReceiptFormRequest): RepaymentReceiptFormRequest => {
-    const feeAdmin = toSafeBig(data.receiptFeeAdministration);
-    const feeProv = toSafeBig(data.receiptFeeProvision);
-    const feePlat = toSafeBig(data.receiptFeePlatform);
-    const feeServ = toSafeBig(data.receiptFeeServicing);
-    const feeMon = toSafeBig(data.receiptFeeMonitoring);
-    const feeOther = toSafeBig(data.receiptFeeOther);
+  // Kalkulasi Sentral: Menghitung pajak individu dan merekap semua total
+  // Tambahkan 'isTopDown' dengan default false
+  const calculateTaxesAndTotals = (formData: RepaymentReceiptFormRequest, isTopDown: boolean = false): RepaymentReceiptFormRequest => {
     
-    // Non-Taxable Items
-    const sinkingFund = toSafeBig(data.receiptSinkingFund);
-    const yieldVal = toSafeBig(data.receiptYield);
-    const actualLoss = toSafeBig(data.receiptActualLoss);
-    const penalty = toSafeBig(data.receiptPenalty);
-
-    // Hitung Pajak per komponen (11%)
-    const taxAdmin = feeAdmin.times(taxRate);
-    const taxProv = feeProv.times(taxRate);
-    const taxPlat = feePlat.times(taxRate);
-    const taxServ = feeServ.times(taxRate);
-    const taxMon = feeMon.times(taxRate);
-    const taxOther = feeOther.times(taxRate);
-
+    // ... (Bagian ambil data Base & Non-Taxable tetap sama)
+    const feeAdmin = toSafeBig(formData.receiptFeeAdministration).round(precision);
+    const feeProv = toSafeBig(formData.receiptFeeProvision).round(precision);
+    const feePlat = toSafeBig(formData.receiptFeePlatform).round(precision);
+    const feeServ = toSafeBig(formData.receiptFeeServicing).round(precision);
+    const feeMon = toSafeBig(formData.receiptFeeMonitoring).round(precision);
+    const feeOther = toSafeBig(formData.receiptFeeOther).round(precision);
+    
+    const sinkingFund = toSafeBig(formData.receiptSinkingFund).round(precision);
+    const yieldVal = toSafeBig(formData.receiptYield).round(precision);
+    const actualLoss = toSafeBig(formData.receiptActualLoss).round(precision);
+    const penalty = toSafeBig(formData.receiptPenalty).round(precision);
+  
     const totalBase = feeAdmin.plus(feeProv).plus(feePlat).plus(feeServ)
       .plus(feeMon).plus(feeOther).plus(sinkingFund).plus(yieldVal)
-      .plus(actualLoss).plus(penalty);
+      .plus(actualLoss).plus(penalty).round(precision);
+  
+    // Kalkulasi Tax Awal
+    let taxAdmin = feeAdmin.times(taxRate).round(precision);
+    let taxProv = feeProv.times(taxRate).round(precision);
+    let taxPlat = feePlat.times(taxRate).round(precision);
+    let taxServ = feeServ.times(taxRate).round(precision);
+    let taxMon = feeMon.times(taxRate).round(precision);
+    let taxOther = feeOther.times(taxRate).round(precision);
+  
+    let totalTax = taxAdmin.plus(taxProv).plus(taxPlat).plus(taxServ)
+      .plus(taxMon).plus(taxOther).round(precision);
+  
+    // Ambil target Total With Tax (jika isTopDown, nilai ini jadi single source of truth)
+    let totalWithTax = toSafeBig(formData.receiptTotalWithTax).round(precision);
 
-    const totalTax = taxAdmin.plus(taxProv).plus(taxPlat).plus(taxServ)
-      .plus(taxMon).plus(taxOther);
-
-    const totalWithTax = totalBase.plus(totalTax);
-
+    if (isTopDown) {
+      // --- TOP DOWN MODE (Waterfall) ---
+      // Kunci totalWithTax dari input, paksa Tax-nya yang mengalah mencari selisih!
+      const expectedTotalTax = totalWithTax.minus(totalBase);
+      
+      if (!expectedTotalTax.eq(totalTax)) {
+        const diff = expectedTotalTax.minus(totalTax);
+        
+        // Distribusi selisih murni ke tax pertama yang nilainya ada
+        if (taxAdmin.gt(0)) taxAdmin = taxAdmin.plus(diff);
+        else if (taxProv.gt(0)) taxProv = taxProv.plus(diff);
+        else if (taxPlat.gt(0)) taxPlat = taxPlat.plus(diff);
+        else if (taxServ.gt(0)) taxServ = taxServ.plus(diff);
+        else if (taxMon.gt(0)) taxMon = taxMon.plus(diff);
+        else taxOther = taxOther.plus(diff); // Fallback terakhir
+        
+        totalTax = expectedTotalTax;
+      }
+    } else {
+      // --- BOTTOM UP MODE (Manual Edit Component) ---
+      // Biarkan totalWithTax dihitung normal mengikuti totalBase + totalTax 
+      totalWithTax = totalBase.plus(totalTax).round(precision);
+    }
+  
     return {
-      ...data,
+      ...formData,
       receiptFeeAdministrationTax: taxAdmin.round(precision).toString(),
       receiptFeeProvisionTax: taxProv.round(precision).toString(),
       receiptFeePlatformTax: taxPlat.round(precision).toString(),
@@ -83,7 +110,7 @@ export default function RepaymentReceiptForm({ mode, initialData, invoiceSummary
       receiptFeeOtherTax: taxOther.round(precision).toString(),
       receiptTotal: totalBase.round(precision).toString(),
       receiptTotalTax: totalTax.round(precision).toString(),
-      receiptTotalWithTax: totalWithTax.round(precision).toString(),
+      receiptTotalWithTax: totalWithTax.round(precision).toString(), // Nilainya aman tidak akan berkurang!
     };
   };
 
@@ -100,6 +127,7 @@ export default function RepaymentReceiptForm({ mode, initialData, invoiceSummary
     // Reset base components supaya bersih dari manual input sebelumnya
     const newForm = {
       ...formData,
+      receiptTotalWithTax: val.toFixed(precision),
       receiptFeeAdministration: '0',
       receiptFeeProvision: '0',
       receiptFeePlatform: '0',
@@ -111,9 +139,15 @@ export default function RepaymentReceiptForm({ mode, initialData, invoiceSummary
     };
 
     if (!invoiceSummary) {
-      setFormData(calculateTaxesAndTotals({ ...newForm, receiptTotalWithTax: val.toString() }));
+      // 👈 Tembak "true" parameter Top-Down
+      setFormData(calculateTaxesAndTotals(newForm, true)); 
       return;
     }
+
+    // if (!invoiceSummary) {
+    //   setFormData(calculateTaxesAndTotals({ ...newForm, receiptTotalWithTax: val.toString() }));
+    //   return;
+    // }
 
     // Helper: Alokasi proporsional berdasarkan cap tagihan (Invoice)
     const allocComponentBase = (invBase: Big | undefined | null, hasTax: boolean = true) => {
@@ -174,14 +208,29 @@ export default function RepaymentReceiptForm({ mode, initialData, invoiceSummary
     }
 
     // Wrap-up dengan menghitung ulang semua pajak dan grand total secara presisi
-    setFormData(calculateTaxesAndTotals(newForm));
+    // setFormData(calculateTaxesAndTotals(newForm));
+    setFormData(calculateTaxesAndTotals(newForm, true));
+  };
+
+  // Di dalam UseEffect initialData
+  useEffect(() => {
+    if (initialData) {
+      setFormData(calculateTaxesAndTotals(initialData, false)); // 👈 false
+    }
+  }, [initialData]);
+
+  // Di dalam handler ubah manual
+  const handleManualNumber = (name: keyof RepaymentReceiptFormRequest) => (val: number) => {
+    const newForm = { ...formData, [name]: val.toString() };
+    setFormData(calculateTaxesAndTotals(newForm, false)); // 👈 false
   };
 
   // Logic Jika User Mengedit Manual Field Base Tertentu
-  const handleManualNumber = (name: keyof RepaymentReceiptFormRequest) => (val: number) => {
-    const newForm = { ...formData, [name]: val.toString() };
-    setFormData(calculateTaxesAndTotals(newForm));
-  };
+  // const handleManualNumber = (name: keyof RepaymentReceiptFormRequest) => (val: number) => {
+  //   const newForm = { ...formData, [name]: val.toString() };
+  //   setFormData(calculateTaxesAndTotals(newForm));
+  // };
+  
 
   const handleSubmitClick = (e: React.FormEvent) => {
     e.preventDefault();
