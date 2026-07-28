@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useBreadcrumb } from '../../contexts/BreadcrumbContext';
 import { useGlobalMode } from '../../contexts/GlobalModeContext';
 import { SafeEditModal } from '../modals/SafeEditModal'; // Sesuaikan path import lu bro
 
@@ -12,12 +13,15 @@ export default function Navbar({ isCollapsed, setIsCollapsed }: NavbarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams(); 
+  const { breadcrumbs } = useBreadcrumb();
   
   // Ambil isManagementMode dan setManagementMode dari Context
   const { isEditMode, setEditMode } = useGlobalMode();
   
   // State lokal untuk kontrol muncul/tidaknya Modal Konfirmasi Vercel
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+
 
   const handleLogout = () => {
     localStorage.removeItem('sum_pp_token');
@@ -50,21 +54,25 @@ export default function Navbar({ isCollapsed, setIsCollapsed }: NavbarProps) {
       >
         {/* Kiri: Toggle Sidebar & Breadcrumb */}
         <div className="flex items-center gap-4">
-          <button 
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="text-slate-500 hover:text-[#090f26] transition-colors cursor-pointer"
-            title="Toggle Sidebar"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+      
 
-          <div className="flex items-center gap-2 text-sm">
-            <span className="font-medium text-slate-400">SUM.PP</span>
-            <span className="text-slate-300">{`>`}</span>
-            <span className="font-bold text-[#090f26]">Monitoring Pembayaran</span>
+          <div className="flex items-center text-sm">
+          <nav className="flex items-center space-x-2">
+            {breadcrumbs.map((item, index) => (
+              <div key={index} className="flex items-center text-[10px] text-slate-600">
+                {item.path ? (
+                  <Link to={item.path} className="font-semibold">{item.label}</Link>
+                ) : (
+                  <span className="font-normal text-slate-400">{item.label}</span>
+                )}
+                {/* Tambah separator '>' kalau bukan item terakhir */}
+                {index < breadcrumbs.length - 1 && <span className="mx-2 text-gray-400">/</span>}
+              </div>
+            ))}
+          </nav>
           </div>
+
+
         </div>
 
         {/* Kanan: Action Buttons, Info Profil & Logout */}

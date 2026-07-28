@@ -27,6 +27,8 @@ import { Big } from 'big.js';
 import Penalty from '../../../components/ui/Penalty';
 import RevenuePanel from '../components/detail/RevenuePanel';
 import { toSafeBig } from '../../../utils/number';
+import { usePageBreadcrumb } from '../../../hooks/usePageBreadcrumb';
+import { useBreadcrumb } from '../../../contexts/BreadcrumbContext';
 
 export default function RepaymentDetailPage() {
   const { repaymentId } = useParams<{ repaymentId: string }>();
@@ -43,6 +45,7 @@ export default function RepaymentDetailPage() {
 
   const { isEditMode } = useGlobalMode();
   const { openPanel } = useSidePanel();
+  const { setBreadcrumbs } = useBreadcrumb();
   
   useEffect(() => {
     if (!repaymentId) return;
@@ -65,16 +68,35 @@ export default function RepaymentDetailPage() {
         setRepaymentSchedules(repaymentSchedulesRes.data.items || []);
         // setRepaymentReceipts(repaymentReceiptsRes.data.items || []);
         setSecurityCollaterals(securityCollateralsRes.data.items || []); // Masuk ke state jaminan/collateral
+
+        //BREADCRUMBS
+        setBreadcrumbs([
+          { label: 'DASHBOARD', path: '/dashboard/monitoring' },
+          { label: 'REPAYMENT', path: '/dashboard/repayment' },
+          { 
+            label: repaymentSecurityRes.data.item.securityCode ?? 'Detail Repayment', 
+            path: `/dashboard/repayment/${repaymentSecurityRes.data.item.id}` 
+          }
+        ]);
+
+        
   
       } catch (err: any) {
         setError(err.response?.data?.message || err.message);
       } finally {
+        
         setLoading(false);
       }
     };
   
     fetchAllDetailData();
   }, [repaymentId]);
+
+  // usePageBreadcrumb([
+  //   { label: 'Dashboard', path: '/dashboard/monitoring' },
+  //   { label: 'Repayment', path: '/repayment/securities' },
+  //   { label: , path:'repayment/securities/'+{}}
+  // ]);
 
   // Loading & Error UI Fallback
   if (loading) return <div className="p-8 text-center">Memuat detail...</div>;

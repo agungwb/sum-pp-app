@@ -10,6 +10,7 @@ import RepaymentSecurityFormPanel from '../components/RepaymentSecurityFormPanel
 import { repaymentSecurityService } from '../services/repaymentSecurityService';
 import { RepaymentSecurityCardResponse } from '../dtos/repayment-security.dto';
 import { ContractStatus, SecurityType } from '../types/repayment-security.enum';
+import { useBreadcrumb } from '../../../contexts/BreadcrumbContext';
 
 export default function RepaymentDashboardPage() {
   const [data, setData] = useState<RepaymentSecurityCardResponse[]>([]);
@@ -30,6 +31,7 @@ export default function RepaymentDashboardPage() {
   // Status panel terbuka kalau ada parameter 'add' atau 'edit'
   const isFormOpen = actionParam === 'add' || actionParam === 'edit';
   const formMode = actionParam === 'add' ? 'add' : 'edit';
+  const { setBreadcrumbs } = useBreadcrumb();
 
   // 2. Gunakan useEffect untuk memanggil Service
   useEffect(() => {
@@ -44,6 +46,12 @@ export default function RepaymentDashboardPage() {
         // Sesuaikan dengan struktur Response backend NestJS Anda
         // Misalnya datanya ada di responseData.data atau responseData.item
         setData(responseData?.data?.items || []); 
+    
+        //BREADCRUMBS
+        setBreadcrumbs([
+          { label: 'DASHBOARD', path: '/dashboard/monitoring' },
+          { label: 'REPAYMENT', path: '/dashboard/repayment' },
+        ]);
         
       } catch (err: any) {
         console.error("Gagal memuat data dashboard:", err);

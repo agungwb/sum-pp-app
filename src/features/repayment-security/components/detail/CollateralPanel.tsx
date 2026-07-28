@@ -5,9 +5,12 @@ import CheckOrCross from './CheckOrCross'; // Sesuaikan import dengan path Anda
 import { formatRupiah } from '../../../../utils/currency';
 import CollateralStatusBadge from '../../../security-collateral/components/badge/CollateralBadge';
 import { toTitleCase } from '../../../../utils/formatter';
+import { SecurityCollateralDetailResponse } from '../../../security-collateral/dtos/security-collateral.dto';
+import { toSafeBig } from '../../../../utils/number';
+import VerificationStatusIcon from '../../../security-collateral/components/badge/VerificationStatusIcon';
 
 interface CollateralPanelProps {
-    securityCollaterals: any[]; // Silakan sesuaikan tipe ini dengan SecurityCollateral[] jika ada
+    securityCollaterals: SecurityCollateralDetailResponse[]; // Silakan sesuaikan tipe ini dengan SecurityCollateral[] jika ada
 }
 export default function CollateralPanel({ securityCollaterals }: CollateralPanelProps) {
 
@@ -16,12 +19,13 @@ export default function CollateralPanel({ securityCollaterals }: CollateralPanel
   const collaterals = securityCollaterals.map(col => ({
     id: col.id,
     type: col.collateralType ? col.collateralType.replace(/_/g, ' ') : '-',
-    value: parseFloat(col.collateralValueEstimated || '0'),
-    status: col.collateralStatus || '-',
-    vDoc: col.verificationDocumentStatus === 'VERIFIED',
-    vLegal: col.verificationLegalStatus === 'VERIFIED',
-    vField: col.verificationFieldStatus === 'VERIFIED',
-    vValue: col.verificationValueStatus === 'VERIFIED',
+    value: toSafeBig(col.collateralValueEstimated || '0'),
+    status: col.collateralStatus,
+    verLegalStatus: col.verificationLegalStatus,
+    verDocStatus: col.verificationDocumentStatus,
+    verFieldStatus: col.verificationFieldStatus,
+    verValueStatus: col.verificationValueStatus,
+
   }));
 
   return (
@@ -46,8 +50,8 @@ export default function CollateralPanel({ securityCollaterals }: CollateralPanel
                     <th className="py-2 px-2 font-bold text-left">Estimasi Nilai</th>
                     <th className="w-8 py-2 px-2 font-bold text-center" title="Verifikasi Dokumen">Dok</th>
                     <th className="w-8 py-2 px-2 font-bold text-center" title="Verifikasi Legal">Leg</th>
-                    <th className="w-8 py-2 px-2 font-bold text-center" title="Verifikasi Lapangan">Lap</th>
                     <th className="w-8 py-2 px-2 font-bold text-center" title="Verifikasi Nilai">Nil</th>
+                    <th className="w-8 py-2 px-2 font-bold text-center" title="Verifikasi Lapangan">Lap</th>
                     <th className="py-2 px-0.5 font-bold text-center">Status</th>  
                   </tr>
                 </thead>
@@ -62,10 +66,10 @@ export default function CollateralPanel({ securityCollaterals }: CollateralPanel
                       </td>
                       <td className="py-2 px-2 align-top text-right font-mono font-bold text-slate-800 align-top">
                         {formatRupiah(col.value)}</td>
-                      <td className="py-2 px-2 align-top"><CheckOrCross isChecked={col.vDoc} /></td>
-                      <td className="py-2 px-2 align-top"><CheckOrCross isChecked={col.vLegal} /></td>
-                      <td className="py-2 px-2 align-top"><CheckOrCross isChecked={col.vField} /></td>
-                      <td className="py-2 px-2 align-top"><CheckOrCross isChecked={col.vValue} /></td>
+                      <td className="py-2 px-2 align-top"><VerificationStatusIcon status={col.verDocStatus || null} size="xs"/></td>
+                      <td className="py-2 px-2 align-top"><VerificationStatusIcon status={col.verLegalStatus || null} size="xs"/></td>
+                      <td className="py-2 px-2 align-top"><VerificationStatusIcon status={col.verValueStatus || null} size="xs"/></td>
+                      <td className="py-2 px-2 align-top"><VerificationStatusIcon status={col.verFieldStatus || null} size="xs"/></td>
                       <td className='py-2 px-0.5 text-center align-top'>
                         <CollateralStatusBadge status={col.status} size='sm' />
                       </td>

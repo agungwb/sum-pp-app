@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import logoFundex from '../../assets/logo-fundex.svg';
 import MonitoringLogo from '../ui/MonitoringLogo';
 
@@ -9,78 +9,62 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
+  const location = useLocation(); // Hook untuk mengetahui path URL saat ini
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   const menus = [
     { 
       name: 'Dashboard', 
-      path: '/dashboard/overview', 
-      icon: (
-        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z" />
-        </svg>
-      )
-    },
-    { 
-      name: 'Monitor Investee', 
-      path: '/repayment/monitoring', 
+      path: '/dashboard/monitoring', 
       icon: (
         <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       )
     },
-    // Menambahkan Menu Repayment Penerbit yang baru kita buat
+    // Parent Menu dengan Sub-Menu
     { 
-      name: 'Repayment Penerbit', 
-      path: '/repayment/securities', 
+      name: 'Pembayaran Penerbit', 
+      path: '#', 
       icon: (
         <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
-      )
+      ),
+      subMenus: [
+        { name: 'Daftar Penerbit', path: '/dashboard/repayment' },
+        { name: 'Jadwal Pembayaran', path: '/dashboard/repayment/schedules' },
+      ]
     },
-    { 
-      name: 'Kupon & Sinking Fund', 
-      path: '/repayment/sinking-fund', 
-      icon: (
-        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-        </svg>
-      )
-    },
-    { 
-      name: 'Cek Mundur & Kolateral', 
-      path: '/repayment/collaterals', 
-      icon: (
-        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-        </svg>
-      )
-    },
-    { 
-      name: 'Denda & Kepatuhan', 
-      path: '/repayment/compliance', 
-      icon: (
-        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-      )
-    },
-    { 
-      name: 'Monitoring Fee & Pajak', 
-      path: '/repayment/billing', 
-      icon: (
-        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      )
-    },
+    // { 
+    //   name: 'Monitoring Fee & Pajak', 
+    //   path: '/repayment/billing', 
+    //   icon: (
+    //     <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    //       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    //     </svg>
+    //   )
+    // },
   ];
 
-  // Bikin handler fungsi klik terpisah biar bisa dipasang log sebelum menembak state
+  // Efek untuk membuka submenu secara otomatis jika URL saat ini berada di bawah submenu tersebut
+  useEffect(() => {
+    menus.forEach((menu) => {
+      if (menu.subMenus?.some((sub) => sub.path === location.pathname)) {
+        setOpenMenu(menu.name);
+      }
+    });
+  }, [location.pathname]);
+
   const handleToggle = () => {
-    // Tembak fungsi pengubah milik layout utama
     setIsCollapsed(!isCollapsed); 
+  };
+
+  const handleMenuClick = (menuName: string) => {
+    if (isCollapsed) {
+      setIsCollapsed(false);
+    }
+    setOpenMenu(openMenu === menuName ? null : menuName);
   };
 
   return (
@@ -89,7 +73,6 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         isCollapsed ? 'w-16' : 'w-64'
       }`}
       style={{
-        // Mempertahankan gradasi merah kuat 0.14 dari sudut kanan bawah
         background: 'radial-gradient(circle at bottom right, rgba(244, 63, 94, 0.20) 0%, transparent 65%), #090f26'
       }}
     >
@@ -98,9 +81,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         {/* HEADER BRANDING SIDEBAR                    */}
         {/* ========================================== */}
         {isCollapsed ? (
-          // Poin 1 & 3: Saat mode collapsed, tombol posisi PALING ATAS, baru tulisan SUM.PP di bawahnya
           <div className="pt-6 pb-4 flex flex-col items-center gap-3.5">
-            {/* Poin 2: Mengganti ikon ke gaya 'Horizontal Lines Staggered' yang modern */}
             <button
               onClick={() => handleToggle()}
               className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors focus:outline-none cursor-pointer"
@@ -116,11 +97,8 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             </h2>
           </div>
         ) : (
-          // Mode Normal: Collapse menu berada di KANAN ATAS (Paling Atas)
           <div className="p-6 pb-4 flex items-start justify-between gap-4">
             <MonitoringLogo  />
-
-            {/* Poin 1 & 2: Tombol collapse ditaruh paling atas kanan dengan ikon garis list futuristik */}
             <button
               onClick={() => handleToggle()}
               className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors focus:outline-none mt-1 shrink-0 cursor-pointer"
@@ -136,27 +114,86 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         {/* ========================================== */}
         {/* LIST NAVIGASI MENU                         */}
         {/* ========================================== */}
-        <nav className={`mt-6 space-y-0.5 ${isCollapsed ? 'px-1.5' : 'px-3'}`}>
-          {menus.map((menu, index) => (
-            <NavLink
-              key={index}
-              to={menu.path}
-              className={({ isActive }) => `
-                flex items-center py-2 text-sm transition-all duration-150 rounded-lg
-                ${isActive 
-                  ? 'bg-white/10 text-white font-medium shadow-sm border-l-2 border-rose-500' 
-                  : 'text-slate-400 font-light hover:bg-white/5 hover:text-white'}
-                ${isCollapsed 
-                  ? 'justify-center px-0' 
-                  : 'gap-3 pr-4 pl-3.5'}
-                ${isActive && !isCollapsed ? 'pl-3' : ''} 
-              `}
-              title={isCollapsed ? menu.name : undefined}
-            >
-              <span className="transition-colors">{menu.icon}</span>
-              {!isCollapsed && <span className="truncate">{menu.name}</span>}
-            </NavLink>
-          ))}
+        <nav className={`mt-6 space-y-1 ${isCollapsed ? 'px-1.5' : 'px-3'}`}>
+          {menus.map((menu, index) => {
+            const hasSubMenus = menu.subMenus && menu.subMenus.length > 0;
+            const isOpen = openMenu === menu.name;
+
+            // Poin 2: Cek apakah salah satu sub-menu dari parent ini sedang aktif
+            const isParentActive = hasSubMenus && menu.subMenus?.some((sub) => sub.path === location.pathname);
+
+            return (
+              <div key={index} className="flex flex-col">
+                {/* Render Button untuk Parent yang memiliki Submenu */}
+                {hasSubMenus ? (
+                  <button
+                    onClick={() => handleMenuClick(menu.name)}
+                    className={`
+                      flex items-center w-full py-2 text-sm transition-all duration-150 rounded-lg cursor-pointer
+                      ${isParentActive
+                        ? 'bg-white/10 text-white font-medium shadow-sm border-l-2 border-rose-500' // Garis merah jika sub-menu terpilih
+                        : 'text-slate-400 font-light hover:bg-white/5 hover:text-white'}
+                      ${isCollapsed ? 'justify-center px-0' : 'justify-between pr-4 pl-3.5'}
+                      ${isParentActive && !isCollapsed ? 'pl-3' : ''}
+                    `}
+                    title={isCollapsed ? menu.name : undefined}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="transition-colors">{menu.icon}</span>
+                      {!isCollapsed && <span className="truncate">{menu.name}</span>}
+                    </div>
+                    {!isCollapsed && (
+                      <svg 
+                        className={`h-3 w-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} 
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    )}
+                  </button>
+                ) : (
+                  /* Render NavLink normal untuk Single Menu */
+                  <NavLink
+                    to={menu.path}
+                    className={({ isActive }) => `
+                      flex items-center py-2 text-sm transition-all duration-150 rounded-lg
+                      ${isActive 
+                        ? 'bg-white/10 text-white font-medium shadow-sm border-l-2 border-rose-500' 
+                        : 'text-slate-400 font-light hover:bg-white/5 hover:text-white'}
+                      ${isCollapsed 
+                        ? 'justify-center px-0' 
+                        : 'gap-3 pr-4 pl-3.5'}
+                      ${isActive && !isCollapsed ? 'pl-3' : ''} 
+                    `}
+                    title={isCollapsed ? menu.name : undefined}
+                  >
+                    <span className="transition-colors">{menu.icon}</span>
+                    {!isCollapsed && <span className="truncate">{menu.name}</span>}
+                  </NavLink>
+                )}
+
+                {/* List Sub-Menu */}
+                {hasSubMenus && isOpen && !isCollapsed && (
+                  <div className="mt-1 space-y-0.5 pl-9 pr-2">
+                    {menu.subMenus!.map((subMenu, subIndex) => (
+                      <NavLink
+                        key={subIndex}
+                        to={subMenu.path}
+                        className={({ isActive }) => `
+                          block py-1.5 px-3 text-xs transition-all duration-150 rounded-md
+                          ${isActive 
+                            ? 'bg-white/10 text-white font-medium shadow-sm' // Poin 1: Font Putih saat selected
+                            : 'text-slate-400 font-light hover:text-white hover:bg-white/5'}
+                        `}
+                      >
+                        {subMenu.name}
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
       </div>
 
@@ -177,7 +214,6 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           </div>
         )}
       </div>
-
     </div>
   );
 }

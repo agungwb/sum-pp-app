@@ -171,9 +171,9 @@ export default function SchedulePanel({
   // - tdLeftClickable: Meniru Sidebar.tsx (border-l-2 dengan warna rose-500) + cursor pointer
   // - tdClickable: Kolom ke-2 & ke-3 yang bisa diklik
   // - tdMid: Kolom ke-4 sampai sebelum akhir, tidak bisa diklik tapi tetep dapet efek hover bg-slate-50
-  const tdLeftClickable = "border-b border-slate-100 border-l-2 border-l-transparent group-hover:border-l-rose-500 group-hover:bg-slate-50 transition-all duration-150 cursor-pointer";
-  const tdClickable = "border-b border-slate-100 group-hover:bg-slate-50 transition-all duration-150 cursor-pointer";
-  const tdMid = "border-b border-slate-100 group-hover:bg-slate-50 transition-all duration-150";
+  const tdLeftClickable = "border-b border-slate-100 border-l-2 border-l-transparent group-hover:border-l-rose-500 group-hover:bg-slate- transition-all duration-150 cursor-pointer";
+  const tdClickable = "border-b border-slate-100 group-hover:bg-slate-100 transition-all duration-150 cursor-pointer";
+  const tdMid = "border-b border-slate-100 group-hover:bg-slate-100 transition-all duration-150";
   const tdEdit = "border-b border-slate-100 bg-white group-hover:bg-white"; // Kolom edit tetap netral putih
 
   return (
@@ -218,31 +218,28 @@ export default function SchedulePanel({
                           <InvoiceStatusBadge status={uf.status} size='sm' />
                         </td>
                         <td className={`py-2 px-2 align-top ${tdClickable}`} onClick={() => handleRowClick(uf.id)}>
-                          <div className="inline-flex items-center gap-1.5 font-normal text-slate-600 group-hover:font-semibold transition-colors">
+                          <div className="inline-flex items-center gap-1.5 font-normal text-slate-600 transition-colors">
                             {formatDate(uf.dueDate)}
-                            <svg className="w-3.5 h-3.5 text-slate-600 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                            </svg>
                           </div>
                         </td>
 
                         {/* SISA KOLOM - NOT CLICKABLE */}
-                        <td className={`py-2 px-2 text-right align-top ${tdMid}`}>
+                        <td className={`py-2 px-2 text-right align-top ${tdClickable}`} onClick={() => handleRowClick(uf.id)}>
                           <FeeWithTax base={uf.admin.gt(0)?uf.admin:'-'} tax={uf.adminTax} withRp={false} />
                         </td>
-                        <td className={`py-2 px-2 text-right align-top ${tdMid}`}>
+                        <td className={`py-2 px-2 text-right align-top ${tdClickable}`} onClick={() => handleRowClick(uf.id)}>
                           <FeeWithTax base={uf.provision.gt(0)?uf.provision:'-'} tax={uf.provisionTax} withRp={false} />
                         </td>
-                        <td className={`py-2 px-2 text-right align-top ${tdMid}`}>
+                        <td className={`py-2 px-2 text-right align-top ${tdClickable}`} onClick={() => handleRowClick(uf.id)}>
                           <FeeWithTax base={uf.platform.gt(0)?uf.platform:'-'} tax={uf.platformTax} withRp={false} />
                         </td>
-                        <td className={`py-2 px-2 text-right align-top ${tdMid}`}>
+                        <td className={`py-2 px-2 text-right align-top ${tdClickable}`} onClick={() => handleRowClick(uf.id)}>
                           <FeeWithTax base={uf.servicing.gt(0)?uf.servicing:'-'} tax={uf.servicingTax} withRp={false} />
                         </td>
-                        <td className={`py-2 px-2 text-right align-top ${tdMid}`}>
+                        <td className={`py-2 px-2 text-right align-top ${tdClickable}`} onClick={() => handleRowClick(uf.id)}>
                           <FeeWithTax base={uf.baseTotal} tax={uf.taxTotal} withRp={false} />
                         </td>
-                        <td className={`py-2 px-2 text-right align-top ${tdMid}`}>
+                        <td className={`py-2 px-2 text-right align-top ${tdClickable}`} onClick={() => handleRowClick(uf.id)}>
                           <FeeWithTax base={uf.grandTotal} weight="bold" withRp={false} />
                         </td>
                         
@@ -307,31 +304,29 @@ export default function SchedulePanel({
                           <InvoiceStatusBadge status={sch.status} size='sm'/>
                         </td>
                         <td className={`py-2 px-2 align-top ${tdClickable}`} onClick={() => handleRowClick(sch.id)}>
-                          <div className="inline-flex items-center gap-1.5 font-normal text-slate-600 group-hover:font-semibold transition-colors">
+                          <div className="inline-flex items-center gap-1.5 font-normal text-slate-600 transition-colors">
                             {`${formatDate(sch.dueDate)}`}
-                            <svg className="w-3.5 h-3.5 text-slate-600 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                            </svg>
+                            
                           </div>
                         </td>
 
                         {/* SISA KOLOM - NOT CLICKABLE */}
-                        <td className={`py-2 px-2 text-right relative ${tdMid}`}>
+                        <td className={`py-2 px-2 text-right relative ${tdClickable}` } onClick={() => handleRowClick(sch.id)}>
                             <FeeWithTax base={sch.sf} withRp={false} />
                         </td>
-                        <td className={`py-2 px-2 text-right relative ${tdMid}`}>
+                        <td className={`py-2 px-2 text-right relative ${tdClickable}`} onClick={() => handleRowClick(sch.id)}>
                             <FeeWithTax base={sch.yield} withRp={false} />
                         </td>
-                        <td className={`py-2 px-2 text-right relative ${tdMid}`}>
+                        <td className={`py-2 px-2 text-right relative ${tdClickable}`} onClick={() => handleRowClick(sch.id)}>
                             <FeeWithTax base={sch.monitoring} tax={sch.taxMonitoring} withRp={false} />
                         </td>
-                        <td className={`py-2 px-2 text-right relative ${tdMid}`}>
-                            <FeeWithTax base={sch.baseTotal} tax={sch.taxTotal} withRp={false} />
+                        <td className={`py-2 px-2 text-right relative ${tdClickable}`}>
+                            <FeeWithTax base={sch.baseTotal} tax={sch.taxTotal} withRp={false} onClick={() => handleRowClick(sch.id)}/>
                         </td>
-                        <td className={`py-2 px-2 text-right relative ${tdMid}`}>
-                            <FeeWithTax base={sch.grandTotal} weight="bold" withRp={false} />
+                        <td className={`py-2 px-2 text-right relative ${tdClickable}`}>
+                            <FeeWithTax base={sch.grandTotal} weight="bold" withRp={false} onClick={() => handleRowClick(sch.id)}/>
                         </td>
-                        <td className={`py-2 px-2 text-right font-mono font-bold text-xs text-slate-800 ${tdMid}`}>
+                        <td className={`py-2 px-2 text-right font-mono font-bold text-xs text-slate-800 ${tdClickable}`} onClick={() => handleRowClick(sch.id)}>
                             <Penalty penalty={sch.penaltyCalculated} mode={sch.penaltyIsSettled ? 'settled' : 'ongoing'} withRp={false} />
                         </td>
                         

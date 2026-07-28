@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useBreadcrumb } from '../../../contexts/BreadcrumbContext';
 
 // =========================================================================
 // INTERFACES & CONTRACTS (TypeScript Type Safety)
@@ -20,6 +21,12 @@ interface CalendarEvent {
 
 export default function MonitoringDashboard() {
   const [currentMonth] = useState('Juni 2026');
+  const { setBreadcrumbs} = useBreadcrumb();
+
+  //BREADCRUMBS
+  setBreadcrumbs([
+    { label: 'DASHBOARD', path: '/dashboard/monitoring' },
+  ]);
 
   // Dummy State data - Terintegrasi dengan silsilah operasional Fundex
   const [alerts] = useState<UrgentAlert[]>([

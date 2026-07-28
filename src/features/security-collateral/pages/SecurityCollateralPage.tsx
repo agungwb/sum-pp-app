@@ -18,6 +18,7 @@ import VerificationStatusBadge from '../components/badge/VerificationStatusBadge
 import FeeWithTax from '../../../components/ui/FeeWithTax';
 import CollateralStatusBadge from '../components/badge/CollateralBadge';
 import { toSafeBig } from '../../../utils/number';
+import { useBreadcrumb } from '../../../contexts/BreadcrumbContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
@@ -29,6 +30,7 @@ export default function SecurityCollateralPage() {
   const [error, setError] = useState<string | null>(null);
   const { isEditMode } = useGlobalMode();
   const { openPanel } = useSidePanel();
+  const { setBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
     if (!repaymentId) return;
@@ -45,6 +47,20 @@ export default function SecurityCollateralPage() {
 
         setCollaterals(securityCollateralsRes.data.items || []);
         setRepaymentSecurity(repaymentSecurityRes.data.item);
+
+        //BREADCRUMBS
+        setBreadcrumbs([
+          { label: 'DASHBOARD', path: '/dashboard/monitoring' },
+          { label: 'REPAYMENT', path: '/dashboard/repayment' },
+          { 
+            label: repaymentSecurityRes.data.item.securityCode ?? 'DETAIL', 
+            path: `/dashboard/repayment/${repaymentSecurityRes.data.item.id}` 
+          },
+          { 
+            label: "COLLATERALS",
+            path: `/dashboard/repayment/${repaymentSecurityRes.data.item.id}/collaterals` 
+          }
+        ]);
       
       } catch (err: any) {
         console.error('Error fetching collateral:', err);
@@ -136,7 +152,7 @@ export default function SecurityCollateralPage() {
               <div className="mt-0.5 text-right">
                 {/* <div>{formatRupiah(underlyingFund)}</div>
                 <div>{formatRupiah(totalCollateralValue)}</div> */}
-                <div>{formatPercentage(coverageRate)}</div>
+                <div>{formatPercentage(coverageRate, 'zero')}</div>
               </div>
             </div>
           </div>
