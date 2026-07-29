@@ -68,7 +68,7 @@ export interface RepaymentSecurityContactAndBank {
 export interface RepaymentSecurityDocuments {
   contractDocumentTitle: string | null;
   contractDocumentNumber: string | null;
-  contractDocumentUrl: string | null;
+  contractDocumentUrl: File | string | null;
 }
 
 // 7. Grup Informasi Restrukturisasi (Opsional)

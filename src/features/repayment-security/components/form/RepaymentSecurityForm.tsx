@@ -1,14 +1,15 @@
 // src/components/repayment/RepaymentSecurityForm.tsx
 import React, { useState, useEffect } from 'react';
 import { useSidePanel } from '../../../../contexts/SidePanelContext';
-import { RepaymentSecurityEditFormResponse, RepaymentSecurityFormRequest, SecurityLookupResponse } from '../../dtos/repayment-security.dto';
-import { toFrontendPercentage, toFrontendPercentageStr } from '../../../../utils/finance';
-import { formatDateForInput } from '../../../../utils/date';
+import { RepaymentSecurityFormRequest, SecurityLookupResponse } from '../../dtos/repayment-security.dto';
 import { ContractStatus } from '../../types/repayment-security.enum';
 import { Big } from 'big.js'; 
-import { NumericInput, FormGroup, ConfirmModal, Select, Input, NumberField, Toggle } from '../../../../components/forms/index';
+import { FormGroup, ConfirmModal, Select, Input, NumberField, Toggle } from '../../../../components/forms/index';
 import { toSafeBig } from '../../../../utils/number';
 import { repaymentSecurityService } from '../../services/repaymentSecurityService';
+import FormFooter from '../../../../components/forms/FormFooter';
+import FormHeader from '../../../../components/forms/FormHeader';
+import { FileInput } from '../../../../components/forms/FileInput';
 
 
 export interface RepaymentSecurityFormProps {
@@ -17,10 +18,11 @@ export interface RepaymentSecurityFormProps {
   onSubmit: (data: RepaymentSecurityFormRequest) => void | Promise<void>;
   onCancel: () => void;
   isLoading: boolean;
+  submissionError?: string | null; 
 }
 
 // --- KOMPONEN UTAMA ---
-export default function RepaymentSecurityForm ({ mode, initialData, onSubmit, onCancel, isLoading }: RepaymentSecurityFormProps) {
+export default function RepaymentSecurityForm ({ mode, initialData, onSubmit, onCancel, isLoading, submissionError = null }: RepaymentSecurityFormProps) {
   // export default function RepaymentSecurityForm({ initialData, onSubmit, isLoading, onCancel }: RepaymentSecurityFormProps) {
   const { closePanel } = useSidePanel();
   const [formData, setFormData] = useState<RepaymentSecurityFormRequest>(initialData);
@@ -28,11 +30,16 @@ export default function RepaymentSecurityForm ({ mode, initialData, onSubmit, on
 
   const [securities, setSecurities] = useState<SecurityLookupResponse[]>([]);
   const [selectedLookupId, setSelectedLookupId] = useState('');
-  const [showErrors, setShowErrors] = useState(false);
+  
+  const [validationError, setValidationError] = useState<string>();
+  const [validationErrors, setValidationErrors] = useState<string[]>([]); 
+  
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const maxPrecision = 2;
   const maxPrecisionPct = 4;
+
+  const isEditMode = mode === 'edit';
 
   // FETCH Data Security
   useEffect(() => {
@@ -202,7 +209,7 @@ const durationBig = new Big(duration.toString());
 
   // VALIDASI FORM
   const isError = (field: keyof RepaymentSecurityFormRequest) => {
-    if (!showErrors) return false;
+    if (!validationError) return false;
     const val = formData[field];
     if (val === '' || val === null || val === undefined) return true;
     if (field === 'contractUnderlyingFund' && val === 0) return true;
@@ -211,7 +218,7 @@ const durationBig = new Big(duration.toString());
 
   const handlePreSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setShowErrors(true);
+    setValidationError(true);
     
     const required = [
       'securityName', 'contractStartDate', 'contractEndDate', 'contractStatus',
@@ -244,24 +251,11 @@ const durationBig = new Big(duration.toString());
     <div className="flex flex-col h-full bg-slate-white relative">
       
       {/* HEADER: Fixed di Atas */}
-      <div className="shrink-0 border-b border-slate-200 px-5 py-4 bg-white flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-bold text-slate-800">
-            {mode==='edit' ? 'Ubah Repayment Security' : 'Tambah Repayment Security'}
-          </h2>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            Lengkapi data formulir di bawah ini dengan akurat.
-          </p>
-        </div>
-      </div>
-
-      <ConfirmModal 
-        isOpen={showConfirmModal} 
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={() => {
-          setShowConfirmModal(false);
-          onSubmit(formData);
-        }}
+      <FormHeader 
+        title={isEditMode ? 'Ubah Data Pembayaran' : 'Tambah Data Pembayaran'}
+        subtitle={isEditMode 
+            ? 'Ubah data pembayaran di bawah ini dengan benar.' 
+            : 'Lengkapi data pembayaran di bawah ini dengan benar.'}
       />
 
       {/* BODY FORM: Scrollable */}
@@ -281,7 +275,7 @@ const durationBig = new Big(duration.toString());
               hasError={isError('securityName')}
               value={selectedLookupId ?? ''} 
               colSpan="2"
-              disabled={mode==='edit'}
+              disabled={isEditMode}
               onChange={(e: any) => {
                 const valId = e.target.value;
                 setSelectedLookupId(valId);
@@ -321,8 +315,8 @@ const durationBig = new Big(duration.toString());
           </FormGroup>
 
           <FormGroup title="JANGKA WAKTU">
-            <Input type="date" label="Contract Start Date" disabled={mode==='edit'} hasError={isError('contractStartDate')} value={formData.contractStartDate} onChange={(e: any) => setFormData({...formData, contractStartDate: e.target.value})} />
-            <Input type="date" label="Contract End Date" disabled={mode==='edit'} hasError={isError('contractEndDate')} value={formData.contractEndDate} onChange={(e: any) => setFormData({...formData, contractEndDate: e.target.value})} />
+            <Input type="date" label="Contract Start Date" disabled={isEditMode} hasError={isError('contractStartDate')} value={formData.contractStartDate} onChange={(e: any) => setFormData({...formData, contractStartDate: e.target.value})} />
+            <Input type="date" label="Contract End Date" disabled={isEditMode} hasError={isError('contractEndDate')} value={formData.contractEndDate} onChange={(e: any) => setFormData({...formData, contractEndDate: e.target.value})} />
             <Input label="Contract Duration (Months)" disabled value={formData.contractDurationInMonths === 0 ? "" : formData.contractDurationInMonths} />
             <Select label="Contract Status" hasError={isError('contractStatus')} value={formData.contractStatus ?? ""} onChange={(e: any) => setFormData({...formData, contractStatus: e.target.value})}>
               <option value="">-- Pilih Contract Status --</option>
@@ -334,54 +328,60 @@ const durationBig = new Big(duration.toString());
             </Select>
           </FormGroup>
 
-          <FormGroup title="PENDANAAN, KUPON/DIVIDEDN, & FEE">
-            <NumberField label="Underlying Fund" disabled={mode==='edit'} hasError={isError('contractUnderlyingFund')} value={formData.contractUnderlyingFund} onValueChange={(v: number) => handleGroup3Change('contractUnderlyingFund', v)} colSpan="2"/>
+          <FormGroup title="PENDANAAN & KUPON/DIVIDEN">
+            <NumberField label="Underlying Fund" disabled={isEditMode} hasError={isError('contractUnderlyingFund')} value={formData.contractUnderlyingFund} onValueChange={(v: number) => handleGroup3Change('contractUnderlyingFund', v)} colSpan="2"/>
             
-            <NumberField label="Yield Rate Annually (%)" disabled={!isGroup3Active || mode==='edit'} value={formData.contractYieldRateAnnually} onValueChange={(v: number) => handleGroup3Change('contractYieldRateAnnually', v)} isPercentage={true}/>
+            <NumberField label="Yield Rate Annually (%)" disabled={!isGroup3Active || isEditMode} value={formData.contractYieldRateAnnually} onValueChange={(v: number) => handleGroup3Change('contractYieldRateAnnually', v)} isPercentage={true}/>
             <NumberField label="Yield Amount" disabled value={formData.contractYieldAmount} onValueChange={() => {}} />
 
-            <NumberField label="Fee Admin (%)" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeeAdministrationPercentage} onValueChange={(v: number) => handleGroup3Change('contractFeeAdministrationPercentage', v)} isPercentage={true}/>
-            <NumberField label="Fee Administration" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeeAdministration} onValueChange={(v: number) => handleGroup3Change('contractFeeAdministration', v)} />
+           </FormGroup>
+
+           <FormGroup title="BIAYA-BIAYA">
+            <NumberField label="Fee Admin (%)" disabled={!isGroup3Active || isEditMode} value={formData.contractFeeAdministrationPercentage} onValueChange={(v: number) => handleGroup3Change('contractFeeAdministrationPercentage', v)} isPercentage={true}/>
+            <NumberField label="Fee Administration" disabled={!isGroup3Active || isEditMode} value={formData.contractFeeAdministration} onValueChange={(v: number) => handleGroup3Change('contractFeeAdministration', v)} />
            
-            <NumberField label="Fee Provision (%)" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeeProvisionPercentage} onValueChange={(v: number) => handleGroup3Change('contractFeeProvisionPercentage', v)} isPercentage={true}/>
-            <NumberField label="Fee Provision" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeeProvision} onValueChange={(v: number) => handleGroup3Change('contractFeeProvision', v)} />
+            <NumberField label="Fee Provision (%)" disabled={!isGroup3Active || isEditMode} value={formData.contractFeeProvisionPercentage} onValueChange={(v: number) => handleGroup3Change('contractFeeProvisionPercentage', v)} isPercentage={true}/>
+            <NumberField label="Fee Provision" disabled={!isGroup3Active || isEditMode} value={formData.contractFeeProvision} onValueChange={(v: number) => handleGroup3Change('contractFeeProvision', v)} />
            
-            <NumberField label="Fee Platform (%)" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeePlatformPercentage} onValueChange={(v: number) => handleGroup3Change('contractFeePlatformPercentage', v)} isPercentage={true}/>
+            <NumberField label="Fee Platform (%)" disabled={!isGroup3Active || isEditMode} value={formData.contractFeePlatformPercentage} onValueChange={(v: number) => handleGroup3Change('contractFeePlatformPercentage', v)} isPercentage={true}/>
             <NumberField label="Fee Platform" disabled={!isGroup3Active} value={formData.contractFeePlatform} onValueChange={(v: number) => handleGroup3Change('contractFeePlatform', v)} />
                       
-            <NumberField label="Fee Servicing (%)" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeeServicingPercentage} onValueChange={(v: number) => handleGroup3Change('contractFeeServicingPercentage', v)} isPercentage={true}/>
-            <NumberField label="Fee Servicing" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeeServicing} onValueChange={(v: number) => handleGroup3Change('contractFeeServicing', v)} />
+            <NumberField label="Fee Servicing (%)" disabled={!isGroup3Active || isEditMode} value={formData.contractFeeServicingPercentage} onValueChange={(v: number) => handleGroup3Change('contractFeeServicingPercentage', v)} isPercentage={true}/>
+            <NumberField label="Fee Servicing" disabled={!isGroup3Active || isEditMode} value={formData.contractFeeServicing} onValueChange={(v: number) => handleGroup3Change('contractFeeServicing', v)} />
             
-            <NumberField label="Fee Monitoring Monthly (%)" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeeMonitoringPercentageMonthly} onValueChange={(v: number) => handleGroup3Change('contractFeeMonitoringPercentageMonthly', v)} isPercentage={true}/>
-            <NumberField label="Fee Monitoring (Monthly)" disabled={!isGroup3Active || mode==='edit'} value={formData.contractFeeMonitoringMonthly} onValueChange={(v: number) => handleGroup3Change('contractFeeMonitoringMonthly', v)} />
+            <NumberField label="Fee Monitoring Monthly (%)" disabled={!isGroup3Active || isEditMode} value={formData.contractFeeMonitoringPercentageMonthly} onValueChange={(v: number) => handleGroup3Change('contractFeeMonitoringPercentageMonthly', v)} isPercentage={true}/>
+            <NumberField label="Fee Monitoring (Monthly)" disabled={!isGroup3Active || isEditMode} value={formData.contractFeeMonitoringMonthly} onValueChange={(v: number) => handleGroup3Change('contractFeeMonitoringMonthly', v)} />
                       
             <NumberField label="Total Fee Monitoring (%)" disabled value={formData.contractFeeMonitoringPercentage} onValueChange={() => {}} isPercentage={true}/>
             <NumberField label="Total Fee Monitoring" disabled value={formData.contractFeeMonitoring} onValueChange={() => {}} />
            </FormGroup>
 
           <FormGroup title="PAJAK DAN DENDA">
-            <Select label="Tax PPN (%)" disabled={mode==='edit'} isPercentage={true} hasError={isError('contractTaxPpn')} value={formData.contractTaxPpn ?? ''} onChange={(e: any) => setFormData({...formData, contractTaxPpn: e.target.value})}>
+            <Select label="Tax PPN (%)" disabled={isEditMode} isPercentage={true} hasError={isError('contractTaxPpn')} value={formData.contractTaxPpn ?? ''} onChange={(e: any) => setFormData({...formData, contractTaxPpn: e.target.value})}>
               <option value="">-- Pilih Tax PPN --</option>
               <option value="0.1">10</option>
               <option value="0.11">11</option>
               <option value="0.12">12</option>
             </Select>
-            <Select label="Tax Factor" disabled={mode==='edit'} hasError={isError('contractTaxFactor')} value={formData.contractTaxFactor ?? ''} onChange={(e: any) => setFormData({...formData, contractTaxFactor: e.target.value})}>
+            <Select label="Tax Factor" disabled={isEditMode} hasError={isError('contractTaxFactor')} value={formData.contractTaxFactor ?? ''} onChange={(e: any) => setFormData({...formData, contractTaxFactor: e.target.value})}>
               <option value="">-- Pilih Tax Factor --</option>
               <option value="1">1</option>
               <option value="0.916667">11/12</option>
             </Select>
-            <Select label="Tax Yield (%)" disabled={mode==='edit'} isPercentage={true} hasError={isError('contractTaxYield')} value={formData.contractTaxYield ?? ''} onChange={(e: any) => setFormData({...formData, contractTaxYield: e.target.value})}>
+            <Select label="Tax Yield (%)" disabled={isEditMode} isPercentage={true} hasError={isError('contractTaxYield')} value={formData.contractTaxYield ?? ''} onChange={(e: any) => setFormData({...formData, contractTaxYield: e.target.value})}>
               <option value="">-- Pilih Tax Yield --</option>
               <option value="0.1">10</option>
               <option value="0.15">15</option>
               <option value="0.2">20</option>
             </Select>
-            <Select label="Penalty Percentage Daily" disabled={mode==='edit'} hasError={isError('contractPenaltyPercentageDaily')} value={formData.contractPenaltyPercentageDaily ?? ''} onChange={(e: any) => setFormData({...formData, contractPenaltyPercentageDaily: e.target.value})}>
+            <Select label="Penalty Percentage Daily" disabled={isEditMode} hasError={isError('contractPenaltyPercentageDaily')} value={formData.contractPenaltyPercentageDaily ?? ''} onChange={(e: any) => setFormData({...formData, contractPenaltyPercentageDaily: e.target.value})}>
               <option value="">-- Pilih Penalty --</option>
+              <option value="0.0005">0,5/1000</option>
               <option value="0.001">1/1000</option>
               <option value="0.002">2/1000</option>
               <option value="0.003">3/1000</option>
+              <option value="0.004">4/1000</option>
+              <option value="0.005">5/1000</option>
             </Select>
           </FormGroup>
 
@@ -390,8 +390,9 @@ const durationBig = new Big(duration.toString());
               <option value="">-- Pilih Escrow Bank --</option>
               <option value="BJB Syariah">BJB Syariah</option>
               <option value="Bank Mega Syariah">Bank Mega Syariah</option>
+              <option value="Bank Keb Hana">Bank Keb Hana</option>
             </Select>
-            <Input label="Escrow Account" hasError={isError('contractEscrowAccount')} value={formData.contractEscrowAccount ?? ''} onChange={(e: any) => setFormData({...formData, contractEscrowAccount: e.target.value})} />
+            <Input label="Escrow Account" inputType="alphanumeric" hasError={isError('contractEscrowAccount')} value={formData.contractEscrowAccount ?? ''} onChange={(e: any) => setFormData({...formData, contractEscrowAccount: e.target.value})} />
             <Select label="VA Bank" hasError={isError('contractVaBank')} value={formData.contractVaBank} onChange={(e: any) => setFormData({...formData, contractVaBank: e.target.value})}>
               <option value="">-- Pilih VA Bank --</option>
               <option value="BCA">BCA</option>
@@ -399,22 +400,28 @@ const durationBig = new Big(duration.toString());
               <option value="BRI">BRI</option>
               <option value="Mandiri">Mandiri</option>
             </Select>
-            <Input label="VA Number" hasError={isError('contractVaNumber')} value={formData.contractVaNumber} onChange={(e: any) => setFormData({...formData, contractVaNumber: e.target.value})} />
-            <Input type="email" label="Contact Email" hasError={isError('contractContactEmail')} value={formData.contractContactEmail} onChange={(e: any) => setFormData({...formData, contractContactEmail: e.target.value})} />
-            <Input type="tel" label="Contact WhatsApp" hasError={isError('contractContactWhatsapp')} value={formData.contractContactWhatsapp} onChange={(e: any) => setFormData({...formData, contractContactWhatsapp: e.target.value})} />
+            <Input label="VA Number" inputType="alphanumeric" hasError={isError('contractVaNumber')} value={formData.contractVaNumber} onChange={(e: any) => setFormData({...formData, contractVaNumber: e.target.value})} />
+            <Input label="Contact Email" inputType="email" hasError={isError('contractContactEmail')} value={formData.contractContactEmail} onChange={(e: any) => setFormData({...formData, contractContactEmail: e.target.value})} />
+            <Input label="Contact WhatsApp" inputType="tel" hasError={isError('contractContactWhatsapp')} value={formData.contractContactWhatsapp} onChange={(e: any) => setFormData({...formData, contractContactWhatsapp: e.target.value})} />
           </FormGroup>
 
           <FormGroup title="DOKUMEN PERJANJIAN">
             <Input label="Document Number" value={formData.contractDocumentNumber} onChange={(e: any) => setFormData({...formData, contractDocumentNumber: e.target.value})} colSpan="2"/>
             <Input label="Document Title" value={formData.contractDocumentTitle} onChange={(e: any) => setFormData({...formData, contractDocumentTitle: e.target.value})} colSpan="2"/>
-            <div className="col-span-2 border-slate-200 px-6 py-4 border-b-2 rounded-lg">
-              <label className="block text-[10px] font-semibold text-slate-600 mb-1">Document URL (File Lokal)</label>
-              <input type="file" className="w-full text-xs" onChange={(e) => setFormData({...formData, contractDocumentUrl: e.target.files ? e.target.files[0] : null})} />
-            </div>
-            
+            <FileInput 
+                label="Document URL (File Lokal)"
+                colSpan="2"
+                hasError={false} // Ubah ke true jika validasi gagal
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                  setFormData({
+                    ...formData, 
+                    contractDocumentUrl: e.target.files ? e.target.files[0] : null
+                  })
+                }
+              />
           </FormGroup>
 
-          {mode !== 'edit' && (
+          {!isEditMode && (
             <FormGroup title="BUAT JADWAL TAGIHAN?">
               {/* ---- BARIS 1: UPFRONT FEE ---- */}
               <Toggle 
@@ -446,7 +453,7 @@ const durationBig = new Big(duration.toString());
                   jika memang benar-benar tidak ingin melihat angka tahun di UI.
                 */}
                 <Input 
-                  type="date" 
+                  inputType="date" 
                   hasError={isError('scheduleInstallmentDate')} 
                   value={formData.scheduleInstallmentDate} 
                   onChange={(e: any) => setFormData({...formData, scheduleInstallmentDate: e.target.value})} 
@@ -458,25 +465,24 @@ const durationBig = new Big(duration.toString());
       </div>
 
       {/* FOOTER: Fixed di Bawah */}
-      <div className="sticky bottom-0 z-50 bg-white border-t border-slate-200 px-6 py-4 flex justify-end gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-      
-        <button 
-          type="button" 
-          onClick={closePanel}
-          className="px-4 py-2 text-xs font-medium text-rose-600 bg-rose-50 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors"
-        >
-          Batal
-        </button>
-        <button
-          type="button"
-          onClick={handlePreSubmit}
-          disabled={isLoading}
-          className="px-6 py-2 text-xs font-bold text-white bg-amber-600 rounded-md shadow hover:bg-amber-700 transition-colors disabled:opacity-50"
-        >
-          {isLoading ? 'Menyimpan...' : (mode==='edit' ? 'Simpan Perubahan' : 'Tambahkan Data')}
-        </button>
-      </div>
+        <FormFooter 
+        mode={mode}
+        validationError={null}
+        submissionError={submissionError}
+        isLoading={isLoading}
+        handlePreSubmit={handlePreSubmit}
+        closePanel={closePanel}
+        />
 
+        <ConfirmModal 
+        isOpen={showConfirmModal} 
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={() => {
+          setShowConfirmModal(false);
+          onSubmit(formData);
+        }}
+      />
     </div>
+    
   );
 };

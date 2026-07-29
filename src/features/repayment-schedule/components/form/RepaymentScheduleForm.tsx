@@ -13,6 +13,8 @@ import { RepaymentSecurityDetailResponse, RepaymentSecuritySummaryResponse } fro
 import { toSafeBig } from '../../../../utils/number';
 import { RepaymentScheduleSummary } from '../../types/repayment-schedule.type';
 import { addDays, subDays, parseISO } from 'date-fns';
+import FormFooter from '../../../../components/forms/FormFooter';
+import FormHeader from '../../../../components/forms/FormHeader';
 
 interface RepaymentScheduleFormProps {
   mode: 'add' | 'edit';
@@ -21,15 +23,19 @@ interface RepaymentScheduleFormProps {
   lastUpfront?: RepaymentScheduleSummary | null;
   lastInstallment?: RepaymentScheduleSummary | null;
   onSubmit: (data: RepaymentScheduleFormRequest) => void;
-  isLoading?: boolean;
+  onCancel: () => void;
+  isLoading: boolean;
+  submissionError?: string | null; 
 }
 
-export default function RepaymentScheduleForm({ mode, initialData, repaymentSecurity, lastUpfront, lastInstallment, onSubmit, isLoading }: RepaymentScheduleFormProps) {
+export default function RepaymentScheduleForm({ mode, initialData, repaymentSecurity, lastUpfront, lastInstallment, onSubmit, onCancel, isLoading, submissionError=null }: RepaymentScheduleFormProps) {
   const { closePanel } = useSidePanel();
   const [formData, setFormData] = useState<RepaymentScheduleFormRequest>(initialData);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  
   const [validationError, setValidationError] = useState<string>('');
-  const [errors, setErrors] = useState<string[]>([]); // State tambahan untuk menandai field yang error
+  const [validationErrors, setValidationErrors] = useState<string[]>([]); // State tambahan untuk menandai field yang error
+
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Cek apakah modenya edit, field-field tertentu akan di disable
   const isEditMode = mode === 'edit';
@@ -179,7 +185,7 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
     setFormData(calculateTaxesAndTotals(newData));
   };
 
-  const handleSubmitClick = (e: React.FormEvent) => {
+  const handlePreSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     // 5. Validasi field wajib
@@ -195,32 +201,30 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
 
     if (missingFields.length > 0) {
       setValidationError(`Silakan lengkapi: ${missingFields.join(', ')}`);
-      setErrors(missingKeys);
+      setValidationErrors(missingKeys);
       return;
     }
 
     setValidationError('');
-    setErrors([]);
-    setIsConfirmOpen(true);
+    setValidationErrors([]);
+    setShowConfirmModal(true);
   };
 
   const handleConfirmSubmit = () => {
-    setIsConfirmOpen(false);
+    setShowConfirmModal(false);
     onSubmit(formData);
   };
 
   return (
     <>
-      <form onSubmit={handleSubmitClick} className="flex flex-col h-full bg-white ">
+      <form className="flex flex-col h-full bg-white ">
         {/* Header */}
-        <div className="shrink-0 p-4 border-b border-slate-200 bg-white">
-          <h2 className="text-sm font-bold text-slate-800">
-            {isEditMode ? 'Review & Edit Jadwal Pembayaran' : 'Tambah Jadwal Pembayaran Baru'}
-          </h2>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            Komponen pajak dan total akan terkalkulasi secara otomatis (Asumsi PPN 11%).
-          </p>
-        </div>
+        <FormHeader 
+        title={isEditMode ? 'Ubah Jadwal Pembayaran' : 'Tambah Jadwal Pembayaran'}
+        subtitle={isEditMode 
+            ? 'Ubah data jadwal pembayaran di bawah ini dengan benar.' 
+            : 'Lengkapi data jadwal pembayaran di bawah ini dengan benar.'}
+        />
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-8 pb-8 space-y-6 mt-4">
@@ -231,19 +235,19 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
 
           {/* Info Dasar */}
           <FormGroup title="INFORMASI DASAR">
-            <Select label="Tipe Jadwal" name="scheduleType" value={formData.scheduleType ?? ""} onChange={handleChange} disabled={isEditMode} error={errors.includes('scheduleType')} colSpan="1">
+            <Select label="Tipe Jadwal" name="scheduleType" value={formData.scheduleType ?? ""} onChange={handleChange} disabled={isEditMode} error={validationErrors.includes('scheduleType')} colSpan="1">
               <option value="">-- Pilih Jenis Pembayaran --</option>
               <option value={ScheduleType.UPFRONT}>UPFRONT</option>
               <option value={ScheduleType.INSTALLMENT}>INSTALLMENT</option>
             </Select>
 
-            <Input label="Urutan Jadwal" name="scheduleSequence" type="number" value={formData.scheduleSequence} onChange={handleChange} disabled={true} error={errors.includes('scheduleSequence')} colSpan="1" />
-            <Input label="Tanggal Jadwal" name="scheduleDate" type="date" min={formatDateForInput(minScheduleDate)} value={formatDateForInput(formData.scheduleDate)} onChange={handleChange} disabled={isEditMode} error={errors.includes('scheduleDate')} colSpan="1" />
-            <Input label="Tanggal Invoice" name="invoiceDate" type="date" max={formatDateForInput(maxInvoiceDate)}value={formatDateForInput(formData.invoiceDate)} onChange={handleChange} disabled={isEditMode} error={errors.includes('invoiceDate')} colSpan="1" />
+            <Input label="Urutan Jadwal" name="scheduleSequence" type="number" value={formData.scheduleSequence} onChange={handleChange} disabled={true} error={validationErrors.includes('scheduleSequence')} colSpan="1" />
+            <Input label="Tanggal Jadwal" name="scheduleDate" type="date" min={formatDateForInput(minScheduleDate)} value={formatDateForInput(formData.scheduleDate)} onChange={handleChange} disabled={isEditMode} error={validationErrors.includes('scheduleDate')} colSpan="1" />
+            <Input label="Tanggal Invoice" name="invoiceDate" type="date" max={formatDateForInput(maxInvoiceDate)}value={formatDateForInput(formData.invoiceDate)} onChange={handleChange} disabled={isEditMode} error={validationErrors.includes('invoiceDate')} colSpan="1" />
             <Input label="Nomor Invoice" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleChange} disabled={true} colSpan="1" />
             <Input label="Invoice Sent Trial" name="invoiceSentTrial" type="number" value={formData.invoiceSentTrial} onChange={handleChange} disabled={true} colSpan="1" />
             
-            <Select label="Status Invoice" name="invoiceStatus" value={formData.invoiceStatus ?? ''} onChange={handleChange} error={errors.includes('invoiceStatus')} colSpan="2">
+            <Select label="Status Invoice" name="invoiceStatus" value={formData.invoiceStatus ?? ''} onChange={handleChange} error={validationErrors.includes('invoiceStatus')} colSpan="2">
             <option key='default' value="">-- Pilih Jenis Status --</option>
               {Object.values(InvoiceStatus).map(status => (
                  <option key={status} value={status}>{status}</option>
@@ -251,13 +255,13 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
             </Select>
 
             <div className="col-span-2">
-              <label className={`block text-[10px] font-semibold mb-1 ${errors.includes('invoiceNotes') ? 'text-rose-600' : 'text-slate-600'}`}>Catatan Invoice</label>
+              <label className={`block text-[10px] font-semibold mb-1 ${validationErrors.includes('invoiceNotes') ? 'text-rose-600' : 'text-slate-600'}`}>Catatan Invoice</label>
               <textarea 
                 name="invoiceNotes" 
                 value={formData.invoiceNotes} 
                 onChange={handleChange} 
                 rows={2} 
-                className={`w-full px-3 py-2 text-xs border rounded-md focus:outline-none focus:ring-1 transition-colors bg-white ${errors.includes('invoiceNotes') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500 text-rose-700' : 'border-slate-200 focus:ring-amber-500 focus:border-amber-500 text-slate-700'}`} 
+                className={`w-full px-3 py-2 text-xs border rounded-md focus:outline-none focus:ring-1 transition-colors bg-white ${validationErrors.includes('invoiceNotes') ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500 text-rose-700' : 'border-slate-200 focus:ring-amber-500 focus:border-amber-500 text-slate-700'}`} 
               />
             </div>
           </FormGroup>
@@ -332,38 +336,24 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 p-4 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
-          <div className="flex-1">
-            {/* Pesan Validasi Error Ditaruh Di Kiri */}
-            {validationError && (
-              <span className="text-xs text-rose-600">{validationError}</span>
-            )}
-          </div>
-          <div className="flex justify-end gap-3 shrink-0">
-            <button 
-              type="button" 
-              onClick={closePanel}
-              className="px-4 py-2 text-xs font-medium text-rose-600 bg-rose-50 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors"
-            >
-              Batal
-            </button>
-            <button 
-              type="submit" 
-              disabled={isLoading}
-              className="px-4 py-2 text-xs font-medium text-white bg-amber-600 rounded-md hover:bg-amber-700 transition-colors disabled:opacity-50"
-            >
-              {isLoading ? 'Memproses...' : 'Simpan Perubahan'}
-            </button>
-          </div>
-        </div>
-      </form>
+        
+        {/* FOOTER: Fixed di Bawah */}
+        <FormFooter 
+        mode={mode}
+        validationError={validationError}
+        submissionError={submissionError}
+        handlePreSubmit={handlePreSubmit}
+        isLoading={isLoading}
+        closePanel={closePanel}
+        />
 
-      {/* Confirmation Modal */}
-      <ConfirmModal 
-        isOpen={isConfirmOpen} 
-        onClose={() => setIsConfirmOpen(false)} 
-        onConfirm={handleConfirmSubmit} 
-      />
+        {/* Confirmation Modal */}
+        <ConfirmModal 
+          isOpen={showConfirmModal} 
+          onClose={() => setShowConfirmModal(false)} 
+          onConfirm={handleConfirmSubmit} 
+        />
+      </form>
     </>
   );
 }

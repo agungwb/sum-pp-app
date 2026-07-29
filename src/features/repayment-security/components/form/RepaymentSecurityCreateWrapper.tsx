@@ -4,13 +4,14 @@ import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { repaymentSecurityService } from '../../services/repaymentSecurityService'; // Sesuaikan path
 import { RepaymentSecurityFormRequest } from '../../dtos/repayment-security.dto';
 import { SecurityType } from '../../types/repayment-security.enum';
+import { mapDtoToFormData } from '../../../../utils/form';
 
 
 
 export default function RepaymentSecurityCreateWrapper() {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [globalError, setGlobalError] = useState<string | null>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   const repaymentSecurityData : RepaymentSecurityFormRequest = {
     investeeId: '',
@@ -71,9 +72,10 @@ export default function RepaymentSecurityCreateWrapper() {
     scheduleInstallmentDate: '',
   }
 
+
   const handleCreateSubmit = async (formData: RepaymentSecurityFormRequest) => {
     setIsSubmitting(true);
-    setGlobalError(null); 
+    setSubmissionError(null); 
 
     const payloadData : RepaymentSecurityFormRequest = {
       ...formData,
@@ -81,15 +83,21 @@ export default function RepaymentSecurityCreateWrapper() {
       contractStatus: formData.contractStatus === '' ? null : formData.contractStatus,
     };
 
+    const isFileUploaded = formData.contractDocumentUrl instanceof File
+
     try {
       // Panggil API lewat Service
-      await repaymentSecurityService.createRepaymentSecurity(payloadData);
-      
+      if (isFileUploaded){
+        const payloadFormData = mapDtoToFormData(payloadData);
+        await repaymentSecurityService.createRepaymentSecurity(payloadFormData);
+      } else {
+        await repaymentSecurityService.createRepaymentSecurity(payloadData);
+      }
       console.log('Data berhasil disimpan');
       closePanel(); // Menutup panel setelah sukses
     } catch (error: any) {
       console.error("Gagal membuat data:", error);
-      setGlobalError(
+      setSubmissionError(
         error?.response?.data?.message || "Terjadi kesalahan saat menyimpan data."
       );
     } finally {
@@ -99,17 +107,13 @@ export default function RepaymentSecurityCreateWrapper() {
 
   return (
     <div className="h-full w-full">
-      {globalError && (
-        <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded">
-          {globalError}
-        </div>
-      )}
       <RepaymentSecurityForm 
         mode='add'
         initialData={repaymentSecurityData}
         onSubmit={handleCreateSubmit} 
         onCancel={closePanel} 
         isLoading={isSubmitting}
+        submissionError = {submissionError}
       />
     </div>
   );

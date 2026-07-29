@@ -1,33 +1,27 @@
 // src/pages/repayment/RepaymentDetail.tsx
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import RepaymentSecurityEditWrapper from '../components/form/RepaymentSecurityEditWrapper';
 import InfoRow from '../../../components/ui/InfoRow';
 import { useGlobalMode } from '../../../contexts/GlobalModeContext';
 import { useSidePanel } from '../../../contexts/SidePanelContext';
-import { calculateTax } from '../../../utils/finance';
-import { toFrontendPercentage } from '../../../utils/finance';
 import { repaymentSecurityService } from '../services/repaymentSecurityService';
 import { repaymentScheduleService } from '../../repayment-schedule/services/repaymentScheduleService';
 import { securityCollateralService } from '../../security-collateral/services/securityCollateralService';
-import RevenueRow from '../components/detail/RevenueRow';
 import CollateralPanel from '../components/detail/CollateralPanel';
 import { SecurityCollateralDetailResponse } from '../../security-collateral/dtos/security-collateral.dto';
 import SchedulePanel from '../components/detail/SchedulePanel';
-import { RepaymentScheduleItemResponse, RepaymentScheduleItemWithPenaltyResponse } from '../../repayment-schedule/dtos/repayment-schedule.dto';
+import { RepaymentScheduleItemWithPenaltyResponse } from '../../repayment-schedule/dtos/repayment-schedule.dto';
 import { formatPercentage, formatRupiah } from '../../../utils/currency';
-import { formatCompactDate, formatDate } from '../../../utils/date';
+import { formatDate } from '../../../utils/date';
 import { ScheduleType } from '../../repayment-schedule/types/repayment-schedule.enum';
-import { RepaymentSecurityDetailResponse, RepaymentSecurityWithSinkingFundResponse } from '../dtos/repayment-security.dto';
-import { getStatusStyle, getTypeStyle } from '../../../utils/styles';
+import { RepaymentSecurityWithSinkingFundResponse } from '../dtos/repayment-security.dto';
 import ContractStatusBadge from '../components/badge/ContractStatusBadge';
 import SecurityTypeBadge from '../components/badge/SecurityTypeBadge';
 import { SecurityType } from '../types/repayment-security.enum';
-import { Big } from 'big.js';
 import Penalty from '../../../components/ui/Penalty';
 import RevenuePanel from '../components/detail/RevenuePanel';
 import { toSafeBig } from '../../../utils/number';
-import { usePageBreadcrumb } from '../../../hooks/usePageBreadcrumb';
 import { useBreadcrumb } from '../../../contexts/BreadcrumbContext';
 
 export default function RepaymentDetailPage() {
@@ -91,12 +85,6 @@ export default function RepaymentDetailPage() {
   
     fetchAllDetailData();
   }, [repaymentId]);
-
-  // usePageBreadcrumb([
-  //   { label: 'Dashboard', path: '/dashboard/monitoring' },
-  //   { label: 'Repayment', path: '/repayment/securities' },
-  //   { label: , path:'repayment/securities/'+{}}
-  // ]);
 
   // Loading & Error UI Fallback
   if (loading) return <div className="p-8 text-center">Memuat detail...</div>;
@@ -271,11 +259,17 @@ export default function RepaymentDetailPage() {
               <div className="w-1/2">
                 <InfoRow label="Nomor Dokumen Perjanjian" value={repaymentSecurity.contractDocumentNumber} fontMono />
                 <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-4">Unduh Dokumen Perjanjian</span>
-                    <a href={repaymentSecurity.contractDocumentUrl} target="_blank" rel="noreferrer" className="text-[12px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 w-fit bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 transition-colors">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-4 mb-1">Unduh Dokumen Perjanjian</span>
+                    {repaymentSecurity.contractDocumentUrl 
+                      ? (<a href={repaymentSecurity.contractDocumentUrl} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 w-fit bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 transition-colors">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                       Unduh Dokumen
-                    </a>
+                    </a>)
+                      : (
+                        <span className="text-[13px] font-sans font-semibold text-slate-700 ml-0.5">
+                          -
+                        </span>
+                      )}
                 </div>
                   
               </div>
@@ -331,7 +325,7 @@ export default function RepaymentDetailPage() {
                 <span className="text-[12px] font-mono font-semibold text-slate-700">{formatRupiah(repaymentSecurity.receiptSinkingFundSum,undefined, 'zero')}</span>
               </div>
               <div className="flex flex-col text-right">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">% p.a.</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">% Terkumpul</span>
                 <span className="text-[12px] font-mono font-semibold text-slate-700">{formatPercentage(progressPercentage, 'zero')}</span>
               </div>
             </div>

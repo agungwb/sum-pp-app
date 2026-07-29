@@ -5,6 +5,7 @@ import { repaymentSecurityService } from '../../services/repaymentSecurityServic
 import { RepaymentSecurityEditFormResponse, RepaymentSecurityFormRequest } from '../../dtos/repayment-security.dto';
 import { formatDateForInput } from '../../../../utils/date';
 import { Big } from 'big.js';
+import { mapDtoToFormData } from '../../../../utils/form';
 
 interface EditWrapperProps {
   repaymentId: string;
@@ -15,6 +16,7 @@ export default function RepaymentSecurityEditWrapper({ repaymentId }: EditWrappe
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialData, setInitialData] = useState<RepaymentSecurityFormRequest | null>(null);
   const [errorFetch, setErrorFetch] = useState<string | null>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -129,6 +131,7 @@ export default function RepaymentSecurityEditWrapper({ repaymentId }: EditWrappe
 
   const handleEditSubmit = async (formData: RepaymentSecurityFormRequest) => {
     setIsSubmitting(true);
+    setSubmissionError(null); 
 
     const payloadData : RepaymentSecurityFormRequest = {
       ...formData,
@@ -136,14 +139,22 @@ export default function RepaymentSecurityEditWrapper({ repaymentId }: EditWrappe
       contractStatus: formData.contractStatus === '' ? null : formData.contractStatus,
     };
 
+    const isFileUploaded = formData.contractDocumentUrl instanceof File
+
     try {
-      // Memanggil API PUT lewat Service
-      await repaymentSecurityService.updateRepaymentSecurity(repaymentId, payloadData);
-      
+      // Panggil API lewat Service
+      if (isFileUploaded){
+        const payloadFormData = mapDtoToFormData(payloadData);
+        await repaymentSecurityService.updateRepaymentSecurity(repaymentId, payloadFormData);
+      } else {
+        await repaymentSecurityService.updateRepaymentSecurity(repaymentId, payloadData);
+      }
       closePanel();
     } catch (error: any) {
       console.error("Gagal update data", error);
-      alert(error?.response?.data?.message || "Terjadi kesalahan saat menyimpan perubahan.");
+      setSubmissionError(
+        error?.response?.data?.message || "Terjadi kesalahan saat menyimpan data."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -160,6 +171,7 @@ export default function RepaymentSecurityEditWrapper({ repaymentId }: EditWrappe
       onSubmit={handleEditSubmit}
       isLoading={isSubmitting}
       onCancel={closePanel}
+      submissionError={submissionError}
     />
   );
 }

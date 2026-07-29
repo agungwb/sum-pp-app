@@ -6,6 +6,7 @@ import { repaymentReceiptService } from '../../services/repaymentReceiptService'
 import { ScheduleType } from '../../types/repayment-receipt.enum';
 import { InvoiceSummary, InvoiceSummaryWithPenaltyBig } from '../../../repayment-schedule/types/repayment-schedule.type';
 import { RepaymentReceiptEditFormResponse, RepaymentReceiptFormRequest } from '../../dtos/repayment-receipt.dto';
+import { mapDtoToFormData } from '../../../../utils/form';
 
 interface Props {
   receiptId: string; // Mengikuti instruksi GET & PUT URL kamu
@@ -16,6 +17,7 @@ export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary 
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialData, setInitialData] = useState<RepaymentReceiptFormRequest | null>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchReceiptDetail = async () => {
@@ -72,11 +74,29 @@ export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary 
 
   const handleEditSubmit = async (formData: any) => {
     setIsSubmitting(true);
+    setSubmissionError(null); 
+
+    const payloadData : RepaymentReceiptFormRequest = {
+      ...formData,
+      receiptMethod: formData.receiptMethod === '' ? null : formData.receiptMethod,
+    };
+
+    const isFileUploaded = formData.receiptDocumentUrl instanceof File
+
     try {
-      await repaymentReceiptService.updateRepaymentReceipt(receiptId, formData);
+      // await repaymentReceiptService.updateRepaymentReceipt(receiptId, formData);
+      if (isFileUploaded){
+        const payloadFormData = mapDtoToFormData(payloadData);
+        await repaymentReceiptService.updateRepaymentReceipt(receiptId, payloadFormData);
+      } else {
+        await repaymentReceiptService.updateRepaymentReceipt(receiptId, payloadData);
+      }
       closePanel();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Gagal update penerimaan", error);
+      setSubmissionError(
+        error?.response?.data?.message || "Terjadi kesalahan saat menyimpan data."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -90,7 +110,9 @@ export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary 
           initialData={initialData}
           invoiceSummary={invoiceSummary}
           onSubmit={handleEditSubmit} 
+          onCancel={closePanel}
           isLoading={isSubmitting} 
+          submissionError={submissionError}
         />
       ) : (
         <div className="p-6 text-sm text-slate-500">Loading data...</div>

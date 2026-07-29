@@ -30,16 +30,42 @@ export const repaymentReceiptService = {
   },
 
   // CREATE
-  createRepaymentReceipt: async (scheduleId: string, payload: RepaymentReceiptFormRequest): Promise<RepaymentReceiptDetailWithAuditResponse> => {
+  createRepaymentReceipt: async (scheduleId: string, payload: RepaymentReceiptFormRequest | FormData): Promise<RepaymentReceiptDetailWithAuditResponse> => {
     // const response = await axios.post(`${BASE_URL}/repayment/schedules/${scheduleId}/receipts`, data);
-    const response = await apiClient.post(`/${REPAYMENT_SCHEDULE_URL}/${scheduleId}/receipts`, payload);
+
+    let response;
+
+    if (payload instanceof FormData) {
+      response = await apiClient.post(`/${REPAYMENT_SCHEDULE_URL}/${scheduleId}/receipts`, payload, {
+        // Kita timpa headers-nya khusus untuk request ini saja
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    } else {
+      response = await apiClient.post(`/${REPAYMENT_SCHEDULE_URL}/${scheduleId}/receipts`, payload);
+    }
+
     return response.data;
   },
 
   // UPDATE
-  updateRepaymentReceipt: async (receiptId: string, payload: RepaymentReceiptFormRequest): Promise<RepaymentReceiptDetailWithAuditResponse> => {
-    // const response = await axios.put(`${BASE_URL}/repayment/receipts/${receiptId}`, data);
-    const response = await apiClient.put(`/${REPAYMENT_RECEIPT_URL}/${receiptId}`, payload);
+  updateRepaymentReceipt: async (receiptId: string, payload: RepaymentReceiptFormRequest | FormData): Promise<RepaymentReceiptDetailWithAuditResponse> => {
+    // const response = await apiClient.put(`/${REPAYMENT_RECEIPT_URL}/${receiptId}`, payload);
+
+    let response;
+
+    if (payload instanceof FormData) {
+      response = await apiClient.put(`/${REPAYMENT_RECEIPT_URL}/${receiptId}`, payload, {
+        // Kita timpa headers-nya khusus untuk request ini saja
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    } else {
+      response = await apiClient.put(`/${REPAYMENT_RECEIPT_URL}/${receiptId}`, payload);
+    }
+
     return response.data;
   },
 

@@ -13,9 +13,11 @@ interface EditWrapperProps {
 }
 
 export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecurity}: EditWrapperProps) {
+  const [initialData, setInitialData] = useState<RepaymentScheduleFormRequest | null>(null);
+
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [initialData, setInitialData] = useState<RepaymentScheduleFormRequest | null>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   
   // State Modal Konfirmasi
 
@@ -78,6 +80,7 @@ export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecu
     }
 
     setIsSubmitting(true);
+    setSubmissionError(null);
 
     const payloadData : RepaymentScheduleFormRequest = {
       ...formData,
@@ -94,8 +97,11 @@ export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecu
       
       // Bisa tambahkan Toast Notification (Success) di sini
       closePanel(); // Langsung tutup side panel setelah berhasil
-    } catch (error) {
+    } catch (error: any) {
       console.error("Gagal mengedit jadwal :", error);
+      setSubmissionError(
+        error?.response?.data?.message || "Terjadi kesalahan saat menyimpan data."
+      );
       // Bisa tambahkan Toast Notification (Error) di sini
     } finally {
       setIsSubmitting(false);
@@ -110,7 +116,9 @@ export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecu
           initialData={initialData}
           repaymentSecurity={repaymentSecurity}
           onSubmit={handleUpdateSubmit} 
+          onCancel={closePanel}
           isLoading={isSubmitting} 
+          submissionError={submissionError}
         />
       ) : (
         <div className="flex flex-col items-center justify-center flex-1 space-y-3">

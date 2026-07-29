@@ -56,13 +56,12 @@ export interface SecurityLookupResponse
           RepaymentSecurityFees, 
           RepaymentSecurityPenaltiesAndTaxes, 
           RepaymentSecurityContactAndBank, 
-          Omit<RepaymentSecurityDocuments, 'contractDocumentUrl'>, 
+          RepaymentSecurityDocuments, 
           RepaymentSecurityRestructuring {
 
       contractFeeMonitoringMonthly: string;
       contractFeeMonitoringPercentage: string;
 
-      contractDocumentUrl: File | null;
       scheduleUpfrontFlag: boolean;
       scheduleInstallmentFlag: boolean;
       scheduleUpfrontDate: string;

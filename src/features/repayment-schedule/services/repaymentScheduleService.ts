@@ -18,6 +18,7 @@ export const repaymentScheduleService = {
 
   //DETAIL
   getRepaymentScheduleDetail: async (scheduleId: string): Promise<ApiResponse<RepaymentScheduleDetailResponse>> => {
+    
     const response = await apiClient.get(`/${REPAYMENT_SCHEDULE_URL}/${scheduleId}`, {
       params: {
         mode: 'detail', 
@@ -52,6 +53,12 @@ export const repaymentScheduleService = {
   //LIST
   getRepaymentSchedulesWithPenalty: async (securityId: string): Promise<ApiResponse<RepaymentScheduleItemWithPenaltyResponse>> => {
     // const response = await axios.get(`${BASE_URL}/repayment/securities/${securityId}/schedules`);
+
+    //VALIDASI jika diperlukan
+    // if (!securityId || securityId === 'undefined') {
+    //   throw new Error('securityId is required before fetching schedules');
+    // }
+
     const response = await apiClient.get(`/${REPAYMENT_SECURITY_URL}/${securityId}/schedules`);
     return response.data;
   },
@@ -59,6 +66,7 @@ export const repaymentScheduleService = {
   //CREATE
   createRepaymentSchedule: async (securityId: string, payload: RepaymentScheduleFormRequest): Promise<RepaymentScheduleDetailWithAuditResponse> => {
     // const response = await axios.post(`${BASE_URL}/repayment/securities/${securityId}/schedules`, payload);
+
     const response = await apiClient.post(`/${REPAYMENT_SECURITY_URL}/${securityId}/schedules`, payload);
     return response.data;
   },

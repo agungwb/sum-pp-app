@@ -18,6 +18,7 @@ interface CreateWrapperProps {
 export default function RepaymentScheduleCreateWrapper({ repaymentSecurity, lastUpfront, lastInstallment }: CreateWrapperProps) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   // Buat default state yang aman untuk form baru agar kalkulasi Big.js tidak error (NaN)
 
@@ -55,12 +56,15 @@ export default function RepaymentScheduleCreateWrapper({ repaymentSecurity, last
   };
 
   const handleCreateSubmit = async (formData: RepaymentScheduleFormRequest) => {
+
     if (!repaymentSecurity.id) {
       console.error("Error: repaymentSecurityId tidak ditemukan!");
       return;
     }
 
     setIsSubmitting(true);
+    setSubmissionError(null); 
+
 
     const payloadData : RepaymentScheduleFormRequest = {
       ...formData,
@@ -79,6 +83,9 @@ export default function RepaymentScheduleCreateWrapper({ repaymentSecurity, last
       closePanel(); // Langsung tutup side panel setelah berhasil
     } catch (error) {
       console.error("Gagal membuat jadwal baru:", error);
+      setSubmissionError(
+        error?.response?.data?.message || "Terjadi kesalahan saat menyimpan data."
+      );
       // Bisa tambahkan Toast Notification (Error) di sini
     } finally {
       setIsSubmitting(false);
@@ -94,7 +101,10 @@ export default function RepaymentScheduleCreateWrapper({ repaymentSecurity, last
         lastUpfront={lastUpfront}
         lastInstallment={lastInstallment}
         onSubmit={handleCreateSubmit} 
+        onCancel={closePanel} 
         isLoading={isSubmitting} 
+        submissionError={submissionError}
+
       />
     </div>
   );

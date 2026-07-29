@@ -6,6 +6,7 @@ import { repaymentReceiptService } from '../../services/repaymentReceiptService'
 import { ReceiptMethod, ReceiptStatus, ScheduleType } from '../../types/repayment-receipt.enum';
 import { InvoiceSummary, InvoiceSummaryWithPenaltyBig } from '../../../repayment-schedule/types/repayment-schedule.type';
 import { RepaymentReceiptFormRequest } from '../../dtos/repayment-receipt.dto';
+import { mapDtoToFormData } from '../../../../utils/form';
 
 interface Props {
   invoiceSummary: InvoiceSummaryWithPenaltyBig;
@@ -14,6 +15,7 @@ interface Props {
 export default function RepaymentReceiptCreateWrapper({invoiceSummary }: Props) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   // DUMMY Data Tagihan untuk Acuan Kalkulasi (Anggap data dari Schedule API)
   const initialData: RepaymentReceiptFormRequest = {
@@ -43,13 +45,31 @@ export default function RepaymentReceiptCreateWrapper({invoiceSummary }: Props) 
     receiptPenalty: '0'
   };
 
-  const handleCreateSubmit = async (formData: any) => {
+  const handleCreateSubmit = async (formData: RepaymentReceiptFormRequest) => {
     setIsSubmitting(true);
+    setSubmissionError(null); 
+
+    const payloadData : RepaymentReceiptFormRequest = {
+      ...formData,
+      receiptMethod: formData.receiptMethod === '' ? null : formData.receiptMethod,
+    };
+
+    const isFileUploaded = formData.receiptDocumentUrl instanceof File
+
     try {
-      await repaymentReceiptService.createRepaymentReceipt(invoiceSummary.id, formData);
+      // await repaymentReceiptService.createRepaymentReceipt(invoiceSummary.id, formData);
+      if (isFileUploaded){
+        const payloadFormData = mapDtoToFormData(payloadData);
+        await repaymentReceiptService.createRepaymentReceipt(invoiceSummary.id, payloadFormData);
+      } else {
+        await repaymentReceiptService.createRepaymentReceipt(invoiceSummary.id, payloadData);
+      }
       closePanel();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Gagal create penerimaan", error);
+      setSubmissionError(
+        error?.response?.data?.message || "Terjadi kesalahan saat menyimpan data."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -61,7 +81,9 @@ export default function RepaymentReceiptCreateWrapper({invoiceSummary }: Props) 
       initialData={initialData}
       invoiceSummary={invoiceSummary}
       onSubmit={handleCreateSubmit} 
+      onCancel={closePanel} 
       isLoading={isSubmitting} 
+      submissionError = {submissionError}
     />
   );
 }

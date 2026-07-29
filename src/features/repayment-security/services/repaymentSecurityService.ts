@@ -73,14 +73,41 @@ export const repaymentSecurityService = {
   },
 
   // CREATE
-  createRepaymentSecurity: async (payload: RepaymentSecurityFormRequest): Promise<RepaymentSecurityDetailWithAuditResponse> => {
-    const response = await apiClient.post('/', payload);
+  createRepaymentSecurity: async (payload: RepaymentSecurityFormRequest | FormData): Promise<RepaymentSecurityDetailWithAuditResponse> => {
+    
+    let response;
+    
+    if (payload instanceof FormData) {
+      response = await apiClient.post('/', payload, {
+        // Kita timpa headers-nya khusus untuk request ini saja
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    } else {
+      response = await apiClient.post('/', payload);
+    }
+
     return response.data;
+    
   },
 
+
   // UPDATE
-  updateRepaymentSecurity: async (id: string, payload: RepaymentSecurityFormRequest): Promise<RepaymentSecurityDetailWithAuditResponse> => {
-    const response = await apiClient.put(`/${id}`, payload);
+  updateRepaymentSecurity: async (id: string, payload: RepaymentSecurityFormRequest | FormData): Promise<RepaymentSecurityDetailWithAuditResponse> => {
+    let response;
+    
+    if (payload instanceof FormData) {
+      response = await apiClient.put(`/${id}`, payload, {
+        // Kita timpa headers-nya khusus untuk request ini saja
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    } else {
+      response = await apiClient.put(`/${id}`, payload);
+    }
+
     return response.data;
   },
 
