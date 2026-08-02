@@ -10,6 +10,7 @@ import { formatDateForInput } from '../../../../utils/date';
 import { toSafeBig } from '../../../../utils/number';
 import FormFooter from '../../../../components/forms/FormFooter';
 import { FileInput } from '../../../../components/forms/FileInput';
+import FormHeader from '../../../../components/forms/FormHeader';
 
 interface Props {
   mode: 'add' | 'edit';
@@ -249,14 +250,12 @@ export default function RepaymentReceiptForm({ mode, initialData, invoiceSummary
     <>
       <form className="h-full w-full flex flex-col bg-white">
         {/* Header */}
-        <div className="shrink-0 p-4 border-b border-slate-200 bg-white">
-            <h2 className="text-sm font-bold text-slate-800">
-              {isEditMode ? 'Edit Receipt' : 'Buat Receipt Baru'}
-            </h2>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              Perhitungan Otomatis dilakukan berdasarkan jumlah total.
-            </p>
-          </div>
+        <FormHeader 
+          title={isEditMode ? 'Edit Receipt' : 'Buat Receipt Baru'}
+          subtitle={isEditMode 
+              ? 'Ubah data jadwal receipt di bawah ini dengan benar.' 
+              : 'Lengkapi data receipt di bawah ini dengan benar. Perhitungan otomatis dilakukan'}
+          />
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           
           {/* GROUP 1: Informasi Dasar */}

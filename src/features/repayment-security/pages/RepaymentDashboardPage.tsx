@@ -1,12 +1,7 @@
-// src/pages/repayment/RepaymentDashboard.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { RepaymentSecurity, ApiResponse } from '../types/repayment';
 import RepaymentCard from '../components/dashboard/RepaymentCard';
 import { useGlobalMode } from '../../../contexts/GlobalModeContext';
-import RepaymentSecurityFormPanel from '../components/RepaymentSecurityFormPanel';
-
-// 1. Import Service yang sudah kita buat
 import { repaymentSecurityService } from '../services/repaymentSecurityService';
 import { RepaymentSecurityCardResponse } from '../dtos/repayment-security.dto';
 import { ContractStatus, SecurityType } from '../types/repayment-security.enum';
@@ -34,38 +29,32 @@ export default function RepaymentDashboardPage() {
   const { setBreadcrumbs } = useBreadcrumb();
 
   // 2. Gunakan useEffect untuk memanggil Service
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Memanggil API via Service
-        const responseData = await repaymentSecurityService.getRepaymentSecurityCards();
-        
-        // Sesuaikan dengan struktur Response backend NestJS Anda
-        // Misalnya datanya ada di responseData.data atau responseData.item
-        setData(responseData?.data?.items || []); 
-    
-        //BREADCRUMBS
-        setBreadcrumbs([
-          { label: 'DASHBOARD', path: '/dashboard/monitoring' },
-          { label: 'REPAYMENT', path: '/dashboard/repayment' },
-        ]);
-        
-      } catch (err: any) {
-        console.error("Gagal memuat data dashboard:", err);
-        // Axios membungkus error dari backend di err.response.data
-        setError(
-          err?.response?.data?.message || "Terjadi kesalahan saat memuat data dari server."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const responseData = await repaymentSecurityService.getRepaymentSecurityCards();
+      setData(responseData?.data?.items || []); 
 
+      setBreadcrumbs([
+        { label: 'DASHBOARD', path: '/dashboard/monitoring' },
+        { label: 'REPAYMENT', path: '/dashboard/repayment' },
+      ]);
+      
+    } catch (err: any) {
+      console.error("Gagal memuat data dashboard:", err);
+      setError(
+        err?.response?.data?.message || "Terjadi kesalahan saat memuat data dari server."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []); // Array dependensi useCallback kosong jika tidak memakai variabel state/props eksternal
+
+  useEffect(() => {
     fetchDashboardData();
-  }, []); // Array dependensi kosong: hanya dijalankan sekali saat komponen di-mount (dimuat)
+  }, [fetchDashboardData]); // Array dependensi kosong: hanya dijalankan sekali saat komponen di-mount (dimuat)
 
   // Asumsi: Filter logic untuk memproses data dari backend sebelum di-render
   const filteredData = data.filter(item => {
@@ -170,18 +159,20 @@ export default function RepaymentDashboardPage() {
                 <p className="text-sm text-slate-400 font-medium">Data tidak ditemukan.</p>
               </div>
               {isEditMode && (
-                  <div>
-                    <RepaymentCard key="new-repayment-security" data={null as any} url="tes"/>
+                  <div className="w-full flex justify-center flex-row pb-10">
+                    <div className="w-1/3">
+                      <RepaymentCard key="_key" data={null as any} onDataChanged={fetchDashboardData}/>
+                    </div>
                   </div>
               )}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {filteredData.map((repayment) => (
-                <RepaymentCard key={repayment.id} data={repayment} url={repayment.id} />
+                <RepaymentCard key={repayment.id} data={repayment} url={repayment.id} onDataChanged={fetchDashboardData}/>
               ))}
               {isEditMode && (
-                <RepaymentCard key="new-repayment-security" data={null as any} url="new" />
+                <RepaymentCard key="_key" data={null as any} onDataChanged={fetchDashboardData}/>
               )}
             </div>
           )}

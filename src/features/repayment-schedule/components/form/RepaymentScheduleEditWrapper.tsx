@@ -10,9 +10,10 @@ import { RepaymentSecurityDetailResponse } from '../../../repayment-security/dto
 interface EditWrapperProps {
   scheduleId: string;
   repaymentSecurity: RepaymentSecurityDetailResponse;
+  onSuccess?: ()=> void;
 }
 
-export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecurity}: EditWrapperProps) {
+export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecurity, onSuccess}: EditWrapperProps) {
   const [initialData, setInitialData] = useState<RepaymentScheduleFormRequest | null>(null);
 
   const { closePanel } = useSidePanel();
@@ -90,12 +91,17 @@ export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecu
     };
 
     try {
+
+      // await new Promise((resolve) => setTimeout(resolve, 5000));
       // Memanggil fungsi POST API dari service 
       await repaymentScheduleService.updateRepaymentSchedule(scheduleId, payloadData);
       
       console.log('Berhasil mengedit jadwal untuk Schedule ID:', scheduleId);
       
       // Bisa tambahkan Toast Notification (Success) di sini
+      if (onSuccess){
+        onSuccess();
+      }
       closePanel(); // Langsung tutup side panel setelah berhasil
     } catch (error: any) {
       console.error("Gagal mengedit jadwal :", error);

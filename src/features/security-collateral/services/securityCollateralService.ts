@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { ApiResponse } from '../../../types/api.type'; // Sesuaikan path dengan lokasi api.type.ts Anda
-import { SecurityCollateralDetailResponse, SecurityCollateralFormRequest, SecurityCollateralEditFormResponse } from '../dtos/security-collateral.dto';
+import { SecurityCollateralItemResponse, SecurityCollateralFormRequest, SecurityCollateralEditFormResponse } from '../dtos/security-collateral.dto';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 const REPAYMENT_SECURITY_URL = 'repayment/securities';
@@ -28,7 +28,7 @@ export const securityCollateralService = {
   
 
   /* DETAIL */
-  getCollateralById: async (collateralId: string): Promise<ApiResponse<SecurityCollateralDetailResponse>> => {
+  getCollateral: async (collateralId: string): Promise<ApiResponse<SecurityCollateralItemResponse>> => {
     // const response = await axios.get(
     //   `${BASE_URL}/security/collaterals/${collateralId}`
     // );
@@ -37,16 +37,16 @@ export const securityCollateralService = {
   },
 
   /* LIST */
-  getCollateralsByRepaymentSecurityId: async (repaymentSecurityId: string): Promise<ApiResponse<SecurityCollateralDetailResponse>> => {
+  getSecurityCollateralItems: async (repaymentSecurityId: string): Promise<ApiResponse<SecurityCollateralItemResponse>> => {
     // const response = await axios.get(
     //   `${BASE_URL}/repayment/securities/${repaymentSecurityId}/collaterals`
     // );
-    const response = await apiClient.get(`/${REPAYMENT_SECURITY_URL}/${repaymentSecurityId}`);
+    const response = await apiClient.get(`/${REPAYMENT_SECURITY_URL}/${repaymentSecurityId}/collaterals`);
     return response.data;
   },
 
   /* CREATE */
-  createCollateral: async (repaymentSecurityId: string, payload: SecurityCollateralFormRequest | FormData): Promise<SecurityCollateralDetailResponse> => {
+  createCollateral: async (repaymentSecurityId: string, payload: SecurityCollateralFormRequest | FormData): Promise<SecurityCollateralItemResponse> => {
     // const response = await axios.post(`${BASE_URL}/repayment/securities/${securityId}/collaterals`, payload);
     
     let response;
@@ -66,7 +66,7 @@ export const securityCollateralService = {
   },
 
   /* UPDATE */
-  updateCollateral: async (collateralId: string, payload: SecurityCollateralFormRequest | FormData): Promise<SecurityCollateralDetailResponse>  => {
+  updateCollateral: async (collateralId: string, payload: SecurityCollateralFormRequest | FormData): Promise<SecurityCollateralItemResponse>  => {
     // const response = await axios.put(`${BASE_URL}/security/collaterals/${collateralId}`, payload);
 
     let response;

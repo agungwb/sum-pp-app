@@ -36,6 +36,7 @@ export const FileInput = ({ label, hasError, colSpan = "2", ...props }: any) => 
         className={`${inputBaseClass} ${disabledClass}`} 
         {...props} 
       />
+      
     </div>
   );
 };

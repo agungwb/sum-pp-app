@@ -31,12 +31,16 @@ export default function FormFooter({
             {/* Ubah span menjadi div agar bisa pakai flex-col untuk menumpuk error */}
             <div className="text-[10px] font-light text-red-600 flex flex-col gap-1 whitespace-pre-wrap break-words">
                 
-                {validationError && (
-                <span>⚠️ [Validation Error] {validationError}</span>
+                {validationError && (<>
+                  <div>⚠️ [Validation Error]</div>
+                  <div>{validationError}</div>
+                </>
                 )}
                 
-                {submissionError && (
-                <span>⚠️ [Submission Error] {submissionError}</span>
+                {submissionError && (<>
+                  <div>⚠️ [Submission Error]</div>
+                  <div>{submissionError}</div>
+                </>
                 )}
                 
             </div>

@@ -9,9 +9,10 @@ import { mapDtoToFormData } from '../../../../utils/form';
 
 interface EditWrapperProps {
   repaymentId: string;
+  onSuccess?: () => void;
 }
 
-export default function RepaymentSecurityEditWrapper({ repaymentId }: EditWrapperProps) {
+export default function RepaymentSecurityEditWrapper({ repaymentId, onSuccess }: EditWrapperProps) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialData, setInitialData] = useState<RepaymentSecurityFormRequest | null>(null);
@@ -99,7 +100,7 @@ export default function RepaymentSecurityEditWrapper({ repaymentId }: EditWrappe
             
             contractDocumentTitle: repaymentSecurityRes?.contractDocumentTitle || '',
             contractDocumentNumber: repaymentSecurityRes?.contractDocumentNumber || '',
-            contractDocumentUrl: null,
+            contractDocumentUrl: repaymentSecurityRes?.contractDocumentUrl || '',
             restructOrder: repaymentSecurityRes?.restructOrder || 0,
             restructParentSecurityId: repaymentSecurityRes?.restructParentSecurityId || null,
             restructOriginalSecurityId: repaymentSecurityRes?.restructOriginalSecurityId || null,
@@ -149,6 +150,11 @@ export default function RepaymentSecurityEditWrapper({ repaymentId }: EditWrappe
       } else {
         await repaymentSecurityService.updateRepaymentSecurity(repaymentId, payloadData);
       }
+
+      if (onSuccess){
+        onSuccess();
+      }
+
       closePanel();
     } catch (error: any) {
       console.error("Gagal update data", error);

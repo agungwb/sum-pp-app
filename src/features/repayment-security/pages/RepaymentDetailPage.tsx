@@ -1,5 +1,5 @@
 // src/pages/repayment/RepaymentDetail.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import RepaymentSecurityEditWrapper from '../components/form/RepaymentSecurityEditWrapper';
 import InfoRow from '../../../components/ui/InfoRow';
@@ -9,7 +9,7 @@ import { repaymentSecurityService } from '../services/repaymentSecurityService';
 import { repaymentScheduleService } from '../../repayment-schedule/services/repaymentScheduleService';
 import { securityCollateralService } from '../../security-collateral/services/securityCollateralService';
 import CollateralPanel from '../components/detail/CollateralPanel';
-import { SecurityCollateralDetailResponse } from '../../security-collateral/dtos/security-collateral.dto';
+import { SecurityCollateralItemResponse } from '../../security-collateral/dtos/security-collateral.dto';
 import SchedulePanel from '../components/detail/SchedulePanel';
 import { RepaymentScheduleItemWithPenaltyResponse } from '../../repayment-schedule/dtos/repayment-schedule.dto';
 import { formatPercentage, formatRupiah } from '../../../utils/currency';
@@ -29,7 +29,7 @@ export default function RepaymentDetailPage() {
 
   const [repaymentSecurity, setRepaymentSecurity] = useState<RepaymentSecurityWithSinkingFundResponse | null>(null);
   const [repaymentSchedules, setRepaymentSchedules] = useState<RepaymentScheduleItemWithPenaltyResponse[]>([]);
-  const [securityCollaterals, setSecurityCollaterals] = useState<SecurityCollateralDetailResponse[]>([]);
+  const [securityCollaterals, setSecurityCollaterals] = useState<SecurityCollateralItemResponse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,51 +40,85 @@ export default function RepaymentDetailPage() {
   const { isEditMode } = useGlobalMode();
   const { openPanel } = useSidePanel();
   const { setBreadcrumbs } = useBreadcrumb();
-  
+
+  // 1. Callback khusus untuk me-refresh Repayment Security
+  const fetchRepaymentSecurity = useCallback(async () => {
+    if (!repaymentId) return;
+    try {
+      const res = await repaymentSecurityService.getRepaymentSecurityWithSinkingFund(repaymentId);
+      setRepaymentSecurity(res.data.item);
+      return res.data.item;
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message);
+    }
+  }, [repaymentId]);
+
+  // 2. Callback khusus untuk me-refresh Repayment Schedules
+  const fetchRepaymentSchedules = useCallback(async () => {
+    if (!repaymentId) return;
+    try {
+      const res = await repaymentScheduleService.getRepaymentSchedulesWithPenalty(repaymentId);
+      setRepaymentSchedules(res.data.items || []);
+      return res.data.items || [];
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message);
+    }
+  }, [repaymentId]);
+
+  // 3. Callback khusus untuk me-refresh Security Collaterals (BARU)
+  const fetchSecurityCollaterals = useCallback(async () => {
+    if (!repaymentId) return;
+    try {
+      const res = await securityCollateralService.getSecurityCollateralItems(repaymentId);
+      setSecurityCollaterals(res.data.items || []);
+      return res.data.items || [];
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message);
+    }
+  }, [repaymentId]);
+
+  // 4. useEffect untuk Initial Load (Bersih & Rapi)
   useEffect(() => {
     if (!repaymentId) return;
-  
-    const fetchAllDetailData = async () => {
+
+    const loadAllInitialData = async () => {
       try {
-        setLoading(true);
+        setLoading(true); // Nyalakan loading global
         
-        // Mengambil 4 sumber data sekaligus secara paralel lewat Axios
-        const [repaymentSecurityRes, repaymentSchedulesRes, securityCollateralsRes] = await Promise.all([
-          repaymentSecurityService.getRepaymentSecurityWithSinkingFund(repaymentId),
-          repaymentScheduleService.getRepaymentSchedulesWithPenalty(repaymentId),
-          securityCollateralService.getCollateralsByRepaymentSecurityId(repaymentId) // Ambil data collateral di sini
+        // Jalankan ketiga request secara paralel dan tangkap hasilnya
+        const [repaymentRes, schedulesRes, collateralRes] = await Promise.all([
+          fetchRepaymentSecurity(),
+          fetchRepaymentSchedules(),
+          fetchSecurityCollaterals() 
         ]);
 
-        // console.log('[RepaymentDetailPage] typeof(repaymentSecurityRes) : ',typeof(repaymentSecurityRes));
-        // console.log('[RepaymentDetailPage] repaymentSecurityRes : ',repaymentSecurityRes);
-  
-        setRepaymentSecurity(repaymentSecurityRes.data.item);
-        setRepaymentSchedules(repaymentSchedulesRes.data.items || []);
-        // setRepaymentReceipts(repaymentReceiptsRes.data.items || []);
-        setSecurityCollaterals(securityCollateralsRes.data.items || []); // Masuk ke state jaminan/collateral
+        // Set Breadcrumbs HANYA JIKA data security berhasil didapatkan
+        if (repaymentRes) {
+          setBreadcrumbs([
+            { label: 'DASHBOARD', path: '/dashboard/monitoring' },
+            { label: 'REPAYMENT', path: '/dashboard/repayment' },
+            { 
+              label: repaymentRes.securityCode ?? 'Detail Repayment', 
+              path: `/dashboard/repayment/${repaymentRes.id}` 
+            }
+          ]);
+        }
 
-        //BREADCRUMBS
-        setBreadcrumbs([
-          { label: 'DASHBOARD', path: '/dashboard/monitoring' },
-          { label: 'REPAYMENT', path: '/dashboard/repayment' },
-          { 
-            label: repaymentSecurityRes.data.item.securityCode ?? 'Detail Repayment', 
-            path: `/dashboard/repayment/${repaymentSecurityRes.data.item.id}` 
-          }
-        ]);
-
-        
-  
       } catch (err: any) {
-        setError(err.response?.data?.message || err.message);
+        // Error sudah ditangani di masing-masing try-catch callback
       } finally {
-        
-        setLoading(false);
+        setLoading(false); // Matikan loading global setelah selesai
       }
     };
+
+    loadAllInitialData();
+  }, [
+    repaymentId, 
+    fetchRepaymentSecurity, 
+    fetchRepaymentSchedules, 
+    fetchSecurityCollaterals 
+  ]);
   
-    fetchAllDetailData();
-  }, [repaymentId]);
 
   // Loading & Error UI Fallback
   if (loading) return <div className="p-8 text-center">Memuat detail...</div>;
@@ -210,7 +244,7 @@ export default function RepaymentDetailPage() {
             {isEditMode && (
                 <button 
                     // 3. Tambahkan onClick di sini (sesuaikan "data.id" dengan variabel ID row/item lo saat ini)
-                    onClick={() => openPanel(<RepaymentSecurityEditWrapper repaymentId={repaymentSecurity.id} />)}
+                    onClick={() => openPanel(<RepaymentSecurityEditWrapper repaymentId={repaymentSecurity.id} onSuccess={fetchRepaymentSecurity}/>)}
                     className="self-center text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-2 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2"
                 >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -261,7 +295,7 @@ export default function RepaymentDetailPage() {
                 <div className="flex flex-col">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-4 mb-1">Unduh Dokumen Perjanjian</span>
                     {repaymentSecurity.contractDocumentUrl 
-                      ? (<a href={repaymentSecurity.contractDocumentUrl} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 w-fit bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 transition-colors">
+                      ? (<a href={repaymentSecurity.contractDocumentUrl as string} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 w-fit bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 transition-colors">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                       Unduh Dokumen
                     </a>)
@@ -294,7 +328,7 @@ export default function RepaymentDetailPage() {
                 </p>
               </div>
               <div>
-                <ContractStatusBadge status={repaymentSecurity.contractStatus} size='md'/>
+                <ContractStatusBadge status={repaymentSecurity.contractStatus || null} size='md'/>
               </div>
                 
 
@@ -303,7 +337,7 @@ export default function RepaymentDetailPage() {
             {/* Baris 2: Tipe Efek & Nama Efek */}
             <div className="flex items-center gap-2 mt-0.5">
               <span>
-                <SecurityTypeBadge type={repaymentSecurity.securityType} size='md'/>
+                <SecurityTypeBadge type={repaymentSecurity.securityType || null} size='md'/>
               </span>
               <span className="text-[14px] font-bold text-slate-800 leading-tight line-clamp-2">
                 {repaymentSecurity.securityName}
@@ -410,9 +444,9 @@ export default function RepaymentDetailPage() {
       repaymentSchedules={repaymentSchedules} 
       penaltyPercentageDaily={repaymentSecurity.contractPenaltyPercentageDaily} 
       isEditMode={isEditMode} 
-      openPanel={openPanel}/>
+      openPanel={openPanel}
+      onDataChanged={fetchRepaymentSchedules}/>
       
-
       {/* =====================================================================
           ROW 3: CONTAINER 4 (Revenue) & CONTAINER 5 (Collateral)
       ====================================================================== */}
@@ -420,8 +454,6 @@ export default function RepaymentDetailPage() {
         
         {/* CONTAINER 4: Revenue Summary (1/2) */}
         <RevenuePanel repaymentSecurity={repaymentSecurity} />
-
-        
 
         {/* CONTAINER 5: Daftar Agunan / Kolateral (1/2) */}
         <CollateralPanel securityCollaterals={securityCollaterals} />

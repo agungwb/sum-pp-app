@@ -5,12 +5,12 @@ import CheckOrCross from './CheckOrCross'; // Sesuaikan import dengan path Anda
 import { formatRupiah } from '../../../../utils/currency';
 import CollateralStatusBadge from '../../../security-collateral/components/badge/CollateralBadge';
 import { toTitleCase } from '../../../../utils/formatter';
-import { SecurityCollateralDetailResponse } from '../../../security-collateral/dtos/security-collateral.dto';
+import { SecurityCollateralItemResponse } from '../../../security-collateral/dtos/security-collateral.dto';
 import { toSafeBig } from '../../../../utils/number';
 import VerificationStatusIcon from '../../../security-collateral/components/badge/VerificationStatusIcon';
 
 interface CollateralPanelProps {
-    securityCollaterals: SecurityCollateralDetailResponse[]; // Silakan sesuaikan tipe ini dengan SecurityCollateral[] jika ada
+    securityCollaterals: SecurityCollateralItemResponse[]; // Silakan sesuaikan tipe ini dengan SecurityCollateral[] jika ada
 }
 export default function CollateralPanel({ securityCollaterals }: CollateralPanelProps) {
 

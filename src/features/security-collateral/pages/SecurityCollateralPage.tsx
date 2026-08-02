@@ -1,5 +1,5 @@
 // src/pages/repayment/SecurityCollateral.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import SecurityCollateralCreateWrapper from '../components/form/SecurityCollateralCreateWrapper';
 import SecurityCollateralEditWrapper from '../components/form/SecurityCollateralEditWrapper';
@@ -8,7 +8,7 @@ import { useSidePanel } from '../../../contexts/SidePanelContext';
 import { securityCollateralService } from '../services/securityCollateralService';
 import { SecurityCollateralItem } from '../types/security-collateral.type';
 import { repaymentSecurityService } from '../../repayment-security/services/repaymentSecurityService';
-import { SecurityCollateralDetailResponse } from '../dtos/security-collateral.dto';
+import { SecurityCollateralItemResponse } from '../dtos/security-collateral.dto';
 import { RepaymentSecurityDetailResponse, RepaymentSecuritySummaryResponse } from '../../repayment-security/dtos/repayment-security.dto';
 import { formatPercentage, formatRupiah } from '../../../utils/currency';
 import { getStatusStyle } from '../../../utils/styles';
@@ -24,7 +24,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000
 
 export default function SecurityCollateralPage() {
   const { repaymentId } = useParams<{ repaymentId: string }>();
-  const [collaterals, setCollaterals] = useState<SecurityCollateralDetailResponse[]>([]);
+  const [collaterals, setCollaterals] = useState<SecurityCollateralItemResponse[]>([]);
   const [repaymentSecurity, setRepaymentSecurity] = useState<RepaymentSecurityDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,45 +32,71 @@ export default function SecurityCollateralPage() {
   const { openPanel } = useSidePanel();
   const { setBreadcrumbs } = useBreadcrumb();
 
+  // Callback untuk Fetch Security Collaterals
+  const fetchSecurityCollaterals = useCallback(async () => {
+    try {
+      const res = await securityCollateralService.getSecurityCollateralItems(repaymentId);
+      setCollaterals(res.data.items || []);
+      return res;
+    } catch (err: any) {
+      throw err; // Lempar ke atas agar ditangkap oleh blok catch di useEffect
+    }
+  }, [repaymentId]);
+
+  // Callback untuk Fetch Repayment Security
+  const fetchRepaymentSecurity = useCallback(async () => {
+    try {
+      const res = await repaymentSecurityService.getRepaymentSecurityDetail(repaymentId);
+      setRepaymentSecurity(res.data.item);
+      return res.data.item; // Return item agar bisa dipakai untuk Breadcrumbs
+    } catch (err: any) {
+      throw err;
+    }
+  }, [repaymentId]);
+
+  // 3. useEffect untuk Initial Load & Orchestrator
   useEffect(() => {
     if (!repaymentId) return;
 
-    const fetchCollateralData = async () => {
+    const loadInitialData = async () => {
       try {
         setIsLoading(true);
         setError(null);
 
-        const [securityCollateralsRes, repaymentSecurityRes] = await Promise.all([
-          securityCollateralService.getCollateralsByRepaymentSecurityId(repaymentId),
-          repaymentSecurityService.getRepaymentSecurityDetail(repaymentId),
+        // Jalankan kedua fetcher secara paralel
+        // Kita hanya butuh menangkap data dari fetchRepaymentSecurity untuk breadcrumb
+        const [_, repaymentSecurityItem] = await Promise.all([
+          fetchSecurityCollaterals(),
+          fetchRepaymentSecurity(),
         ]);
 
-        setCollaterals(securityCollateralsRes.data.items || []);
-        setRepaymentSecurity(repaymentSecurityRes.data.item);
-
-        //BREADCRUMBS
-        setBreadcrumbs([
-          { label: 'DASHBOARD', path: '/dashboard/monitoring' },
-          { label: 'REPAYMENT', path: '/dashboard/repayment' },
-          { 
-            label: repaymentSecurityRes.data.item.securityCode ?? 'DETAIL', 
-            path: `/dashboard/repayment/${repaymentSecurityRes.data.item.id}` 
-          },
-          { 
-            label: "COLLATERALS",
-            path: `/dashboard/repayment/${repaymentSecurityRes.data.item.id}/collaterals` 
-          }
-        ]);
-      
+        // Set BREADCRUMBS menggunakan data yang direturn
+        if (repaymentSecurityItem) {
+          setBreadcrumbs([
+            { label: 'DASHBOARD', path: '/dashboard/monitoring' },
+            { label: 'REPAYMENT', path: '/dashboard/repayment' },
+            { 
+              label: repaymentSecurityItem.securityCode ?? 'DETAIL', 
+              path: `/dashboard/repayment/${repaymentSecurityItem.id}` 
+            },
+            { 
+              label: "COLLATERALS",
+              path: `/dashboard/repayment/${repaymentSecurityItem.id}/collaterals` 
+            }
+          ]);
+        }
+        
       } catch (err: any) {
-        console.error('Error fetching collateral:', err);
-        setError(err.securityCollateralsRes?.data?.message || 'Terjadi kesalahan saat memproses data dari server.');
+        console.error('Error fetching data:', err);
+        // Penyesuaian optional chaining untuk penanganan error
+        setError(err.response?.data?.message || err.message || 'Terjadi kesalahan saat memproses data dari server.');
       } finally {
         setIsLoading(false);
       }
     };
-    fetchCollateralData();
-  }, [repaymentId]);
+
+    loadInitialData();
+  }, [repaymentId, fetchSecurityCollaterals, fetchRepaymentSecurity]);
 
   if (isLoading) return <div className="p-6 text-slate-500 font-medium">Memuat data agunan...</div>;
   if (error) return <div className="p-6 text-red-500 font-medium">Error: {error}</div>;
@@ -260,7 +286,7 @@ export default function SecurityCollateralPage() {
                           <td className="py-4 px-3 align-top text-center">
                             <div className="mt-0.5 flex justify-center">
                               <button 
-                                onClick={() => openPanel(<SecurityCollateralEditWrapper collateralId={item.id} repaymentSecuritySummary={repaymentSecurity}/>)}
+                                onClick={() => openPanel(<SecurityCollateralEditWrapper collateralId={item.id} repaymentSecuritySummary={repaymentSecurity} onSuccess={fetchSecurityCollaterals}/>)}
                                 className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-1.5 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center justify-center"
                                 title="Edit Kolateral"
                               >
@@ -295,7 +321,7 @@ export default function SecurityCollateralPage() {
               <div className="border-t-2 border-slate-200 flex items-center justify-center">
                 <button
                   type="button"
-                  onClick={() => openPanel(<SecurityCollateralCreateWrapper repaymentSecuritySummary={repaymentSecurity}/>)}
+                  onClick={() => openPanel(<SecurityCollateralCreateWrapper repaymentSecuritySummary={repaymentSecurity} onSuccess={fetchSecurityCollaterals}/>)}
                   className="w-11/12 py-4 m-4 flex items-center justify-center border-2 border-dashed rounded-lg border-amber-200 bg-amber-50/40 hover:bg-amber-100 text-amber-700 transition-all focus:outline-none focus:ring-2 focus:ring-amber-200 group"
                 >
                   <div className="bg-amber-100 p-1 rounded-full group-hover:bg-amber-500 transition-colors">

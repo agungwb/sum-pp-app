@@ -8,9 +8,10 @@ import { RepaymentSecuritySummaryResponse } from '../../../repayment-security/dt
 interface EditWrapperProps {
   collateralId: string;
   repaymentSecuritySummary: RepaymentSecuritySummaryResponse;
+  onSuccess?: ()=> void;
 }
 
-export default function SecurityCollateralEditWrapper({ collateralId, repaymentSecuritySummary }: EditWrapperProps) {
+export default function SecurityCollateralEditWrapper({ collateralId, repaymentSecuritySummary, onSuccess }: EditWrapperProps) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialData, setInitialData] = useState<SecurityCollateralFormRequest | null>(null);
@@ -18,7 +19,7 @@ export default function SecurityCollateralEditWrapper({ collateralId, repaymentS
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await securityCollateralService.getCollateralsByRepaymentSecurityId(repaymentSecuritySummary.id);
+        const response = await securityCollateralService.getSecurityCollateralItems(repaymentSecuritySummary.id);
         const collateralData = response.data.items.find(item => item.id === collateralId);
         
         if (collateralData) {
@@ -64,6 +65,9 @@ export default function SecurityCollateralEditWrapper({ collateralId, repaymentS
     setIsSubmitting(true);
     try {
       await securityCollateralService.updateCollateral(collateralId, formData);
+      if (onSuccess){
+        onSuccess();
+      }
       closePanel();
     } catch (error) {
       console.error("Gagal update kolateral", error);

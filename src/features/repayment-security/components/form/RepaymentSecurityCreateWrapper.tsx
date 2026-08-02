@@ -6,9 +6,11 @@ import { RepaymentSecurityFormRequest } from '../../dtos/repayment-security.dto'
 import { SecurityType } from '../../types/repayment-security.enum';
 import { mapDtoToFormData } from '../../../../utils/form';
 
+export interface RepaymentSecurityCreateWrapperProps {
+  onSuccess?: () => void;
+}
 
-
-export default function RepaymentSecurityCreateWrapper() {
+export default function RepaymentSecurityCreateWrapper({onSuccess}: RepaymentSecurityCreateWrapperProps) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
@@ -94,6 +96,10 @@ export default function RepaymentSecurityCreateWrapper() {
         await repaymentSecurityService.createRepaymentSecurity(payloadData);
       }
       console.log('Data berhasil disimpan');
+      // 2. Panggil (Trigger) callback di sini, agar Dashboard mengambil data terbaru
+      if (onSuccess) {
+        onSuccess();
+      }
       closePanel(); // Menutup panel setelah sukses
     } catch (error: any) {
       console.error("Gagal membuat data:", error);
@@ -110,7 +116,7 @@ export default function RepaymentSecurityCreateWrapper() {
       <RepaymentSecurityForm 
         mode='add'
         initialData={repaymentSecurityData}
-        onSubmit={handleCreateSubmit} 
+        onSubmit={handleCreateSubmit}
         onCancel={closePanel} 
         isLoading={isSubmitting}
         submissionError = {submissionError}

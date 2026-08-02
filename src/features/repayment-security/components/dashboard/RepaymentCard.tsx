@@ -3,22 +3,22 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import {useSidePanel} from '../../../../contexts/SidePanelContext';
 import RepaymentSecurityCreateWrapper from '../form/RepaymentSecurityCreateWrapper';
-import { toDatabasePercentage, toFrontendPercentage } from '../../../../utils/finance';
+import { toFrontendPercentage } from '../../../../utils/finance';
 import { formatRupiah } from '../../../../utils/currency';
 import { formatCompactDate } from '../../../../utils/date';
 import ContractStatusBadge from '../badge/ContractStatusBadge';
 import SecurityTypeBadge from '../badge/SecurityTypeBadge';
-import { SecurityType, ContractStatus } from '../../types/repayment-security.enum';
-import { RepaymentSecurity } from '../../types/repayment-security.type';
+import { SecurityType } from '../../types/repayment-security.enum';
 import { RepaymentSecurityCardResponse } from '../../dtos/repayment-security.dto';
 
 interface Props {
   data: RepaymentSecurityCardResponse | null;
-  url: string;
+  url?: string;
+  onDataChanged?: ()=> void;
 }
 
 
-export default function RepaymentCard({ data, url }: Props) {
+export default function RepaymentCard({ data, url, onDataChanged }: Props) {
   // Jika data null, jangan render card biasa, melainkan render card "Tambah Data"
 
   const { openPanel, closePanel, isOpen } = useSidePanel();
@@ -29,7 +29,7 @@ export default function RepaymentCard({ data, url }: Props) {
       <button 
         type="button"
         // onClick={() => openPanel('Tambah Data Repayment Baru', <RepaymentSecurityForm mode="add" />)}
-        onClick={() => openPanel(<RepaymentSecurityCreateWrapper />)}
+        onClick={() => openPanel(<RepaymentSecurityCreateWrapper onSuccess={onDataChanged}/>)}
         
         className="group relative flex flex-col items-center justify-center p-4 min-h-[220px] h-full w-full bg-gradient-to-br from-amber-50/40 to-white border-2 border-dashed border-amber-200 rounded-xl hover:border-amber-400 hover:shadow-md hover:from-amber-50/80 transition-all duration-300 ease-in-out cursor-pointer overflow-hidden"
       >
@@ -81,14 +81,14 @@ export default function RepaymentCard({ data, url }: Props) {
             {data.investeeNameLegal}
           </p>
         </div>
-        <ContractStatusBadge status={data.contractStatus} size='sm' />
+        <ContractStatusBadge status={data.contractStatus || null} size='sm' />
        
       </div>
 
       {/* BODY: Security Info & Financials */}
       <div className="space-y-2 grow">
         <div className="flex items-center gap-1.5">
-          <SecurityTypeBadge type={data.securityType} size='sm' /> 
+          <SecurityTypeBadge type={data.securityType || null} size='sm' /> 
           <span className="text-[11px] font-semibold text-slate-600 truncate" title={data.securityName}>
             {data.securityName}
           </span>

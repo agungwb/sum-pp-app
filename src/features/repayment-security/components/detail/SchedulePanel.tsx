@@ -3,17 +3,14 @@ import { useNavigate } from 'react-router-dom'; // 👈 Ubah import Link jadi us
 import RepaymentScheduleCreateWrapper from '../../../repayment-schedule/components/form/RepaymentScheduleCreateWrapper';
 import RepaymentScheduleEditWrapper from '../../../repayment-schedule/components/form/RepaymentScheduleEditWrapper';
 import FeeWithTax from '../../../../components/ui/FeeWithTax';
-import { RepaymentScheduleItemResponse, RepaymentScheduleItemWithPenaltyResponse } from '../../../repayment-schedule/dtos/repayment-schedule.dto';
+import { RepaymentScheduleItemWithPenaltyResponse } from '../../../repayment-schedule/dtos/repayment-schedule.dto';
 import InvoiceStatusBadge from '../badge/InvoiceStatusBadge';
 import { formatDate } from '../../../../utils/date';
-import { formatRupiah } from '../../../../utils/currency';
-import { RepaymentSecurityDetailResponse, RepaymentSecurityWithSinkingFundResponse } from '../../dtos/repayment-security.dto';
+import { RepaymentSecurityWithSinkingFundResponse } from '../../dtos/repayment-security.dto';
 import Penalty from '../../../../components/ui/Penalty';
 import { ScheduleType } from '../../../repayment-schedule/types/repayment-schedule.enum';
 import { Big } from 'big.js';
-import { SafeEditModal } from '../../../../components/modals/SafeEditModal';
 import { toSafeBig } from '../../../../utils/number';
-import { repaymentSecurityService } from '../../services/repaymentSecurityService';
 import { InvoiceStatus } from '../../types/repayment-security.enum';
 
 interface RepaymentScheduleTableProps {
@@ -22,6 +19,7 @@ interface RepaymentScheduleTableProps {
   penaltyPercentageDaily: number | string;
   isEditMode: boolean;
   openPanel: (component: React.ReactNode) => void;
+  onDataChanged?: ()=> void;
 }
 
 export interface ValidationItem {
@@ -61,6 +59,7 @@ export default function SchedulePanel({
   repaymentSchedules,
   isEditMode,
   openPanel,
+  onDataChanged,
 }: RepaymentScheduleTableProps) {
   
   const navigate = useNavigate(); // 👈 Inisialisasi hook navigasi
@@ -246,7 +245,7 @@ export default function SchedulePanel({
                         {isEditMode && (
                           <td className={`py-2 px-2 text-left align-top ${tdEdit}`}>
                               <button 
-                              onClick={() => openPanel(<RepaymentScheduleEditWrapper scheduleId={uf.id} repaymentSecurity={repaymentSecurity}/>)}
+                              onClick={() => openPanel(<RepaymentScheduleEditWrapper scheduleId={uf.id} repaymentSecurity={repaymentSecurity} onSuccess={onDataChanged}/>)}
                               className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
                                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -333,7 +332,7 @@ export default function SchedulePanel({
                         {isEditMode && (
                         <td className={`py-2 px-2 text-left align-top ${tdEdit}`}>
                             <button 
-                            onClick={() => openPanel(<RepaymentScheduleEditWrapper scheduleId={sch.id} repaymentSecurity={repaymentSecurity}/>)}
+                            onClick={() => openPanel(<RepaymentScheduleEditWrapper scheduleId={sch.id} repaymentSecurity={repaymentSecurity} onSuccess={onDataChanged}/>)}
                             className="text-[12px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -371,7 +370,7 @@ export default function SchedulePanel({
               <div className="border-t-2 border-slate-200 flex items-center justify-center">
                 <button
                     type="button"
-                    onClick={() => openPanel(<RepaymentScheduleCreateWrapper repaymentSecurity={repaymentSecurity} lastUpfront={lastUpfront} lastInstallment={lastInstallment}/>)}
+                    onClick={() => openPanel(<RepaymentScheduleCreateWrapper repaymentSecurity={repaymentSecurity} lastUpfront={lastUpfront} lastInstallment={lastInstallment} onSuccess={onDataChanged}/>)}
                     className="w-11/12 py-4 m-4 last:flex items-center justify-center border-2 border-dashed rounded-lg border-amber-200 bg-amber-50/40 hover:bg-amber-100 text-amber-700 transition-all focus:outline-none focus:ring-2 focus:ring-amber-200 group">
                     <div className="bg-amber-100 p-1 rounded-full group-hover:bg-amber-500 transition-colors">
                       <svg className="w-4 h-4 text-amber-600 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -11,9 +11,10 @@ import { mapDtoToFormData } from '../../../../utils/form';
 interface Props {
   receiptId: string; // Mengikuti instruksi GET & PUT URL kamu
   invoiceSummary: InvoiceSummaryWithPenaltyBig;
+  onSuccess?: ()=> void;
 }
 
-export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary }: Props) {
+export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary, onSuccess }: Props) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialData, setInitialData] = useState<RepaymentReceiptFormRequest | null>(null);
@@ -90,6 +91,10 @@ export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary 
         await repaymentReceiptService.updateRepaymentReceipt(receiptId, payloadFormData);
       } else {
         await repaymentReceiptService.updateRepaymentReceipt(receiptId, payloadData);
+      }
+
+      if (onSuccess){
+        onSuccess();
       }
       closePanel();
     } catch (error: any) {

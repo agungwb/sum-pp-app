@@ -3,16 +3,17 @@ import React, { useState } from 'react';
 import RepaymentReceiptForm from './RepaymentReceiptForm';
 import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { repaymentReceiptService } from '../../services/repaymentReceiptService';
-import { ReceiptMethod, ReceiptStatus, ScheduleType } from '../../types/repayment-receipt.enum';
-import { InvoiceSummary, InvoiceSummaryWithPenaltyBig } from '../../../repayment-schedule/types/repayment-schedule.type';
+import { ReceiptStatus } from '../../types/repayment-receipt.enum';
+import { InvoiceSummaryWithPenaltyBig } from '../../../repayment-schedule/types/repayment-schedule.type';
 import { RepaymentReceiptFormRequest } from '../../dtos/repayment-receipt.dto';
 import { mapDtoToFormData } from '../../../../utils/form';
 
 interface Props {
   invoiceSummary: InvoiceSummaryWithPenaltyBig;
+  onSuccess?: ()=> void;
 }
 
-export default function RepaymentReceiptCreateWrapper({invoiceSummary }: Props) {
+export default function RepaymentReceiptCreateWrapper({invoiceSummary, onSuccess }: Props) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
@@ -63,6 +64,10 @@ export default function RepaymentReceiptCreateWrapper({invoiceSummary }: Props) 
         await repaymentReceiptService.createRepaymentReceipt(invoiceSummary.id, payloadFormData);
       } else {
         await repaymentReceiptService.createRepaymentReceipt(invoiceSummary.id, payloadData);
+      }
+
+      if (onSuccess){
+        onSuccess();
       }
       closePanel();
     } catch (error: any) {

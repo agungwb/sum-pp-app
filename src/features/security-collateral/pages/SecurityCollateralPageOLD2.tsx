@@ -8,7 +8,7 @@ import { useSidePanel } from '../../../contexts/SidePanelContext';
 import { securityCollateralService } from '../services/securityCollateralService';
 import { SecurityCollateralItem } from '../types/security-collateral.type';
 import { repaymentSecurityService } from '../../repayment-security/services/repaymentSecurityService';
-import { SecurityCollateralDetailResponse } from '../dtos/security-collateral.dto';
+import { SecurityCollateralItemResponse } from '../dtos/security-collateral.dto';
 import { RepaymentSecuritySummaryResponse } from '../../repayment-security/dtos/repayment-security.dto';
 import { formatRupiah } from '../../../utils/currency';
 import { getStatusStyle } from '../../../utils/styles';
@@ -24,7 +24,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000
 
 export default function SecurityCollateralPage() {
   const { repaymentId } = useParams<{ repaymentId: string }>();
-  const [ collaterals, setCollaterals] = useState<SecurityCollateralDetailResponse[]>([]);
+  const [ collaterals, setCollaterals] = useState<SecurityCollateralItemResponse[]>([]);
   const [repaymentSecSummary, setRepaymentSecSummary] = useState<RepaymentSecuritySummaryResponse>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +64,7 @@ export default function SecurityCollateralPage() {
 
 
         const [securityCollateralsRes, repaymentSecSummaryRes, ] = await Promise.all([
-          securityCollateralService.getCollateralsByRepaymentSecurityId(repaymentId),
+          securityCollateralService.getSecurityCollateralItems(repaymentId),
           repaymentSecurityService.getRepaymentSecuritySummary(repaymentId),
         ]);
 

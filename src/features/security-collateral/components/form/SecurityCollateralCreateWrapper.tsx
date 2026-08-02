@@ -8,9 +8,10 @@ import { RepaymentSecuritySummaryResponse } from '../../../repayment-security/dt
 
 interface CreateWrapperProps {
   repaymentSecuritySummary : RepaymentSecuritySummaryResponse;
+  onSuccess?: ()=> void;
 }
 
-export default function SecurityCollateralCreateWrapper({ repaymentSecuritySummary }: CreateWrapperProps) {
+export default function SecurityCollateralCreateWrapper({ repaymentSecuritySummary, onSuccess }: CreateWrapperProps) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -49,6 +50,9 @@ export default function SecurityCollateralCreateWrapper({ repaymentSecuritySumma
     try {
       if (!repaymentSecuritySummary.id) throw new Error("Security ID tidak ditemukan");
       await securityCollateralService.createCollateral(repaymentSecuritySummary.id, formData);
+      if (onSuccess){
+        onSuccess();
+      }
       closePanel();
     } catch (error) {
       console.error("Gagal membuat kolateral baru", error);

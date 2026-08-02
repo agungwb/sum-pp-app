@@ -13,9 +13,10 @@ interface CreateWrapperProps {
   repaymentSecurity: RepaymentSecurityDetailResponse;
   lastInstallment?: RepaymentScheduleSummary | null;
   lastUpfront?: RepaymentScheduleSummary | null;
+  onSuccess?: ()=> void;
 }
 
-export default function RepaymentScheduleCreateWrapper({ repaymentSecurity, lastUpfront, lastInstallment }: CreateWrapperProps) {
+export default function RepaymentScheduleCreateWrapper({ repaymentSecurity, lastUpfront, lastInstallment, onSuccess }: CreateWrapperProps) {
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
@@ -78,10 +79,14 @@ export default function RepaymentScheduleCreateWrapper({ repaymentSecurity, last
       await repaymentScheduleService.createRepaymentSchedule(repaymentSecurity.id, payloadData);
       
       console.log('Berhasil membuat jadwal baru untuk Security ID:', repaymentSecurity.id);
+
+      if (onSuccess){
+        onSuccess();
+      }
       
       // Bisa tambahkan Toast Notification (Success) di sini
       closePanel(); // Langsung tutup side panel setelah berhasil
-    } catch (error) {
+    } catch (error: any) {
       console.error("Gagal membuat jadwal baru:", error);
       setSubmissionError(
         error?.response?.data?.message || "Terjadi kesalahan saat menyimpan data."

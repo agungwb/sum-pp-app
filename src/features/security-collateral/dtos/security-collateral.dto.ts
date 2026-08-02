@@ -2,7 +2,7 @@
 
 import { CollateralStatus, VerificationStatus } from "../types/security-collateral.enum";
 
-export interface SecurityCollateralDetailResponse {
+export interface SecurityCollateralItemResponse {
     id: string;
     repaymentSecurityId: string;
     collateralType: string;
@@ -53,7 +53,7 @@ export interface SecurityCollateralFormRequest {
     collateralValueEstimated: string;
     collateralStatus: string;
     executionTime: string | null;
-    documentUrl: File | null; 
+    documentUrl: File | string | null; 
     
     // Group Dokumen
     verificationDocumentStatus: string;

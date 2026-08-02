@@ -1,12 +1,12 @@
 // src/pages/repayment/RepaymentSchedulePage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import RepaymentScheduleEditWrapper from '../components/form/RepaymentScheduleEditWrapper';
 import ReceiptPanel from '../components/schedule/ReceiptPanel';
 import FeeWithTax from '../../../components/ui/FeeWithTax';
 import { useGlobalMode } from '../../../contexts/GlobalModeContext';
 import { useSidePanel } from '../../../contexts/SidePanelContext';
-import { InvoiceSummary, InvoiceSummaryBig, InvoiceSummaryWithPenaltyBig } from '../types/repayment-schedule.type';
+import { InvoiceSummaryWithPenaltyBig } from '../types/repayment-schedule.type';
 import InvoiceStatusBadge from '../../repayment-security/components/badge/InvoiceStatusBadge';
 import { ScheduleType } from '../types/repayment-schedule.enum';
 import { repaymentScheduleService } from '../services/repaymentScheduleService';
@@ -16,9 +16,10 @@ import { RepaymentSecurityDetailResponse } from '../../repayment-security/dtos/r
 import { RepaymentScheduleDetailWithPenaltyResponse } from '../dtos/repayment-schedule.dto';
 import { RepaymentReceiptDetailResponse } from '../../repayment-receipt/dtos/repayment-receipt.dto';
 import { toSafeBig } from '../../../utils/number';
-import { calculateDays } from '../../../utils/date';
+import { calculateDays, formatDate } from '../../../utils/date';
 import Penalty from '../../../components/ui/Penalty';
 import { useBreadcrumb } from '../../../contexts/BreadcrumbContext';
+import { formatRupiah } from '../../../utils/currency';
 
 export default function RepaymentSchedulePage() {
   const { repaymentId, scheduleId } = useParams<{ 
@@ -26,9 +27,9 @@ export default function RepaymentSchedulePage() {
     scheduleId: string; 
   }>();
   
-  const [schedule, setSchedule] = useState<RepaymentScheduleDetailWithPenaltyResponse | null > (null);
+  const [schedule, setSchedule] = useState<RepaymentScheduleDetailWithPenaltyResponse > ();
   const [receipts, setReceipts] = useState<RepaymentReceiptDetailResponse[]>([]);
-  const [repaymentSecurity, setRepaymentSecurity] = useState<RepaymentSecurityDetailResponse | null>(null);
+  const [repaymentSecurity, setRepaymentSecurity] = useState<RepaymentSecurityDetailResponse>();
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,70 +37,91 @@ export default function RepaymentSchedulePage() {
   const { openPanel } = useSidePanel();
   const { setBreadcrumbs } = useBreadcrumb();
 
+
+  // 1. Callback untuk Schedule (Return data agar bisa dipakai di breadcrumbs)
+  const fetchRepaymentSchedule = useCallback(async () => {
+    if (!scheduleId) return null;
+    try {
+      const res = await repaymentScheduleService.getRepaymentScheduleDetailWithPenalty(scheduleId);
+      setSchedule(res.data.item);
+      return res.data.item; // <-- Kembalikan datanya
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || 'Terjadi kesalahan sistem';
+      setError(errorMessage);
+      return null;
+    }
+  }, [scheduleId]);
+
+  // 2. Callback untuk Receipts (Tidak butuh return karena tidak dipakai di breadcrumbs)
+  const fetchRepaymentReceipts = useCallback(async () => {
+    if (!scheduleId) return;
+    try {
+      const res = await repaymentReceiptService.getRepaymentReceipts(scheduleId);
+      setReceipts(res.data.items || []);
+      return res.data.items || [];
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || 'Terjadi kesalahan sistem';
+      setError(errorMessage);
+    }
+  }, [scheduleId]);
+
+  // 3. Callback untuk Security Detail (Return data agar bisa dipakai di breadcrumbs)
+  const fetchRepaymentSecurity = useCallback(async () => {
+    if (!repaymentId) return null;
+    try {
+      const res = await repaymentSecurityService.getRepaymentSecurityDetail(repaymentId);
+      setRepaymentSecurity(res.data.item);
+      return res.data.item; // <-- Kembalikan datanya
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || 'Terjadi kesalahan sistem';
+      setError(errorMessage);
+      return null;
+    }
+  }, [repaymentId]);
+
   useEffect(() => {
+    // Guard clause agar tidak mengeksekusi jika ID belum ada
+    if (!scheduleId || !repaymentId) return;
+  
     const fetchAllDetails = async () => {
       try {
         setLoading(true);
         setError(null);
     
-        const [scheduleRes, receiptsRes, repaymentSecurityRes] = await Promise.all([
-          repaymentScheduleService.getRepaymentScheduleDetailWithPenalty(scheduleId!),
-          repaymentReceiptService.getRepaymentReceipts(scheduleId!),
-          repaymentSecurityService.getRepaymentSecurityDetail(repaymentId!)
+        // Jalankan paralel dan tangkap hasil return dari callback
+        const [scheduleRes, receiptsRes, repaymentRes] = await Promise.all([
+          fetchRepaymentSchedule(),
+          fetchRepaymentReceipts(),
+          fetchRepaymentSecurity()
         ]);
     
-        setSchedule(scheduleRes.data.item);
-        setReceipts(receiptsRes.data.items || []);
-        setRepaymentSecurity(repaymentSecurityRes.data.item);
-
-         //BREADCRUMBS
-         setBreadcrumbs([
-          { label: 'DASHBOARD', path: '/dashboard/monitoring' },
-          { label: 'REPAYMENT', path: '/dashboard/repayment' },
-          { 
-            label: repaymentSecurityRes.data.item.securityCode ?? 'DETAIL', 
-            path: `/dashboard/repayment/${repaymentSecurityRes.data.item.id}` 
-          },
-          { 
-            label: `${scheduleRes.data.item.scheduleType} ${scheduleRes.data.item.scheduleSequence}` ?? 'SCHEDULE', 
-            path: `/dashboard/repayment/${repaymentSecurityRes.data.item.id}/schedules/${scheduleRes.data.item.id}` 
-          }
-        ]);
+        // Set Breadcrumbs jika data Schedule & Security berhasil didapat
+        if (scheduleRes && repaymentRes) {
+          setBreadcrumbs([
+            { label: 'DASHBOARD', path: '/dashboard/monitoring' },
+            { label: 'REPAYMENT', path: '/dashboard/repayment' },
+            { 
+              label: repaymentRes.securityCode ?? 'DETAIL', 
+              path: `/dashboard/repayment/${repaymentRes.id}` 
+            },
+            { 
+              label: `${scheduleRes.scheduleType} ${scheduleRes.scheduleSequence}` ?? 'SCHEDULE', 
+              path: `/dashboard/repayment/${repaymentRes.id}/schedules/${scheduleRes.id}` 
+            }
+          ]);
+        }
     
       } catch (err: any) {
+        // Error handling API sudah ditangani di masing-masing try-catch callback
         console.error("Gagal memuat detail data repayment:", err);
-        const errorMessage = err.response?.data?.message || err.message || 'Terjadi kesalahan sistem';
-        setError(errorMessage);
       } finally {
-        setLoading(false);
+        setLoading(false); // Matikan loading global setelah SEMUA request selesai
       }
     };
-
-    if (scheduleId && repaymentId) {
-      fetchAllDetails();
-    }
-  }, [scheduleId, repaymentId]);
-
-  // Formatter Rupiah Standar Project
-  const formatRupiah = (value: string | number) => {
-    const numeric = typeof value === 'string' ? parseFloat(value) : value;
-    if (isNaN(numeric)) return 'Rp 0';
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(numeric);
-  };
-
-  // Formatter Tanggal
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
+  
+    fetchAllDetails();
+  }, [scheduleId, repaymentId, fetchRepaymentSchedule, fetchRepaymentReceipts, fetchRepaymentSecurity
+  ]);
 
   const invoiceSummary: InvoiceSummaryWithPenaltyBig = {
         id: schedule?.id ?? '',
@@ -195,7 +217,7 @@ export default function RepaymentSchedulePage() {
             <div>
               {isEditMode && (
                 <button 
-                  onClick={() => openPanel(<RepaymentScheduleEditWrapper scheduleId={schedule.id} repaymentSecurity={repaymentSecurity}/>)}
+                  onClick={() => repaymentSecurity && openPanel(<RepaymentScheduleEditWrapper scheduleId={schedule.id} repaymentSecurity={repaymentSecurity} onSuccess={fetchRepaymentSchedule}/>)}
                   className="text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-2 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -414,7 +436,7 @@ export default function RepaymentSchedulePage() {
       </div>
 
       {/* KOMPONEN RECEIPT PANEL (KOMPONEN TABEL DIPISAH) */}
-      <ReceiptPanel receipts={receipts} invoiceSummary={invoiceSummary} />
+      <ReceiptPanel receipts={receipts} invoiceSummary={invoiceSummary} onDataChanged={fetchRepaymentReceipts}/>
     </div>
   );
 }

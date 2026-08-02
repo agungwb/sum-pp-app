@@ -1,0 +1,27 @@
+export const PATHS = {
+    LOGIN: '/login',
+    TEST_DASHBOARD: '/test-dashboard',
+    
+    // Base dashboard layout path
+    ROOT: '/',
+    
+    // Dashboard Sub-routes (tanpa slash '/' di depan karena untuk nested route)
+    MONITORING: 'monitoring',
+    
+    REPAYMENT: {
+      ROOT: 'repayment',
+      DETAIL: 'repayment/:id', // Menggunakan dynamic param
+    },
+    
+    REPAYMENT_SCHEDULE: 'repayment-schedule',
+    SECURITY_COLLATERAL: 'security-collateral',
+  };
+  
+  // Helper jika Anda butuh absolute path (opsional, berguna untuk <Link to={...}>)
+  export const ABSOLUTE_PATHS = {
+    MONITORING: `/${PATHS.MONITORING}`,
+    REPAYMENT: `/${PATHS.REPAYMENT.ROOT}`,
+    REPAYMENT_DETAIL: (id) => `/${PATHS.REPAYMENT.ROOT}/${id}`,
+    REPAYMENT_SCHEDULE: `/${PATHS.REPAYMENT_SCHEDULE}`,
+    SECURITY_COLLATERAL: `/${PATHS.SECURITY_COLLATERAL}`,
+  };

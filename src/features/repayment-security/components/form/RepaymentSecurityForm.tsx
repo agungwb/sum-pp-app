@@ -33,7 +33,7 @@ export default function RepaymentSecurityForm ({ mode, initialData, onSubmit, on
   
   const [validationError, setValidationError] = useState<string>();
   const [validationErrors, setValidationErrors] = useState<string[]>([]); 
-  
+
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const maxPrecision = 2;

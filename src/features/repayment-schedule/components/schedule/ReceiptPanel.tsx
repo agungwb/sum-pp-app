@@ -10,13 +10,16 @@ import RepaymentReceiptEditWrapper from '../../../repayment-receipt/components/f
 import { formatRupiah } from '../../../../utils/currency';
 import { formatDate } from '../../../../utils/date';
 import ReceiptStatusBadge from '../../../repayment-receipt/components/badge/ReceiptStatusBadge';
+import { toSafeBig } from '../../../../utils/number';
+import { Big } from 'big.js';
 
 interface ReceiptPanelProps {
   receipts: RepaymentReceiptDetailResponse[];
   invoiceSummary: InvoiceSummaryWithPenaltyBig;
+  onDataChanged?: ()=> void;
 }
 
-export default function ReceiptPanel({ receipts, invoiceSummary }: ReceiptPanelProps) {
+export default function ReceiptPanel({ receipts, invoiceSummary, onDataChanged }: ReceiptPanelProps) {
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
   const { isEditMode } = useGlobalMode();
   const { openPanel } = useSidePanel();
@@ -91,7 +94,7 @@ export default function ReceiptPanel({ receipts, invoiceSummary }: ReceiptPanelP
                             onClick={(e) => {
                               e.stopPropagation();
                               openPanel(
-                                <RepaymentReceiptEditWrapper receiptId={rcpt.id} invoiceSummary={invoiceSummary}/>
+                                <RepaymentReceiptEditWrapper receiptId={rcpt.id} invoiceSummary={invoiceSummary} onSuccess={onDataChanged}/>
                               );
                             }}
                             className="text-[12px] font-semibold bg-amber-50 mx-auto text-amber-700 border border-amber-200 px-1 py-1 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center gap-2"
@@ -140,62 +143,62 @@ export default function ReceiptPanel({ receipts, invoiceSummary }: ReceiptPanelP
                             <div className="py-4 bg-slate-50/50 border-b border-slate-100 flex justify-end gap-4 text-[11px]">
                               
                               <div className="w-2/5 bg border-l-2 border-slate-300 space-y-3 pl-5 px-3 rounded-xl">
-                                {Number(rcpt?.receiptFeeAdministration) > 0 && (
+                                {toSafeBig(rcpt?.receiptFeeAdministration).gt(0) && (
                                   <div className="flex justify-between items-center rounded">
                                     <span className="font-normal text-slate-900">Biaya Administrasi</span>
                                     <FeeWithTax
-                                      base={Number(rcpt.receiptFeeAdministration)}
-                                      tax={Number(rcpt.receiptFeeAdministrationTax)}
+                                      base={toSafeBig(rcpt.receiptFeeAdministration)}
+                                      tax={toSafeBig(rcpt.receiptFeeAdministrationTax)}
                                       size="sm"
                                     />
                                   </div>
                                 )}
 
-                                {Number(rcpt?.receiptFeeProvision) > 0 && (
+                                {toSafeBig(rcpt?.receiptFeeProvision).gt(0) && (
                                   <div className="flex justify-between items-center rounded">
                                     <span className="font-normal text-slate-900">Biaya Provisi</span>
                                     <FeeWithTax
-                                      base={Number(rcpt.receiptFeeProvision)}
-                                      tax={Number(rcpt.receiptFeeProvisionTax)}
+                                      base={toSafeBig(rcpt.receiptFeeProvision)}
+                                      tax={toSafeBig(rcpt.receiptFeeProvisionTax)}
                                       size="sm"
                                     />
                                   </div>
                                 )}
 
-                                {Number(rcpt?.receiptFeePlatform) > 0 && (
+                                {toSafeBig(rcpt?.receiptFeePlatform).gt(0) && (
                                   <div className="flex justify-between items-center rounded">
                                     <span className="font-normal text-slate-900">Biaya Platform</span>
                                     <FeeWithTax
-                                      base={Number(rcpt.receiptFeePlatform)}
-                                      tax={Number(rcpt.receiptFeePlatformTax)}
+                                      base={toSafeBig(rcpt.receiptFeePlatform)}
+                                      tax={toSafeBig(rcpt.receiptFeePlatformTax)}
                                       size="sm"
                                     />
                                   </div>
                                 )}
 
-                                {Number(rcpt?.receiptFeeServicing) > 0 && (
+                                {toSafeBig(rcpt?.receiptFeeServicing).gt(0) && (
                                   <div className="flex justify-between items-center rounded">
                                     <span className="font-normal text-slate-900">Biaya Servicing</span>
                                     <FeeWithTax
-                                      base={Number(rcpt.receiptFeeServicing)}
-                                      tax={Number(rcpt.receiptFeeServicingTax)}
+                                      base={toSafeBig(rcpt.receiptFeeServicing)}
+                                      tax={toSafeBig(rcpt.receiptFeeServicingTax)}
                                       size="sm"
                                     />
                                   </div>
                                 )}
 
-                                {Number(rcpt?.receiptFeeMonitoring) > 0 && (
+                                {toSafeBig(rcpt?.receiptFeeMonitoring).gt(0) && (
                                   <div className="flex justify-between items-center rounded">
                                     <span className="font-normal text-slate-900">Biaya Monitoring</span>
                                     <FeeWithTax
-                                      base={Number(rcpt.receiptFeeMonitoring)}
-                                      tax={Number(rcpt.receiptFeeMonitoringTax)}
+                                      base={toSafeBig(rcpt.receiptFeeMonitoring)}
+                                      tax={toSafeBig(rcpt.receiptFeeMonitoringTax)}
                                       size="sm"
                                     />
                                   </div>
                                 )}
 
-                                {Number(rcpt?.receiptFeeOther) > 0 && (
+                                {toSafeBig(rcpt?.receiptFeeOther).gt(0) && (
                                   <div className="flex justify-between items-center rounded">
                                     <span className="font-normal text-slate-900">Biaya Lain-lain</span>
                                     <FeeWithTax
@@ -206,39 +209,39 @@ export default function ReceiptPanel({ receipts, invoiceSummary }: ReceiptPanelP
                                   </div>
                                 )}
 
-                                {Number(rcpt?.receiptSinkingFund) > 0 && (
+                                {toSafeBig(rcpt?.receiptSinkingFund).gt(0) && (
                                   <div className="flex justify-between items-center rounded">
                                     <span className="font-normal text-slate-900">Cicilan Sinking Fund</span>
-                                    <FeeWithTax base={Number(rcpt.receiptSinkingFund)} size="sm" />
+                                    <FeeWithTax base={toSafeBig(rcpt.receiptSinkingFund)} size="sm" />
                                   </div>
                                 )}
 
-                                {Number(rcpt?.receiptYield) > 0 && (
+                                {toSafeBig(rcpt?.receiptYield).gt(0) && (
                                   <div className="flex justify-between items-center rounded">
                                     <span className="font-normal text-slate-900">Imbal hasil / Kupon</span>
-                                    <FeeWithTax base={Number(rcpt.receiptYield)} size="sm" />
+                                    <FeeWithTax base={toSafeBig(rcpt.receiptYield)} size="sm" />
                                   </div>
                                 )}
 
-                                {Number(rcpt?.receiptPenalty) > 0 && (
+                                {toSafeBig(rcpt?.receiptPenalty).gt(0) && (
                                   <div className="flex justify-between items-center rounded">
                                     <span className="font-normal text-slate-900">Denda</span>
-                                    <FeeWithTax base={Number(rcpt.receiptPenalty)} size="sm" />
+                                    <FeeWithTax base={toSafeBig(rcpt.receiptPenalty)} size="sm" />
                                   </div>
                                 )}
 
-                                {Number(rcpt?.receiptActualLoss) > 0 && (
+                                {toSafeBig(rcpt?.receiptActualLoss).gt(0) && (
                                   <div className="flex justify-between items-center rounded">
                                     <span className="font-normal text-slate-900">Kerugian Riil</span>
-                                    <FeeWithTax base={Number(rcpt.receiptActualLoss)} size="sm" />
+                                    <FeeWithTax base={toSafeBig(rcpt.receiptActualLoss)} size="sm" />
                                   </div>
                                 )}
 
                                 <div className="flex justify-between items-center rounded">
                                   <span className="font-semibold text-slate-900">TOTAL</span>
                                   <FeeWithTax
-                                    base={Number(rcpt.receiptTotal)}
-                                    tax={Number(rcpt.receiptTotalTax)}
+                                    base={toSafeBig(rcpt.receiptTotal)}
+                                    tax={toSafeBig(rcpt.receiptTotalTax)}
                                     size="sm"
                                   />
                                 </div>
@@ -246,7 +249,7 @@ export default function ReceiptPanel({ receipts, invoiceSummary }: ReceiptPanelP
                                 <div className="flex justify-between items-center rounded">
                                   <span className="font-bold text-slate-900">TOTAL + PAJAK</span>
                                   <FeeWithTax
-                                    base={Number(rcpt.receiptTotalWithTax)}
+                                    base={toSafeBig(rcpt.receiptTotalWithTax)}
                                     size="sm"
                                     weight="bold"
                                   />
@@ -269,9 +272,7 @@ export default function ReceiptPanel({ receipts, invoiceSummary }: ReceiptPanelP
                     Total Pembayaran Diterima
                   </td>
                   <td className="py-3 px-2 text-right font-mono text-slate-700 text-xs">
-                    {formatRupiah(
-                      receipts.reduce((sum, item) => sum + Number(item.receiptTotalWithTax || 0), 0)
-                    )}
+                  {formatRupiah(receipts.reduce((sum, item) => sum.plus(toSafeBig(item.receiptTotalWithTax || '0')), new Big('0')) )}
                   </td>
                   <td colSpan={2}></td>
                   {isEditMode && (<td></td>)}
@@ -286,7 +287,7 @@ export default function ReceiptPanel({ receipts, invoiceSummary }: ReceiptPanelP
               <div className="border-t-2 border-slate-200 flex items-center justify-center">
               <button
                   type="button"
-                  onClick={() => openPanel(<RepaymentReceiptCreateWrapper invoiceSummary={invoiceSummary} />)}
+                  onClick={() => openPanel(<RepaymentReceiptCreateWrapper invoiceSummary={invoiceSummary} onSuccess={onDataChanged}/>)}
                   className="w-11/12 py-4 m-4 last:flex items-center justify-center border-2 border-dashed rounded-lg border-amber-200 bg-amber-50/40 hover:bg-amber-100 text-amber-700 transition-all focus:outline-none focus:ring-2 focus:ring-amber-200 group">
                   <div className="bg-amber-100 p-1 rounded-full group-hover:bg-amber-500 transition-colors">
                     <svg className="w-4 h-4 text-amber-600 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">

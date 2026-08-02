@@ -33,4 +33,85 @@ export const mapDtoToFormData = (dtoPayload: Record<string, any>): FormData => {
   
     return formData;
   };
-  
+
+  export type FormInputType = 
+  | 'input' 
+  | 'textarea' 
+  | 'select' 
+  | 'date' 
+  | 'file' 
+  | 'checkbox' 
+  | 'array'
+  | 'numeric-input'; // Diubah menjadi 'numeric-input'
+
+/**
+ * Helper untuk mengecek apakah sebuah field form kosong.
+ * @param field Nilai dari input yang akan dicek
+ * @param type Tipe input form (default: 'input')
+ * @returns boolean true jika kosong, false jika ada isinya
+ */
+export const isEmptyField = (field: any, type: FormInputType = 'input'): boolean => {
+  // 1. Cek nilai dasar (null / undefined) yang berlaku untuk semua tipe
+  if (field === undefined || field === null) return true;
+
+  // 2. Evaluasi spesifik berdasarkan tipe
+  switch (type) {
+    case 'numeric-input': // Disesuaikan menjadi 'numeric-input'
+      // Dianggap belum diisi jika nilainya 0 (number) atau "0" (string)
+      if (field === 0 || field === '0') return true;
+      // Tangani juga jika user mengetik lalu menghapus isi input (string kosong)
+      if (typeof field === 'string' && field.trim() === '') return true;
+      // Opsional: Cek NaN jika form numeric sempat dikonversi secara keliru
+      if (typeof field === 'number' && Number.isNaN(field)) return true;
+      return false;
+
+    case 'date':
+      if (typeof field === 'string') {
+        const trimmed = field.trim();
+        return trimmed === '' || trimmed === 'dd/mm/yyyy' || trimmed === 'mm/dd/yyyy';
+      }
+      return false;
+
+    case 'select':
+      // Menangani Select yang value-nya string atau number
+      if (typeof field === 'string' || typeof field === 'number') {
+        const val = String(field).trim();
+        // "-1" sering digunakan programmer sebagai value default "Pilih Salah Satu..."
+        return val === '' || val === '-1'; 
+      }
+      return false;
+
+    case 'checkbox':
+      // Checkbox wajib biasanya dianggap "kosong/invalid" jika nilainya false
+      return field === false;
+
+    case 'file':
+      // File native dari browser (HTML5)
+      if (field instanceof FileList) return field.length === 0;
+      // Array file (misal dari React Dropzone)
+      if (Array.isArray(field)) return field.length === 0;
+      // Jika berupa single File object (ada properti name dan size)
+      if (typeof field === 'object' && field !== null && 'name' in field) return false; 
+      
+      // Jika lolos dari semua itu tapi tipenya file, anggap kosong untuk aman
+      return true; 
+
+    case 'array':
+      // Multi-select / Tag Input
+      if (Array.isArray(field)) return field.length === 0;
+      return false;
+
+    case 'textarea':
+    case 'input':
+    default:
+      // Pengecekan standar untuk text, number, email, password, dll
+      if (typeof field === 'string') return field.trim() === '';
+      
+      // Cek untuk object kosong {} (opsional tapi berguna)
+      if (typeof field === 'object' && !Array.isArray(field)) {
+        return Object.keys(field).length === 0;
+      }
+      
+      return false;
+  }
+};
