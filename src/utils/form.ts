@@ -115,3 +115,58 @@ export const isEmptyField = (field: any, type: FormInputType = 'input'): boolean
       return false;
   }
 };
+
+// src/utils/formValidation.ts
+
+export interface FieldValidationConfig<T> {
+  key: keyof T;
+  label: string;
+  type?: FormInputType;
+  // Field nested yang hanya akan divalidasi jika field utama (parent) ini SUDAH terisi
+  dependencies?: FieldValidationConfig<T>[]; 
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  missingFields: string[];
+  missingKeys: string[];
+}
+
+export const validateFormFields = <T extends Record<string, any>>(
+  formData: T,
+  fields: FieldValidationConfig<T>[]
+): ValidationResult => {
+  const missingFields: string[] = [];
+  const missingKeys: string[] = [];
+
+  fields.forEach((fieldConfig) => {
+    const { key, label, type = 'input', dependencies } = fieldConfig;
+    
+    // Cek field parent (utama)
+    const isParentEmpty = isEmptyField(formData[key], type);
+
+    if (isParentEmpty) {
+      // Jika parent kosong, catat error parent-nya saja (anaknya diabaikan)
+      missingFields.push(label);
+      missingKeys.push(key as string);
+    } else {
+      // Jika parent SUDAH TERISI, barulah kita cek field nested-nya (dependencies)
+      if (dependencies && dependencies.length > 0) {
+        dependencies.forEach((childConfig) => {
+          const childType = childConfig.type || 'input';
+          
+          if (isEmptyField(formData[childConfig.key], childType)) {
+            missingFields.push(childConfig.label);
+            missingKeys.push(childConfig.key as string);
+          }
+        });
+      }
+    }
+  });
+
+  return {
+    isValid: missingFields.length === 0,
+    missingFields,
+    missingKeys,
+  };
+};

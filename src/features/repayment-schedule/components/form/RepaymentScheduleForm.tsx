@@ -10,7 +10,7 @@ import { RepaymentScheduleSummary } from '../../types/repayment-schedule.type';
 import { addDays, subDays, parseISO } from 'date-fns';
 import FormFooter from '../../../../components/forms/FormFooter';
 import FormHeader from '../../../../components/forms/FormHeader';
-import { isEmptyField } from '../../../../utils/form';
+import { FieldValidationConfig, isEmptyField, validateFormFields } from '../../../../utils/form';
 import { LoadingForm } from '../../../../components/forms/LoadingForm';
 
 
@@ -191,71 +191,6 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
     setFormData(calculateTaxesAndTotals(newData));
   };
 
-  const validateForm = (): boolean => {
-    const missingFields: string[] = [];
-    const missingKeys: string[] = [];
-
-    // Validasi Tipe Jadwal (Select)
-    if (isEmptyField(formData.scheduleType, 'select')) { 
-      missingFields.push('Tipe Jadwal'); 
-      missingKeys.push('scheduleType'); 
-    } 
-    
-    // Validasi Urutan Jadwal (Input Text / Number - Default 'input')
-    if (isEmptyField(formData.scheduleSequence)) { 
-      missingFields.push('Urutan Jadwal'); 
-      missingKeys.push('scheduleSequence'); 
-    }
-    
-    // Validasi Tanggal Jadwal (Date)
-    if (isEmptyField(formData.scheduleDate, 'date')) { 
-      missingFields.push('Tanggal Jadwal'); 
-      missingKeys.push('scheduleDate'); 
-    }
-    
-    // Validasi Tanggal Invoice (Date)
-    if (isEmptyField(formData.invoiceDate, 'date')) { 
-      missingFields.push('Tanggal Invoice'); 
-      missingKeys.push('invoiceDate'); 
-    }
-    
-    // Validasi Status Invoice (Select)
-    if (isEmptyField(formData.invoiceStatus, 'select')) { 
-      missingFields.push('Status Invoice'); 
-      missingKeys.push('invoiceStatus'); 
-    }
-    
-    // Validasi Catatan Invoice (Input Text Area - Default 'input')
-    if (isEmptyField(formData.invoiceNotes)) { 
-      missingFields.push('Catatan Invoice'); 
-      missingKeys.push('invoiceNotes'); 
-    }
-
-   
-    if (!isEmptyField(formData.scheduleType, 'select')) { 
-
-      if (isEmptyField(formData.invoiceTotalWithTax, 'numeric-input')) { 
-        missingFields.push('Total Tagihan'); 
-        missingKeys.push('invoiceTotal'); 
-      }
-
-      if (isEmptyField(formData.invoiceTotalWithTax, 'numeric-input')) { 
-        missingFields.push('Total Tagihan & Pajak'); 
-        missingKeys.push('invoiceTotalWithTax'); 
-      }
-    }
-
-    if (missingFields.length > 0) {
-      setValidationError(`Silakan lengkapi: ${missingFields.join(', ')}`);
-      setValidationErrors(missingKeys);
-      return false;
-    }
-
-    setValidationError('');
-    setValidationErrors([]);
-    return true;
-  };
-
   // 2. Event Handler Form Submission
   const handlePreSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -274,6 +209,40 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
     setShowConfirmModal(false);
     onSubmit(formData);
   };
+
+  const validateForm = (): boolean => {
+    const requiredFields: FieldValidationConfig<typeof formData>[] = [
+      { 
+        key: 'scheduleType', label: 'Tipe Jadwal', type: 'select',
+        dependencies: [
+          { key: 'invoiceTotal', label: 'Total Tagihan', type: 'numeric-input' },
+          { key: 'invoiceTotalWithTax', label: 'Total Tagihan & Pajak', type: 'numeric-input' },
+        ]
+      },
+      { key: 'scheduleSequence', label: 'Urutan Jadwal' }, // Tipe default 'input'
+      { key: 'scheduleDate', label: 'Tanggal Jadwal', type: 'date' },
+      { key: 'invoiceDate', label: 'Tanggal Invoice', type: 'date' },
+      { key: 'invoiceStatus', label: 'Status Invoice', type: 'select' },
+      { key: 'invoiceNotes', label: 'Catatan Invoice' },
+    ];
+  
+    const { isValid, missingFields, missingKeys } = validateFormFields(formData, requiredFields);
+  
+    if (!isValid) {
+      setValidationError(`Silakan lengkapi: ${missingFields.join(', ')}`);
+      setValidationErrors(missingKeys);
+      return false;
+    }
+  
+    setValidationError('');
+    setValidationErrors([]);
+    return true;
+  };
+
+  const isError = (field: keyof RepaymentScheduleFormRequest) => {
+    return validationErrors.includes(field)
+  };
+
 
   return (
     <>
@@ -296,7 +265,7 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
           {/* Info Dasar */}
           <FormGroup title="INFORMASI DASAR">
             <Select label="Tipe Jadwal" name="scheduleType" value={formData.scheduleType ?? ""} 
-                    hasError={validationErrors.includes('scheduleType')}
+                    hasError={isError('scheduleType')}
                     onChange={handleChange} disabled={isEditMode} 
                     colSpan="1">
               <option value="">-- Pilih Jenis Pembayaran --</option>
@@ -306,25 +275,25 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
 
             <Input label="Urutan Jadwal" name="scheduleSequence" type="number" 
                     value={formData.scheduleSequence} onChange={handleChange} disabled={true} 
-                    hasError={validationErrors.includes('scheduleSequence')} colSpan="1" />
+                    hasError={isError('scheduleSequence')} colSpan="1" />
 
             <Input label="Tanggal Jadwal" name="scheduleDate" type="date" 
                     min={formatDateForInput(minScheduleDate)} 
                     value={formatDateForInput(formData.scheduleDate)} 
-                    hasError={validationErrors.includes('scheduleDate')}
+                    hasError={isError('scheduleDate')}
                     onChange={handleChange} disabled={isEditMode} colSpan="1" />
             
             <Input label="Tanggal Invoice" name="invoiceDate" type="date" 
                     max={formatDateForInput(maxInvoiceDate)}
                     value={formatDateForInput(formData.invoiceDate)} 
                     onChange={handleChange} disabled={isEditMode} 
-                    hasError={validationErrors.includes('invoiceDate')} colSpan="1" />
+                    hasError={isError('invoiceDate')} colSpan="1" />
             <Input label="Nomor Invoice" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleChange} disabled={true} colSpan="1" />
             <Input label="Invoice Sent Trial"  name="invoiceSentTrial" type="number" value={formData.invoiceSentTrial} onChange={handleChange} disabled={true} colSpan="1" />
             
             <Select label="Status Invoice" name="invoiceStatus" 
                     value={formData.invoiceStatus ?? ''} onChange={handleChange} 
-                    hasError={validationErrors.includes('invoiceStatus')} colSpan="2">
+                    hasError={isError('invoiceStatus')} colSpan="2">
             <option key='default' value="">-- Pilih Jenis Status --</option>
               {Object.values(InvoiceStatus).map(status => (
                  <option key={status} value={status}>{status}</option>
@@ -334,7 +303,7 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
 
             <TextArea label="Catatan Invoice" name="invoiceNotes" 
                 value={formData.invoiceNotes} 
-                hasError={validationErrors.includes('invoiceNotes')}
+                hasError={isError('invoiceNotes')}
                 onChange={handleChange} 
                 rows={3} colSpan="2"/>
           </FormGroup>
@@ -394,7 +363,7 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
             <FormGroup title="TOTAL">
               <NumberField label="Total Tagihan" value={Number(formData.invoiceTotal || 0)} 
                           onValueChange={() => {}} disabled className="font-medium text-amber-700" 
-                          hasError={validationErrors.includes('invoiceTotal')} />
+                          hasError={isError('invoiceTotal')} />
 
               <NumberField label="Total Pajak" value={Number(formData.invoiceTotalTax || 0)} 
                             onValueChange={() => {}} disabled className="font-medium text-rose-600" />
@@ -404,7 +373,7 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
                 label="Total Tagihan Beserta Pajak" 
                 value={Number(formData.invoiceTotalWithTax || 0)} 
                 onValueChange={() => {}} 
-                hasError={validationErrors.includes('invoiceTotalWithTax')} 
+                hasError={isError('invoiceTotalWithTax')} 
                 disabled 
                 className="font-semibold text-lg text-emerald-700 bg-emerald-50 border-emerald-200" 
               />

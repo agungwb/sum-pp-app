@@ -105,9 +105,9 @@ export default function RepaymentSecurityEditWrapper({ repaymentId, onSuccess }:
             restructParentSecurityId: repaymentSecurityRes?.restructParentSecurityId || null,
             restructOriginalSecurityId: repaymentSecurityRes?.restructOriginalSecurityId || null,
   
-            scheduleUpfrontFlag: true,
+            scheduleUpfrontFlag: false,
             scheduleUpfrontDate: '',
-            scheduleInstallmentFlag: true,
+            scheduleInstallmentFlag: false,
             scheduleInstallmentDate: '',
             };
 
