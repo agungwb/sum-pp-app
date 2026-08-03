@@ -12,7 +12,7 @@ export interface RepaymentReceiptParent {
 export interface RepaymentReceiptInfo {
   // Receipt Core Info
   receiptDate: string; // ISO Date string
-  receiptStatus: ReceiptStatus;
+  receiptStatus: ReceiptStatus | null | '';
   receiptNotes: string | null;
   receiptMethod: ReceiptMethod | null | '';
   receiptDocumentUrl: File | string | null;

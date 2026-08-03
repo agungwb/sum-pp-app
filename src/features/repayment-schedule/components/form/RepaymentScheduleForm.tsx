@@ -93,21 +93,41 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
 
     const totalWithTax = totalBase.plus(totalTax);
 
+    const precision = 2;
+
     return {
       ...data,
-      invoiceFeeAdministrationTax: taxAdmin.round(2).toString(),
-      invoiceFeeProvisionTax: taxProv.round(2).toString(),
-      invoiceFeePlatformTax: taxPlat.round(2).toString(),
-      invoiceFeeServicingTax: taxServ.round(2).toString(),
-      invoiceFeeMonitoringTax: taxMon.round(2).toString(),
-      invoiceFeeOtherTax: taxOther.round(2).toString(),
-      invoiceTotal: totalBase.round(2).toString(),
-      invoiceTotalTax: totalTax.round(2).toString(),
-      invoiceTotalWithTax: totalWithTax.round(2).toString(),
+      invoiceFeeAdministration: feeAdmin.gt(0)?feeAdmin.round(precision).toString():'',
+      invoiceFeeAdministrationTax: taxAdmin.gt(0)?taxAdmin.round(precision).toString():'',
+
+      invoiceFeeProvision: feeProv.gt(0)?feeProv.round(precision).toString():'',
+      invoiceFeeProvisionTax: taxProv.gt(0)?taxProv.round(precision).toString():'',
+
+      invoiceFeePlatform: feePlat.gt(0)?feePlat.round(precision).toString():'',
+      invoiceFeePlatformTax: taxPlat.gt(0)?taxPlat.round(precision).toString():'',
+
+      invoiceFeeServicing: feeServ.gt(0)?feeServ.round(precision).toString():'',
+      invoiceFeeServicingTax: taxServ.gt(0)?taxServ.round(precision).toString():'',
+
+      invoiceFeeMonitoring: feeMon.gt(0)?feeMon.round(precision).toString():'',
+      invoiceFeeMonitoringTax: taxMon.gt(0)?taxMon.round(precision).toString():'',
+
+      invoiceFeeOther: feeOther.gt(0)?feeOther.round(precision).toString():'',
+      invoiceFeeOtherTax: taxOther.gt(0)?taxOther.round(precision).toString():'',
+
+      invoiceSinkingFund: sinkingFund.gt(0)?sinkingFund.round(precision).toString():'',
+      invoiceYield: yieldVal.gt(0)?yieldVal.round(precision).toString():'',
+
+      invoiceActualLoss: actualLoss.gt(0)?actualLoss.round(precision).toString():'',
+      invoicePenalty: penalty.gt(0)?penalty.round(precision).toString():'',
+
+      invoiceTotal: totalBase.gt(0)?totalBase.round(precision).toString():'',
+      invoiceTotalTax: totalTax.gt(0)?totalTax.round(precision).toString():'',
+      invoiceTotalWithTax: totalWithTax.gt(0)?totalWithTax.round(precision).toString():'',
     };
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange =  (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
     if (validationErrors.includes(name)) {
@@ -264,8 +284,9 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
 
           {/* Info Dasar */}
           <FormGroup title="INFORMASI DASAR">
-            <Select label="Tipe Jadwal" name="scheduleType" value={formData.scheduleType ?? ""} 
-                    hasError={isError('scheduleType')}
+            <Select label="Tipe Jadwal" name="scheduleType"
+                    value={formData.scheduleType ?? ""} 
+                    hasError={isError('scheduleType')} 
                     onChange={handleChange} disabled={isEditMode} 
                     colSpan="1">
               <option value="">-- Pilih Jenis Pembayaran --</option>
@@ -275,7 +296,8 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
 
             <Input label="Urutan Jadwal" name="scheduleSequence" type="number" 
                     value={formData.scheduleSequence} onChange={handleChange} disabled={true} 
-                    hasError={isError('scheduleSequence')} colSpan="1" />
+                    hasError={isError('scheduleSequence')}
+                    colSpan="1" />
 
             <Input label="Tanggal Jadwal" name="scheduleDate" type="date" 
                     min={formatDateForInput(minScheduleDate)} 
@@ -288,16 +310,21 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
                     value={formatDateForInput(formData.invoiceDate)} 
                     onChange={handleChange} disabled={isEditMode} 
                     hasError={isError('invoiceDate')} colSpan="1" />
-            <Input label="Nomor Invoice" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleChange} disabled={true} colSpan="1" />
-            <Input label="Invoice Sent Trial"  name="invoiceSentTrial" type="number" value={formData.invoiceSentTrial} onChange={handleChange} disabled={true} colSpan="1" />
+            <Input label="Nomor Invoice" name="invoiceNumber" 
+                    value={formData.invoiceNumber} onChange={handleChange} 
+                    disabled={true} colSpan="1" />
+            <Input label="Invoice Sent Trial"  name="invoiceSentTrial" 
+                    type="number" value={formData.invoiceSentTrial} 
+                    onChange={handleChange} disabled={true} colSpan="1" />
             
             <Select label="Status Invoice" name="invoiceStatus" 
                     value={formData.invoiceStatus ?? ''} onChange={handleChange} 
                     hasError={isError('invoiceStatus')} colSpan="2">
-            <option key='default' value="">-- Pilih Jenis Status --</option>
-              {Object.values(InvoiceStatus).map(status => (
-                 <option key={status} value={status}>{status}</option>
-              ))}
+
+                <option key='default' value="">-- Pilih Jenis Status --</option>
+                  {Object.values(InvoiceStatus).map(status => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
             </Select>
 
 
@@ -311,67 +338,119 @@ export default function RepaymentScheduleForm({ mode, initialData, repaymentSecu
           {/* UPFRONT FEE */}
           {formData.scheduleType === ScheduleType.UPFRONT && (
             <FormGroup title="UPFRONT FEE">
-              <NumberField label="Fee Administration" value={Number(formData.invoiceFeeAdministration || 0)} onValueChange={(val: number) => handleNumericChange('invoiceFeeAdministration', val)} disabled={isInvoiceNonDraft} />
-              <NumberField label="Tax Administration" value={Number(formData.invoiceFeeAdministrationTax || 0)} onValueChange={() => {}} disabled />
+              <NumberField label="Fee Administration" name="invoiceFeeAdministration"
+                            value={formData.invoiceFeeAdministration} 
+                            onValueChange={(val: number) => handleNumericChange('invoiceFeeAdministration', val)} 
+                            disabled={isInvoiceNonDraft} />
+              <NumberField label="Tax Administration" name="invoiceFeeAdministrationTax"
+                            value={formData.invoiceFeeAdministrationTax} 
+                            onValueChange={() => {}} disabled />
               
-              <NumberField label="Fee Provision" value={Number(formData.invoiceFeeProvision || 0)} onValueChange={(val: number) => handleNumericChange('invoiceFeeProvision', val)} disabled={isInvoiceNonDraft} />
-              <NumberField label="Tax Provision" value={Number(formData.invoiceFeeProvisionTax || 0)} onValueChange={() => {}} disabled />
+              <NumberField label="Fee Provision" name="invoiceFeeProvision"
+                            value={formData.invoiceFeeProvision} 
+                            onValueChange={(val: number) => handleNumericChange('invoiceFeeProvision', val)} 
+                            disabled={isInvoiceNonDraft} />
 
-              <NumberField label="Fee Platform" value={Number(formData.invoiceFeePlatform || 0)} onValueChange={(val: number) => handleNumericChange('invoiceFeePlatform', val)} disabled={isInvoiceNonDraft} />
-              <NumberField label="Tax Platform" value={Number(formData.invoiceFeePlatformTax || 0)} onValueChange={() => {}} disabled />
+              <NumberField label="Tax Provision" name="invoiceFeeProvisionTax"
+                            value={formData.invoiceFeeProvisionTax} 
+                            onValueChange={() => {}} disabled />
 
-              <NumberField label="Fee Servicing" value={Number(formData.invoiceFeeServicing || 0)} onValueChange={(val: number) => handleNumericChange('invoiceFeeServicing', val)} disabled={isInvoiceNonDraft} />
-              <NumberField label="Tax Servicing" value={Number(formData.invoiceFeeServicingTax || 0)} onValueChange={() => {}} disabled />
+              <NumberField label="Fee Platform" name="invoiceFeePlatform"
+                            value={formData.invoiceFeePlatform} 
+                            onValueChange={(val: number) => handleNumericChange('invoiceFeePlatform', val)} 
+                            disabled={isInvoiceNonDraft} />
+
+              <NumberField label="Tax Platform" name="invoiceFeePlatformTax"
+                            value={formData.invoiceFeePlatformTax} 
+                            onValueChange={() => {}} disabled />
+
+              <NumberField label="Fee Servicing" name="invoiceFeeServicing"
+                            value={formData.invoiceFeeServicing}
+                            onValueChange={(val: number) => handleNumericChange('invoiceFeeServicing', val)} 
+                            disabled={isInvoiceNonDraft} />
+
+              <NumberField label="Tax Servicing" name="invoiceFeeServicingTax"
+                            value={formData.invoiceFeeServicingTax} 
+                            onValueChange={() => {}} disabled />
 
               {/* Pemisah untuk kelompok Fee Other */}
               <div className="col-span-2 w-full border-b border-slate-200 mt-2 pt-4"></div>
 
               {/* invoiceFeeOther ikut gabung di grup UPFRONT */}
-              <NumberField label="Fee Other" value={Number(formData.invoiceFeeOther || 0)} onValueChange={(val: number) => handleNumericChange('invoiceFeeOther', val)} disabled={isInvoiceNonDraft} />
-              <NumberField label="Tax Other" value={Number(formData.invoiceFeeOtherTax || 0)} onValueChange={() => {}} disabled />
+              <NumberField label="Fee Other" name="invoiceFeeOther"
+                            value={formData.invoiceFeeOther} 
+                            onValueChange={(val: number) => handleNumericChange('invoiceFeeOther', val)} 
+                            disabled={isInvoiceNonDraft} />
+              <NumberField label="Tax Other" name="invoiceFeeOtherTax"
+                            value={formData.invoiceFeeOtherTax} 
+                            onValueChange={() => {}} disabled />
             </FormGroup>
           )}
 
           {/* INSTALLMENT FEE & OTHERS */}
           {formData.scheduleType === ScheduleType.INSTALLMENT && (
             <FormGroup title="INSTALLMENT FEE">
-              <NumberField label="Fee Monitoring" value={Number(formData.invoiceFeeMonitoring || 0)} onValueChange={(val: number) => handleNumericChange('invoiceFeeMonitoring', val)} disabled={isInvoiceNonDraft} />
-              <NumberField label="Tax Monitoring" value={Number(formData.invoiceFeeMonitoringTax || 0)} onValueChange={() => {}} disabled />
+              <NumberField label="Fee Monitoring" name="invoiceFeeMonitoring"
+                            value={formData.invoiceFeeMonitoring} 
+                            onValueChange={(val: number) => handleNumericChange('invoiceFeeMonitoring', val)} 
+                            disabled={isInvoiceNonDraft} />
+              <NumberField label="Tax Monitoring" name="invoiceFeeMonitoringTax"
+                            value={formData.invoiceFeeMonitoringTax} 
+                            onValueChange={() => {}} disabled />
 
-              <NumberField label="Sinking Fund (Pokok)" value={Number(formData.invoiceSinkingFund || 0)} onValueChange={(val: number) => handleNumericChange('invoiceSinkingFund', val)} disabled={isInvoiceNonDraft} />
-              <NumberField label="Yield (Kupon)" value={Number(formData.invoiceYield || 0)} onValueChange={(val: number) => handleNumericChange('invoiceYield', val)} disabled={isInvoiceNonDraft} />
+              <NumberField label="Sinking Fund (Pokok)" name="invoiceSinkingFund"
+                            value={formData.invoiceSinkingFund} 
+                            onValueChange={(val: number) => handleNumericChange('invoiceSinkingFund', val)} 
+                            disabled={isInvoiceNonDraft} />
+              <NumberField label="Yield (Kupon)" name="invoiceYield"
+                            value={formData.invoiceYield} 
+                            onValueChange={(val: number) => handleNumericChange('invoiceYield', val)} 
+                            disabled={isInvoiceNonDraft} />
 
               {/* Pemisah untuk kelompok Fee Other */}
               <div className="col-span-2 w-full border-b border-slate-200 pt-4"></div>
 
               {/* invoiceFeeOther ikut gabung di grup INSTALLMENT */}
-              <NumberField label="Fee Other" value={Number(formData.invoiceFeeOther || 0)} onValueChange={(val: number) => handleNumericChange('invoiceFeeOther', val)} disabled={isInvoiceNonDraft} />
-              <NumberField label="Tax Other" value={Number(formData.invoiceFeeOtherTax || 0)} onValueChange={() => {}} disabled />
+              <NumberField label="Fee Other" name="invoiceFeeOther"
+                            value={formData.invoiceFeeOther} 
+                            onValueChange={(val: number) => handleNumericChange('invoiceFeeOther', val)} 
+                            disabled={isInvoiceNonDraft} />
+              <NumberField label="Tax Other" name="invoiceFeeOtherTax"
+                            value={formData.invoiceFeeOtherTax} 
+                            onValueChange={() => {}} disabled />
             </FormGroup>
           )}
 
           {/* DENDA & KERUGIAN (Hanya Muncul Jika Schedule Type Dipilih) */}
           {formData.scheduleType && (
             <FormGroup title="DENDA & KERUGIAN">
-              <NumberField label="Actual Loss" value={Number(formData.invoiceActualLoss || 0)} onValueChange={(val: number) => handleNumericChange('invoiceActualLoss', val)} disabled={!isEditMode ||  !isInvoiceOverdue} />
-              <NumberField label="Penalty" value={Number(formData.invoicePenalty || 0)} onValueChange={(val: number) => handleNumericChange('invoicePenalty', val)} disabled={true} />
+              <NumberField label="Actual Loss" name="invoiceActualLoss"
+                            value={formData.invoiceActualLoss} 
+                            onValueChange={(val: number) => handleNumericChange('invoiceActualLoss', val)} 
+                            disabled={!isEditMode ||  !isInvoiceOverdue} />
+              <NumberField label="Penalty" name="invoicePenalty"
+                            value={formData.invoicePenalty} 
+                            onValueChange={(val: number) => handleNumericChange('invoicePenalty', val)} 
+                            disabled={true} />
             </FormGroup>
           )}
 
           {/* TOTAL (Hanya Muncul Jika Schedule Type Dipilih) */}
           {formData.scheduleType && (
             <FormGroup title="TOTAL">
-              <NumberField label="Total Tagihan" value={Number(formData.invoiceTotal || 0)} 
-                          onValueChange={() => {}} disabled className="font-medium text-amber-700" 
-                          hasError={isError('invoiceTotal')} />
+              <NumberField label="Total Tagihan" name="invoiceTotal"
+                            value={formData.invoiceTotal} 
+                            onValueChange={() => {}} disabled className="font-medium text-amber-700" 
+                            hasError={isError('invoiceTotal')} />
 
-              <NumberField label="Total Pajak" value={Number(formData.invoiceTotalTax || 0)} 
+              <NumberField label="Total Pajak" name="invoiceTotalTax"
+                            value={formData.invoiceTotalTax} 
                             onValueChange={() => {}} disabled className="font-medium text-rose-600" />
               
               <NumberField 
                 colSpan="2" 
-                label="Total Tagihan Beserta Pajak" 
-                value={Number(formData.invoiceTotalWithTax || 0)} 
+                label="Total Tagihan Beserta Pajak" name="invoiceTotalWithTax"
+                value={formData.invoiceTotalWithTax} 
                 onValueChange={() => {}} 
                 hasError={isError('invoiceTotalWithTax')} 
                 disabled 

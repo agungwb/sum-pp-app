@@ -1,5 +1,5 @@
 // src/components/repayment/RepaymentSecurityForm.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { RepaymentSecurityFormRequest, SecurityLookupResponse } from '../../dtos/repayment-security.dto';
 import { ContractStatus } from '../../types/repayment-security.enum';
@@ -38,6 +38,8 @@ export default function RepaymentSecurityForm ({ mode, initialData, onSubmit, on
 
   const maxPrecision = 2;
   const maxPrecisionPct = 4;
+
+  const oldFile = useRef(formData.contractDocumentUrl ? String(formData.contractDocumentUrl) : undefined);
 
   const isEditMode = mode === 'edit';
 
@@ -426,20 +428,17 @@ const durationBig = new Big(duration.toString());
         <form className="max-w-6xl mx-auto space-y-8">
           
           {/* HIDDEN FIELD */}
-          <input type="hidden" value={formData.investeeId} />
-          <input type="hidden" value={formData.securityId} />
-          <input type="hidden" value={formData.restructOrder || 0} />
-          <input type="hidden" value={formData.restructParentSecurityId || ''} />
-          <input type="hidden" value={formData.restructOriginalSecurityId || ''} />
+          <input type="hidden" value={formData.investeeId} name="investeeId"/>
+          <input type="hidden" value={formData.securityId} name="securityId"/>
+          <input type="hidden" value={formData.restructOrder || 0} name="restructOrder"/>
+          <input type="hidden" value={formData.restructParentSecurityId || ''} name="restructParentSecurityId"/>
+          <input type="hidden" value={formData.restructOriginalSecurityId || ''} name="restructOriginalSecurityId"/>
 
           <FormGroup title="PENERBIT DAN EFEK">
             <Select 
               label="Nama Efek" 
-              hasError={isError('securityName')}
-              value={selectedLookupId ?? ''} 
-              colSpan="2"
-              disabled={isEditMode}
-              name="securityName"
+              hasError={isError('securityName')} name="securityName"
+              value={selectedLookupId ?? ''} colSpan="2" disabled={isEditMode}
               onChange={handleSecuritySelect}
             >
               <option value="">-- Pilih Security Name --</option>
@@ -483,9 +482,17 @@ const durationBig = new Big(duration.toString());
           </FormGroup>
 
           <FormGroup title="PENDANAAN & KUPON/DIVIDEN">
-            <NumberField label="Underlying Fund" disabled={isEditMode} hasError={isError('contractUnderlyingFund')} value={formData.contractUnderlyingFund} onValueChange={(v: number) => handleGroup3Change('contractUnderlyingFund', v)} colSpan="2"/>
+            <NumberField label="Underlying Fund" disabled={isEditMode} 
+                          hasError={isError('contractUnderlyingFund')} name="contractUnderlyingFund"
+                          value={formData.contractUnderlyingFund} 
+                          onValueChange={(v: number) => handleGroup3Change('contractUnderlyingFund', v)} 
+                          colSpan="2"/>
             
-            <NumberField label="Yield Rate Annually (%)" hasError={isError('contractYieldRateAnnually')}  disabled={!isGroup3Active || isEditMode} value={formData.contractYieldRateAnnually} onValueChange={(v: number) => handleGroup3Change('contractYieldRateAnnually', v)} isPercentage={true}/>
+            <NumberField label="Yield Rate Annually (%)" 
+                          hasError={isError('contractYieldRateAnnually')} name="contractYieldRateAnnually"
+                          disabled={!isGroup3Active || isEditMode} value={formData.contractYieldRateAnnually} 
+                          onValueChange={(v: number) => handleGroup3Change('contractYieldRateAnnually', v)} 
+                          isPercentage={true}/>
             <NumberField label="Yield Amount" hasError={isError('contractYieldAmount')}  disabled value={formData.contractYieldAmount} onValueChange={() => {}} />
 
            </FormGroup>
@@ -494,53 +501,53 @@ const durationBig = new Big(duration.toString());
             <NumberField label="(%) Biaya Administrasi" disabled={!isGroup3Active || isEditMode} 
                           hasError={isError('contractFeeAdministrationPercentage')} name="contractFeeAdministrationPercentage"
                           value={formData.contractFeeAdministrationPercentage} 
-                          onValueChange={(v: number) => handleGroup3Change('contractFeeAdministrationPercentage', v)} 
+                          onValueChange={(val: number) => handleGroup3Change('contractFeeAdministrationPercentage', val)} 
                           isPercentage={true}/>
             <NumberField label="Biaya Administrasi" disabled={!isGroup3Active || isEditMode} 
                           hasError={isError('contractFeeAdministration')} 
                           value={formData.contractFeeAdministration} name="contractFeeAdministration"
-                          onValueChange={(v: number) => handleGroup3Change('contractFeeAdministration', v)} />
+                          onValueChange={(val: number) => handleGroup3Change('contractFeeAdministration', val)} />
            
             <NumberField label="(%) Biaya Provisi" disabled={!isGroup3Active || isEditMode} 
                           hasError={isError('contractFeeProvisionPercentage')} name="contractFeeProvisionPercentage"
                           value={formData.contractFeeProvisionPercentage} 
-                          onValueChange={(v: number) => handleGroup3Change('contractFeeProvisionPercentage', v)} 
+                          onValueChange={(val: number) => handleGroup3Change('contractFeeProvisionPercentage', val)} 
                           isPercentage={true}/>
             <NumberField label="Biaya Provisi" disabled={!isGroup3Active || isEditMode} 
                           hasError={isError('contractFeeProvision')} 
                           value={formData.contractFeeProvision} name="contractFeeProvision"
-                          onValueChange={(v: number) => handleGroup3Change('contractFeeProvision', v)} />
+                          onValueChange={(val: number) => handleGroup3Change('contractFeeProvision', val)} />
            
             <NumberField label="(%) Biaya Platform" disabled={!isGroup3Active || isEditMode} 
                           hasError={isError('contractFeePlatformPercentage')} name="contractFeePlatformPercentage"
                           value={formData.contractFeePlatformPercentage} 
-                          onValueChange={(v: number) => handleGroup3Change('contractFeePlatformPercentage', v)} 
+                          onValueChange={(val: number) => handleGroup3Change('contractFeePlatformPercentage', val)} 
                           isPercentage={true}/>
             <NumberField label="Biaya Platform" disabled={!isGroup3Active} 
                           hasError={isError('contractFeePlatform')} name="contractFeePlatform"
                           value={formData.contractFeePlatform} 
-                          onValueChange={(v: number) => handleGroup3Change('contractFeePlatform', v)} />
+                          onValueChange={(val: number) => handleGroup3Change('contractFeePlatform', val)} />
                       
             <NumberField label="(%) Biaya Servicing" disabled={!isGroup3Active || isEditMode} 
                           hasError={isError('contractFeeServicingPercentage')} name="contractFeeServicingPercentage"
                           value={formData.contractFeeServicingPercentage} 
-                          onValueChange={(v: number) => handleGroup3Change('contractFeeServicingPercentage', v)} 
+                          onValueChange={(val: number) => handleGroup3Change('contractFeeServicingPercentage', val)} 
                           isPercentage={true}/>
             <NumberField label="Biaya Servicing" disabled={!isGroup3Active || isEditMode} 
                           hasError={isError('contractFeeServicing')} name="contractFeeServicing"
                           value={formData.contractFeeServicing} 
-                          onValueChange={(v: number) => handleGroup3Change('contractFeeServicing', v)} />
+                          onValueChange={(val: number) => handleGroup3Change('contractFeeServicing', val)} />
             
             <NumberField label="(%) Biaya Monitoring (per bulan)" disabled={!isGroup3Active || isEditMode} 
                           hasError={isError('contractFeeMonitoringPercentageMonthly')} name="contractFeeMonitoringPercentageMonthly"
                           value={formData.contractFeeMonitoringPercentageMonthly} 
-                          onValueChange={(v: number) => handleGroup3Change('contractFeeMonitoringPercentageMonthly', v)} 
+                          onValueChange={(val: number) => handleGroup3Change('contractFeeMonitoringPercentageMonthly', val)} 
                           isPercentage={true}/>
 
             <NumberField label="Biaya Monitoring (per bulan)" disabled={!isGroup3Active || isEditMode} 
                           hasError={isError('contractFeeMonitoringMonthly')} name="contractFeeMonitoringMonthly"
                           value={formData.contractFeeMonitoringMonthly} 
-                          onValueChange={(v: number) => handleGroup3Change('contractFeeMonitoringMonthly', v)} />
+                          onValueChange={(val: number) => handleGroup3Change('contractFeeMonitoringMonthly', val)} />
                       
             <NumberField label="(%) Total Biaya Monitoring" disabled 
                           hasError={isError('contractFeeMonitoringPercentage')} name="contractFeeMonitoringPercentage"
@@ -593,13 +600,19 @@ const durationBig = new Big(duration.toString());
           </FormGroup>
 
           <FormGroup title="PEMBAYARAN DAN KONTAK">
-            <Select label="Bank Escrow" hasError={isError('contractEscrowBank')} value={formData.contractEscrowBank ?? ''} onChange={(e: any) => setFormData({...formData, contractEscrowBank: e.target.value})}>
+            <Select label="Bank Escrow" 
+                    hasError={isError('contractEscrowBank')} name="contractEscrowBank"
+                    value={formData.contractEscrowBank ?? ''} 
+                    onChange={(e: any) => setFormData({...formData, contractEscrowBank: e.target.value})}>
               <option value="">-- Pilih Escrow Bank --</option>
               <option value="BJB Syariah">BJB Syariah</option>
               <option value="Bank Mega Syariah">Bank Mega Syariah</option>
               <option value="Bank Keb Hana">Bank Keb Hana</option>
             </Select>
-            <Input label="Rekening Escrow" inputType="alphanumeric" hasError={isError('contractEscrowAccount')} value={formData.contractEscrowAccount ?? ''} onChange={(e: any) => setFormData({...formData, contractEscrowAccount: e.target.value})} />
+            <Input label="Rekening Escrow" inputType="alphanumeric" 
+                    hasError={isError('contractEscrowAccount')} name="contractEscrowAccount"
+                    value={formData.contractEscrowAccount ?? ''} 
+                    onChange={(e: any) => setFormData({...formData, contractEscrowAccount: e.target.value})} />
             <Select label="Bank Virtual Account" hasError={isError('contractVaBank')} value={formData.contractVaBank} onChange={(e: any) => setFormData({...formData, contractVaBank: e.target.value})}>
               <option value="">-- Pilih VA Bank --</option>
               <option value="BCA">BCA</option>
@@ -607,20 +620,31 @@ const durationBig = new Big(duration.toString());
               <option value="BRI">BRI</option>
               <option value="Mandiri">Mandiri</option>
             </Select>
-            <Input label="Nomor Virtual Account" inputType="alphanumeric" hasError={isError('contractVaNumber')} value={formData.contractVaNumber} onChange={(e: any) => setFormData({...formData, contractVaNumber: e.target.value})} />
-            <Input label="Email Penerbit" inputType="email" hasError={isError('contractContactEmail')} value={formData.contractContactEmail} onChange={(e: any) => setFormData({...formData, contractContactEmail: e.target.value})} />
+            <Input label="Nomor Virtual Account" inputType="alphanumeric" 
+                    hasError={isError('contractVaNumber')} name="contractVaNumber"
+                    value={formData.contractVaNumber} 
+                    onChange={(e: any) => setFormData({...formData, contractVaNumber: e.target.value})} />
+            <Input label="Email Penerbit" inputType="email" 
+                    hasError={isError('contractContactEmail')} name="contractContactEmail"
+                    value={formData.contractContactEmail} 
+                    onChange={(e: any) => setFormData({...formData, contractContactEmail: e.target.value})} />
             <Input label="WhatsApp Penerbit" inputType="tel" hasError={isError('contractContactWhatsapp')} value={formData.contractContactWhatsapp} onChange={(e: any) => setFormData({...formData, contractContactWhatsapp: e.target.value})} />
           </FormGroup>
 
           <FormGroup title="DOKUMEN PERJANJIAN">
-            <Input label="Document Number" value={formData.contractDocumentNumber} onChange={(e: any) => setFormData({...formData, contractDocumentNumber: e.target.value})} colSpan="2"/>
-            <Input label="Document Title" value={formData.contractDocumentTitle} onChange={(e: any) => setFormData({...formData, contractDocumentTitle: e.target.value})} colSpan="2"/>
+            <Input label="Document Number" name="contractDocumentNumber"
+                    value={formData.contractDocumentNumber} 
+                    onChange={(e: any) => setFormData({...formData, contractDocumentNumber: e.target.value})} 
+                    colSpan="2"/>
+            <Input label="Document Title" name="contractDocumentTitle"
+                    value={formData.contractDocumentTitle} 
+                    onChange={(e: any) => setFormData({...formData, contractDocumentTitle: e.target.value})} 
+                    colSpan="2"/>
             <FileInput 
-                label="Upload Dokumen"
-                colSpan="2"
+                label="Upload Dokumen" name="contractDocumentUrl" colSpan="2"
                 hasError={false} // Ubah ke true jika validasi gagal
-                oldFile={formData.contractDocumentUrl ? String(formData.contractDocumentUrl) : undefined}
-                maxSizeMb={2} // Maksimal 2MB (jika diabaikan, otomatis 5MB)
+                oldFile={oldFile.current}
+                maxSizeMb={5} // Maksimal 2MB (jika diabaikan, otomatis 5MB)
                 allowedTypes={['.pdf']} // Hanya izinkan tipe ini
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                   setFormData({
@@ -635,7 +659,7 @@ const durationBig = new Big(duration.toString());
             <FormGroup title="BUAT JADWAL TAGIHAN?">
               {/* ---- BARIS 1: UPFRONT FEE ---- */}
               <Toggle 
-                label="Upfront Fee" 
+                label="Upfront Fee" name="scheduleUpfrontFlag"
                 checked={formData.scheduleUpfrontFlag} 
                 onChange={(val: boolean) => setFormData({...formData, scheduleUpfrontFlag: val})}
               />
@@ -643,7 +667,7 @@ const durationBig = new Big(duration.toString());
               {/* Gunakan class 'invisible' saat toggle OFF agar grid kolom tidak rusak & UI tidak melompat */}
               <div className={formData.scheduleUpfrontFlag ? 'visible' : 'invisible'}>
                 <Input 
-                  type="date" 
+                  type="date" name="scheduleUpfrontDate"
                   hasError={isError('scheduleUpfrontDate')} 
                   value={formData.scheduleUpfrontDate} 
                   onChange={(e: any) => setFormData({...formData, scheduleUpfrontDate: e.target.value})} 
@@ -652,7 +676,7 @@ const durationBig = new Big(duration.toString());
 
               {/* ---- BARIS 2: CICILAN ---- */}
               <Toggle 
-                label="Cicilan" 
+                label="Cicilan" name="scheduleInstallmentFlag"
                 checked={formData.scheduleInstallmentFlag} 
                 onChange={(val: boolean) => setFormData({...formData, scheduleInstallmentFlag: val})}
               />
@@ -663,7 +687,7 @@ const durationBig = new Big(duration.toString());
                   jika memang benar-benar tidak ingin melihat angka tahun di UI.
                 */}
                 <Input 
-                  inputType="date" 
+                  inputType="date" name="scheduleInstallmentDate"
                   hasError={isError('scheduleInstallmentDate')} 
                   value={formData.scheduleInstallmentDate} 
                   onChange={(e: any) => setFormData({...formData, scheduleInstallmentDate: e.target.value})} 

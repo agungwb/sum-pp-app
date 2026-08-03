@@ -94,7 +94,6 @@ export const FileInput = ({
   const displayErrorMessage = internalError || errorMessage;
 
   const wrapperBaseClass = "pb-4 border-b-2 rounded-lg transition-colors";
-  const wrapperErrorClass = activeError ? "border-red-500 bg-red-50/50 p-3" : "border-slate-200 bg-white";
   
   const inputBaseClass = `
     w-full text-xs focus:outline-none 
@@ -112,7 +111,7 @@ export const FileInput = ({
     : "text-slate-600 cursor-pointer";
 
   return (
-    <div className={`${colSpanClasses[colSpan] || ""} ${wrapperBaseClass} ${wrapperErrorClass}`}>
+    <div className={`${colSpanClasses[colSpan] || ""} ${wrapperBaseClass} `}>
 
       <div className="flex flex-row gap-2">
         {label && (
