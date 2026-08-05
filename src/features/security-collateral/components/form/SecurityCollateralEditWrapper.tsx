@@ -64,7 +64,7 @@ export default function SecurityCollateralEditWrapper({ collateralId, repaymentS
   const handleEditSubmit = async (formData: SecurityCollateralFormRequest) => {
     setIsSubmitting(true);
     try {
-      await securityCollateralService.updateCollateral(collateralId, formData);
+      await securityCollateralService.updateSecurityCollateral(collateralId, formData);
       if (onSuccess){
         onSuccess();
       }

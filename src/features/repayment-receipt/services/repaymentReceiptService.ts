@@ -69,5 +69,10 @@ export const repaymentReceiptService = {
     return response.data;
   },
 
+  //DELETE
+  deleteRepaymentReceipt: async (receiptId: string): Promise<RepaymentReceiptDetailWithAuditResponse> => {
+    const response = await apiClient.delete(`/${REPAYMENT_RECEIPT_URL}/${receiptId}`);
+    return response.data;
+  },
   
 };

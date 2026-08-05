@@ -28,7 +28,7 @@ export const securityCollateralService = {
   
 
   /* DETAIL */
-  getCollateral: async (collateralId: string): Promise<ApiResponse<SecurityCollateralItemResponse>> => {
+  getSecurityCollateral: async (collateralId: string): Promise<ApiResponse<SecurityCollateralItemResponse>> => {
     // const response = await axios.get(
     //   `${BASE_URL}/security/collaterals/${collateralId}`
     // );
@@ -46,7 +46,7 @@ export const securityCollateralService = {
   },
 
   /* CREATE */
-  createCollateral: async (repaymentSecurityId: string, payload: SecurityCollateralFormRequest | FormData): Promise<SecurityCollateralItemResponse> => {
+  createSecurityCollateral: async (repaymentSecurityId: string, payload: SecurityCollateralFormRequest| FormData): Promise<SecurityCollateralItemResponse> => {
     // const response = await axios.post(`${BASE_URL}/repayment/securities/${securityId}/collaterals`, payload);
     
     let response;
@@ -66,7 +66,7 @@ export const securityCollateralService = {
   },
 
   /* UPDATE */
-  updateCollateral: async (collateralId: string, payload: SecurityCollateralFormRequest | FormData): Promise<SecurityCollateralItemResponse>  => {
+  updateSecurityCollateral: async (collateralId: string, payload: SecurityCollateralFormRequest | FormData): Promise<SecurityCollateralItemResponse>  => {
     // const response = await axios.put(`${BASE_URL}/security/collaterals/${collateralId}`, payload);
 
     let response;
@@ -82,6 +82,12 @@ export const securityCollateralService = {
       response = await apiClient.put(`/${SECURITY_COLLATERAL_URL}/${collateralId}`, payload);
     }
 
+    return response.data;
+  },
+
+  //DELETE
+  deleteSecurityCollateral: async (collateralId: string): Promise<SecurityCollateralItemResponse> => {
+    const response = await apiClient.delete(`/${SECURITY_COLLATERAL_URL}/${collateralId}`);
     return response.data;
   },
   

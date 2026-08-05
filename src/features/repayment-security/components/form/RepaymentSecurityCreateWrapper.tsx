@@ -83,6 +83,20 @@ export default function RepaymentSecurityCreateWrapper({onSuccess}: RepaymentSec
       ...formData,
       securityType: formData.securityType === '' ? null : formData.securityType,
       contractStatus: formData.contractStatus === '' ? null : formData.contractStatus,
+
+      contractEscrowBank: formData.contractEscrowBank === '' ? null : formData.contractEscrowBank,
+      contractEscrowAccount: formData.contractEscrowAccount === '' ? null : formData.contractEscrowAccount,
+      contractVaBank: formData.contractVaBank === '' ? null : formData.contractVaBank,
+      contractVaNumber: formData.contractVaNumber === '' ? null : formData.contractVaNumber,
+      contractContactEmail: formData.contractContactEmail === '' ? null : formData.contractContactEmail,
+      contractContactWhatsapp: formData.contractContactWhatsapp === '' ? null : formData.contractContactWhatsapp,
+      contractDocumentTitle: formData.contractDocumentTitle === '' ? null : formData.contractDocumentTitle,
+      contractDocumentNumber: formData.contractDocumentNumber === '' ? null : formData.contractDocumentNumber,
+
+      contractStartDate: formData.contractStartDate === '' ? null : formData.contractStartDate,
+      contractEndDate: formData.contractEndDate === '' ? null : formData.contractEndDate,
+      scheduleUpfrontDate: formData.scheduleUpfrontDate === '' ? null : formData.scheduleUpfrontDate,
+      scheduleInstallmentDate: formData.scheduleInstallmentDate === '' ? null : formData.scheduleInstallmentDate,
     };
 
     const isFileUploaded = formData.contractDocumentUrl instanceof File

@@ -13,6 +13,7 @@ import { FileInput } from '../../../../components/forms/FileInput';
 import FormHeader from '../../../../components/forms/FormHeader';
 import { LoadingForm } from '../../../../components/forms/LoadingForm';
 import { FieldValidationConfig, validateFormFields } from '../../../../utils/form';
+import { DeleteDataSection } from '../../../../components/forms/DeleteDataSection';
 
 interface Props {
   mode: 'add' | 'edit';
@@ -20,11 +21,12 @@ interface Props {
   invoiceSummary: InvoiceSummaryWithPenaltyBig; // Dummy/Target Schedule data for waterfall limits
   onSubmit: (data: RepaymentReceiptFormRequest) => void;
   onCancel: () => void;
+  onDelete?: () => void;
   isLoading: boolean;
   submissionError?: string | null; 
 }
 
-export default function RepaymentReceiptForm({ mode, initialData, invoiceSummary, onSubmit,onCancel, isLoading, submissionError }: Props) {
+export default function RepaymentReceiptForm({ mode, initialData, invoiceSummary, onSubmit, onCancel, onDelete, isLoading, submissionError }: Props) {
   const { closePanel } = useSidePanel();
   const [formData, setFormData] = useState<RepaymentReceiptFormRequest>(initialData);
 
@@ -39,6 +41,8 @@ export default function RepaymentReceiptForm({ mode, initialData, invoiceSummary
   const taxRate = invoiceSummary.taxPpn.times(invoiceSummary.taxFactor).round(precisionTax);
   
   const oldFile = useRef(formData.receiptDocumentUrl ? String(formData.receiptDocumentUrl) : undefined);
+
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isEditMode = mode === 'edit';
 
@@ -297,12 +301,25 @@ export default function RepaymentReceiptForm({ mode, initialData, invoiceSummary
   const handlePreSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Panggil fungsi validasi
-    const isValid = validateForm();
-    
-    // Jika valid, baru tampilkan modal konfirmasi
-    if (isValid) {
+    if (isDeleting){
       setShowConfirmModal(true);
+    } else {
+      // Panggil fungsi validasi
+      const isValid = validateForm();
+      
+      // Jika valid, baru tampilkan modal konfirmasi
+      if (isValid) {
+        setShowConfirmModal(true);
+      }
+    }
+  };
+
+  const handleConfirmSubmit = () => {
+    setShowConfirmModal(false);
+    if (isDeleting && onDelete) {
+      onDelete();
+    } else {
+      onSubmit(formData);
     }
   };
 
@@ -311,8 +328,8 @@ export default function RepaymentReceiptForm({ mode, initialData, invoiceSummary
       { key: 'receiptDate', label: 'Tanggal Pembayaran', type:'date' }, 
       { key: 'receiptMethod', label: 'Metode Pembayaran', type: 'select' },
       { key: 'receiptStatus', label: 'Status Pembayaran', type: 'select' },
-      // { key: 'receiptNotes', label: 'Catatan Pembayaran', type: 'textarea' },
-      { key: 'receiptDocumentUrl', label: 'Dokumen Bukti Pembayaran', type: 'textarea' },
+      { key: 'receiptNotes', label: 'Catatan Pembayaran', type: 'textarea' },
+      // { key: 'receiptDocumentUrl', label: 'Dokumen Bukti Pembayaran', type: 'textarea' },
       { key: 'receiptTotal', label: 'Total Pembayaran Diterima', type: 'numeric-input' },
       { key: 'receiptTotalWithTax', label: 'Total Pembayaran Beserta Pajak', type: 'numeric-input' },
     ];
@@ -344,164 +361,178 @@ export default function RepaymentReceiptForm({ mode, initialData, invoiceSummary
               ? 'Ubah data pembayaran di bawah ini dengan benar.' 
               : 'Lengkapi data pembayaran di bawah ini dengan benar. Perhitungan otomatis dilakukan.'}
           />
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          
-          {/* GROUP 1: Informasi Dasar */}
-          <FormGroup title="INFORMASI PENERIMAAN DANA" colRatio="1:1">
-            <NumberField label="Jumlah Total Tagihan" 
-                          name="invoiceTotalWithTax"
-                          value={invoiceSummary?.invoiceTotalWithTax.round(precision).toString()} 
-                          disabled={true} colSpan="1" />
+        
+        <div className="flex-1 overflow-y-auto mx-2 space-y-6">
 
-            <Input label="Tanggal Pembayaran" type="date" 
-                    name="receiptDate" hasError={isError('receiptDate')}
-                    value={formatDateForInput(formData.receiptDate)} 
-                    onChange={handleChange} colSpan="1" />
-            
-            <Select label="Metode Pembayaran"
-                    name="receiptMethod"  hasError={isError('receiptMethod')}
-                    value={formData.receiptMethod ?? ""} 
-                    onChange={handleChange} colSpan="1">
-              <option key="default" value="">-- Pilih Metode Transfer --</option>
-              {Object.values(ReceiptMethod).map(m => <option key={m} value={m}>{m.replace('_', ' ')}</option>)}
-            </Select>
+          <div className="relative space-y-6 transition-all duration-300 px-8 pb-8 mt-4">
 
-            <Select label="Status Pembayaran" 
-                    name="receiptStatus" hasError={isError('receiptStatus')}
-                    value={formData.receiptStatus} onChange={handleChange} colSpan="1">
-              <option key="default" value="">-- Pilih Status Pembayaran --</option>
-              {Object.values(ReceiptStatus).map(s => <option key={s} value={s}>{s}</option>)}
-            </Select>
+            {isDeleting && (
+                <div className="absolute inset-y-[-30px] inset-x-[0px] z-10 bg-white opacity-65 bcursor-not-allowed" />
+              )}
 
-            <TextArea label="Catatan Pembayaran" 
-                name="receiptNotes" hasError={isError('receiptNotes')}
-                value={formData.receiptNotes} 
-                onChange={handleChange} 
-                rows={3} colSpan="2"/>
+            {/* GROUP 1: Informasi Dasar */}
+            <FormGroup title="INFORMASI PENERIMAAN DANA" colRatio="1:1">
+              <NumberField label="Jumlah Total Tagihan" 
+                            name="invoiceTotalWithTax"
+                            value={invoiceSummary?.invoiceTotalWithTax.round(precision).toString()} 
+                            disabled={true} colSpan="1" />
 
-            <FileInput 
-                label="Dokumen Bukti Pembayaran"
-                colSpan="2" name="receiptDocumentUrl"
-                hasError={false} // Ubah ke true jika validasi gagal
-                oldFile={oldFile.current}
-                allowedTypes={['.pdf','.png','.jpg','.gif','.jpeg']} // Hanya izinkan tipe ini
-                maxSizeMb={5} // Maksimal 2MB (jika diabaikan, otomatis 5MB)
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                  setFormData({
-                    ...formData, 
-                    receiptDocumentUrl: e.target.files ? e.target.files[0] : null
-                  })
-                }
-              />
-          </FormGroup>
-
-          {/* GROUP 2: Rincian Nilai Penerimaan */}
-          <FormGroup title="TOTAL PEMBAYARAN DITERIMA" colRatio="1:1">
-            <NumberField label="Total Pembayaran Beserta Pajak" 
-                          name="receiptTotalWithTax" hasError={isError('receiptTotalWithTax')}
-                          value={formData.receiptTotalWithTax} 
-                          onValueChange={handleTotalWithTaxChange} 
-                          colSpan="2" 
-                          className="font-semibold text-lg text-emerald-700 bg-emerald-50 border-emerald-200" 
-            />
-            <NumberField label="Total Pembayaran Diterima" 
-                          name="receiptTotal" hasError={isError('receiptTotal')}
-                          value={formData.receiptTotal} disabled colSpan="1" />
-
-            <NumberField label="Total Pajak" name="receiptTotalTax"
-                          value={formData.receiptTotalTax} 
-                          disabled colSpan="1" />
-          </FormGroup>
-
-          {/* Rincian Spesifik Sesuai Schedule */}
-          {invoiceSummary.scheduleType === ScheduleType.UPFRONT && (
-            <FormGroup title="UPFRONT FEE" colRatio="1:1">
-              {invoiceSummary.invoiceFeeAdministration.gt(0) && 
-              <>
-                <NumberField label="Biaya Administrasi" name="receiptFeeAdministration"
-                              value={formData.receiptFeeAdministration} 
-                              onValueChange={handleNumeriChange('receiptFeeAdministrationTax')} />
-                <NumberField label="Pajak Biaya Administrasi" name="receiptFeeAdministrationTax"
-                              value={formData.receiptFeeAdministrationTax} 
-                              disabled />
-              </>}
-
-              {invoiceSummary.invoiceFeeProvision.gt(0) && 
-              <>
-                <NumberField label="Biaya Provisi" name="receiptFeeProvision"
-                              value={formData.receiptFeeProvision} 
-                              onValueChange={handleNumeriChange('receiptFeeProvision')} />
-                <NumberField label="Pajak Biaya Provisi" name="receiptFeeProvisionTax"
-                              value={formData.receiptFeeProvisionTax} 
-                              disabled />
-              </>}
-
-              {invoiceSummary.invoiceFeePlatform.gt(0) && 
-              <>
-                <NumberField label="Biaya Platform" name="receiptFeePlatform"
-                              value={formData.receiptFeePlatform} 
-                              onValueChange={handleNumeriChange('receiptFeePlatform')} />
-                <NumberField label="Pajak Biaya Platform" name="receiptFeePlatformTax"
-                              value={formData.receiptFeePlatformTax} 
-                              disabled />
-              </>}
-
-              {invoiceSummary.invoiceFeeServicing.gt(0) && 
-              <>
-                <NumberField label="Biaya Servicing" name="receiptFeeServicing"
-                              value={formData.receiptFeeServicing} 
-                              onValueChange={handleNumeriChange('receiptFeeServicing')} />
-                <NumberField label="Pajak Biaya Servicing" name="receiptFeeServicingTax"
-                              value={formData.receiptFeeServicingTax} 
-                              disabled />
-              </>}
+              <Input label="Tanggal Pembayaran" type="date" 
+                      name="receiptDate" hasError={isError('receiptDate')}
+                      value={formatDateForInput(formData.receiptDate)} 
+                      onChange={handleChange} colSpan="1" />
               
-              {/* Pemisah untuk kelompok Fee Other */}
-              <div className="col-span-2 w-full border-b border-slate-200 mt-2 pt-4"></div>
-              <NumberField label="Biaya Lain-lain" name="receiptFeeOther"
-                            value={formData.receiptFeeOther} 
-                            onValueChange={handleNumeriChange('receiptFeeOther')} />
-              <NumberField label="Pajak Biaya Lain-lain" name="receiptFeeOtherTax"
-                            value={formData.receiptFeeOtherTax} 
-                            disabled />
-            </FormGroup>
-          )}
+              <Select label="Metode Pembayaran"
+                      name="receiptMethod"  hasError={isError('receiptMethod')}
+                      value={formData.receiptMethod ?? ""} 
+                      onChange={handleChange} colSpan="1">
+                <option key="default" value="">-- Pilih Metode Transfer --</option>
+                {Object.values(ReceiptMethod).map(m => <option key={m} value={m}>{m.replace('_', ' ')}</option>)}
+              </Select>
 
-          {invoiceSummary.scheduleType === ScheduleType.INSTALLMENT && (
-            <FormGroup title="INSTALLMENT FEE" colRatio="1:1">
-              <NumberField label="Biaya Monitoring" name="receiptFeeMonitoring"
-                            value={formData.receiptFeeMonitoring} 
-                            onValueChange={handleNumeriChange('receiptFeeMonitoring')} />
-              <NumberField label="Pajak Biaya Monitoring" name="receiptFeeMonitoringTax"
-                            value={formData.receiptFeeMonitoringTax} 
-                            disabled />
-              <NumberField label="Sinking Fund" name="receiptSinkingFund"
-                            value={formData.receiptSinkingFund} 
-                            onValueChange={handleNumeriChange('receiptSinkingFund')} />
-              <NumberField label="Yield" name="receiptYield"
-                            value={formData.receiptYield} 
-                            onValueChange={handleNumeriChange('receiptYield')} />
-              {/* Pemisah untuk kelompok Fee Other */}
-              <div className="col-span-2 w-full border-b border-slate-200 mt-2 pt-4"></div>
-              <NumberField label="Biaya Lain-lain" name="receiptFeeOther"
-                            value={formData.receiptFeeOther} 
-                            onValueChange={handleNumeriChange('receiptFeeOther')} />
-              <NumberField label="Pajak Biaya Lain-lain" name="receiptFeeOtherTax"
-                            value={formData.receiptFeeOtherTax} 
-                            disabled />
-            </FormGroup>
-          )}
+              <Select label="Status Pembayaran" 
+                      name="receiptStatus" hasError={isError('receiptStatus')}
+                      value={formData.receiptStatus} onChange={handleChange} colSpan="1">
+                <option key="default" value="">-- Pilih Status Pembayaran --</option>
+                {Object.values(ReceiptStatus).map(s => <option key={s} value={s}>{s}</option>)}
+              </Select>
 
-          <FormGroup title="DENDA & KERUGIAN RIIL" colRatio="1:1">
-            <NumberField label="Kerugian Riil" name="receiptActualLoss"
-                          value={formData.receiptActualLoss} 
-                          onValueChange={handleNumeriChange('receiptActualLoss')} />
-            <NumberField label="Denda" name="receiptPenalty"
-                          value={formData.receiptPenalty} 
-                          onValueChange={handleNumeriChange('receiptPenalty')} />
-          </FormGroup>
+              <TextArea label="Catatan Pembayaran" 
+                  name="receiptNotes" hasError={isError('receiptNotes')}
+                  value={formData.receiptNotes} 
+                  onChange={handleChange} 
+                  rows={3} colSpan="2"/>
+
+              <FileInput 
+                  label="Dokumen Bukti Pembayaran"
+                  colSpan="2" name="receiptDocumentUrl"
+                  hasError={false} // Ubah ke true jika validasi gagal
+                  oldFile={oldFile.current}
+                  allowedTypes={['.pdf','.png','.jpg','.gif','.jpeg']} // Hanya izinkan tipe ini
+                  maxSizeMb={5} // Maksimal 2MB (jika diabaikan, otomatis 5MB)
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                    setFormData({
+                      ...formData, 
+                      receiptDocumentUrl: e.target.files ? e.target.files[0] : null
+                    })
+                  }
+                />
+            </FormGroup>
+
+            {/* GROUP 2: Rincian Nilai Penerimaan */}
+            <FormGroup title="TOTAL PEMBAYARAN DITERIMA" colRatio="1:1">
+              <NumberField label="Total Pembayaran Beserta Pajak" 
+                            name="receiptTotalWithTax" hasError={isError('receiptTotalWithTax')}
+                            value={formData.receiptTotalWithTax} 
+                            onValueChange={handleTotalWithTaxChange} 
+                            colSpan="2" 
+                            className="font-semibold text-lg text-emerald-700 bg-emerald-50 border-emerald-200" 
+              />
+              <NumberField label="Total Pembayaran Diterima" 
+                            name="receiptTotal" hasError={isError('receiptTotal')}
+                            value={formData.receiptTotal} disabled colSpan="1" />
+
+              <NumberField label="Total Pajak" name="receiptTotalTax"
+                            value={formData.receiptTotalTax} 
+                            disabled colSpan="1" />
+            </FormGroup>
+
+            {/* Rincian Spesifik Sesuai Schedule */}
+            {invoiceSummary.scheduleType === ScheduleType.UPFRONT && (
+              <FormGroup title="UPFRONT FEE" colRatio="1:1">
+                {invoiceSummary.invoiceFeeAdministration.gt(0) && 
+                <>
+                  <NumberField label="Biaya Administrasi" name="receiptFeeAdministration"
+                                value={formData.receiptFeeAdministration} 
+                                onValueChange={handleNumeriChange('receiptFeeAdministrationTax')} />
+                  <NumberField label="Pajak Biaya Administrasi" name="receiptFeeAdministrationTax"
+                                value={formData.receiptFeeAdministrationTax} 
+                                disabled />
+                </>}
+
+                {invoiceSummary.invoiceFeeProvision.gt(0) && 
+                <>
+                  <NumberField label="Biaya Provisi" name="receiptFeeProvision"
+                                value={formData.receiptFeeProvision} 
+                                onValueChange={handleNumeriChange('receiptFeeProvision')} />
+                  <NumberField label="Pajak Biaya Provisi" name="receiptFeeProvisionTax"
+                                value={formData.receiptFeeProvisionTax} 
+                                disabled />
+                </>}
+
+                {invoiceSummary.invoiceFeePlatform.gt(0) && 
+                <>
+                  <NumberField label="Biaya Platform" name="receiptFeePlatform"
+                                value={formData.receiptFeePlatform} 
+                                onValueChange={handleNumeriChange('receiptFeePlatform')} />
+                  <NumberField label="Pajak Biaya Platform" name="receiptFeePlatformTax"
+                                value={formData.receiptFeePlatformTax} 
+                                disabled />
+                </>}
+
+                {invoiceSummary.invoiceFeeServicing.gt(0) && 
+                <>
+                  <NumberField label="Biaya Servicing" name="receiptFeeServicing"
+                                value={formData.receiptFeeServicing} 
+                                onValueChange={handleNumeriChange('receiptFeeServicing')} />
+                  <NumberField label="Pajak Biaya Servicing" name="receiptFeeServicingTax"
+                                value={formData.receiptFeeServicingTax} 
+                                disabled />
+                </>}
+                
+                {/* Pemisah untuk kelompok Fee Other */}
+                <div className="col-span-2 w-full border-b border-slate-200 mt-2 pt-4"></div>
+                <NumberField label="Biaya Lain-lain" name="receiptFeeOther"
+                              value={formData.receiptFeeOther} 
+                              onValueChange={handleNumeriChange('receiptFeeOther')} />
+                <NumberField label="Pajak Biaya Lain-lain" name="receiptFeeOtherTax"
+                              value={formData.receiptFeeOtherTax} 
+                              disabled />
+              </FormGroup>
+            )}
+
+            {invoiceSummary.scheduleType === ScheduleType.INSTALLMENT && (
+              <FormGroup title="INSTALLMENT FEE" colRatio="1:1">
+                <NumberField label="Biaya Monitoring" name="receiptFeeMonitoring"
+                              value={formData.receiptFeeMonitoring} 
+                              onValueChange={handleNumeriChange('receiptFeeMonitoring')} />
+                <NumberField label="Pajak Biaya Monitoring" name="receiptFeeMonitoringTax"
+                              value={formData.receiptFeeMonitoringTax} 
+                              disabled />
+                <NumberField label="Sinking Fund" name="receiptSinkingFund"
+                              value={formData.receiptSinkingFund} 
+                              onValueChange={handleNumeriChange('receiptSinkingFund')} />
+                <NumberField label="Yield" name="receiptYield"
+                              value={formData.receiptYield} 
+                              onValueChange={handleNumeriChange('receiptYield')} />
+                {/* Pemisah untuk kelompok Fee Other */}
+                <div className="col-span-2 w-full border-b border-slate-200 mt-2 pt-4"></div>
+                <NumberField label="Biaya Lain-lain" name="receiptFeeOther"
+                              value={formData.receiptFeeOther} 
+                              onValueChange={handleNumeriChange('receiptFeeOther')} />
+                <NumberField label="Pajak Biaya Lain-lain" name="receiptFeeOtherTax"
+                              value={formData.receiptFeeOtherTax} 
+                              disabled />
+              </FormGroup>
+            )}
+
+            <FormGroup title="DENDA & KERUGIAN RIIL" colRatio="1:1">
+              <NumberField label="Kerugian Riil" name="receiptActualLoss"
+                            value={formData.receiptActualLoss} 
+                            onValueChange={handleNumeriChange('receiptActualLoss')} />
+              <NumberField label="Denda" name="receiptPenalty"
+                            value={formData.receiptPenalty} 
+                            onValueChange={handleNumeriChange('receiptPenalty')} />
+            </FormGroup>
+          </div>
+          
+          {/*Area Deletion (Danger Zone) - Hanya muncul saat Edit Mode */}
+          {isEditMode && (<DeleteDataSection isDeleting={isDeleting} onDeleting={setIsDeleting}/>)}
 
         </div>
+
+        
+
 
         {/* FOOTER: Fixed di Bawah */}
         <FormFooter 
@@ -510,14 +541,16 @@ export default function RepaymentReceiptForm({ mode, initialData, invoiceSummary
           submissionError={submissionError}
           handlePreSubmit={handlePreSubmit}
           isLoading={isLoading}
+          isDeleting={isDeleting}
           closePanel={closePanel}
           />
 
         <ConfirmModal 
           isOpen={showConfirmModal} 
           onClose={() => setShowConfirmModal(false)} 
-          onConfirm={() => { setShowConfirmModal(false); 
-          }} />
+          onConfirm={handleConfirmSubmit} 
+          mode={isDeleting?'delete':mode}
+        />
 
         <LoadingForm isLoading={isLoading} />
       </form>

@@ -20,6 +20,7 @@ export default function RepaymentReceiptCreateWrapper({invoiceSummary, onSuccess
 
   // DUMMY Data Tagihan untuk Acuan Kalkulasi (Anggap data dari Schedule API)
   const initialData: RepaymentReceiptFormRequest = {
+    repaymentScheduleId: invoiceSummary.id,
     receiptDate: '',
     receiptStatus: null,
     receiptMethod: null,
@@ -53,7 +54,10 @@ export default function RepaymentReceiptCreateWrapper({invoiceSummary, onSuccess
     const payloadData : RepaymentReceiptFormRequest = {
       ...formData,
       receiptMethod: formData.receiptMethod === '' ? null : formData.receiptMethod,
+      receiptNotes: formData.receiptNotes === '' ? null : formData.receiptNotes,
     };
+
+    // console.log('dudu payload : ',payloadData);
 
     const isFileUploaded = formData.receiptDocumentUrl instanceof File
 

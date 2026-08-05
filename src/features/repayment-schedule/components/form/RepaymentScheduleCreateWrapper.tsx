@@ -5,14 +5,14 @@ import { repaymentScheduleService } from '../../services/repaymentScheduleServic
 import { ScheduleType, InvoiceStatus } from '../../types/repayment-schedule.enum';
 import { RepaymentScheduleEditFormResponse, RepaymentScheduleFormRequest } from '../../dtos/repayment-schedule.dto';
 import { RepaymentSecurityDetailResponse, RepaymentSecuritySummaryResponse, RepaymentSecurityWithSinkingFundResponse } from '../../../repayment-security/dtos/repayment-security.dto'
-import { RepaymentScheduleSummary } from '../../types/repayment-schedule.type';
+import { InvoiceInfo } from '../../types/repayment-schedule.type';
 
 
 
 interface CreateWrapperProps {
   repaymentSecurity: RepaymentSecurityDetailResponse;
-  lastInstallment?: RepaymentScheduleSummary | null;
-  lastUpfront?: RepaymentScheduleSummary | null;
+  lastInstallment?: InvoiceInfo;
+  lastUpfront?: InvoiceInfo;
   onSuccess?: ()=> void;
 }
 
@@ -66,12 +66,12 @@ export default function RepaymentScheduleCreateWrapper({ repaymentSecurity, last
     setIsSubmitting(true);
     setSubmissionError(null); 
 
-
     const payloadData : RepaymentScheduleFormRequest = {
       ...formData,
       invoiceStatus: formData.invoiceStatus === '' ? null : formData.invoiceStatus,
       scheduleType: formData.scheduleType === '' ? null : formData.scheduleType,
       invoiceNumber: formData.invoiceNumber === '-' ? null : formData.invoiceNumber,
+      invoiceDate: formData.invoiceDate === '' ? null : formData.invoiceDate,
     };
 
     try {

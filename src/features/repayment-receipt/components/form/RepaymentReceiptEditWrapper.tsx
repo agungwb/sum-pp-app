@@ -1,10 +1,10 @@
 // src/components/repayment/RepaymentReceiptEditWrapper.tsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import RepaymentReceiptForm from './RepaymentReceiptForm';
 import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { repaymentReceiptService } from '../../services/repaymentReceiptService';
-import { ScheduleType } from '../../types/repayment-receipt.enum';
-import { InvoiceSummary, InvoiceSummaryWithPenaltyBig } from '../../../repayment-schedule/types/repayment-schedule.type';
+import { InvoiceSummaryWithPenaltyBig } from '../../../repayment-schedule/types/repayment-schedule.type';
 import { RepaymentReceiptEditFormResponse, RepaymentReceiptFormRequest } from '../../dtos/repayment-receipt.dto';
 import { mapDtoToFormData } from '../../../../utils/form';
 
@@ -19,6 +19,7 @@ export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary,
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialData, setInitialData] = useState<RepaymentReceiptFormRequest | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchReceiptDetail = async () => {
@@ -80,6 +81,7 @@ export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary,
     const payloadData : RepaymentReceiptFormRequest = {
       ...formData,
       receiptMethod: formData.receiptMethod === '' ? null : formData.receiptMethod,
+      receiptNotes: formData.receiptNotes === '' ? null : formData.receiptNotes,
     };
 
     const isFileUploaded = formData.receiptDocumentUrl instanceof File
@@ -92,7 +94,6 @@ export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary,
       } else {
         await repaymentReceiptService.updateRepaymentReceipt(receiptId, payloadData);
       }
-
       if (onSuccess){
         onSuccess();
       }
@@ -101,6 +102,35 @@ export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary,
       console.error("Gagal update penerimaan", error);
       setSubmissionError(
         error?.response?.data?.message || "Terjadi kesalahan saat menyimpan data."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsSubmitting(true);
+    setSubmissionError(null);
+    try {
+  
+      await repaymentReceiptService.deleteRepaymentReceipt(receiptId);
+      console.log('Berhasil menghapus bukti pembayaran untuk Receipt ID:', receiptId);
+      
+      if (onSuccess){
+        onSuccess();
+      }
+      closePanel();
+
+      //Untuk case delete receipt sementara tidak perlu redirect
+      // navigate('/dashboard/repayment/'+invoiceSummary.repaymentSecurityId+'/schedules/'+invoiceSummary.id, { 
+      //   replace: true, 
+      //   // state: { message: 'Data berhasil dihapus!' } 
+      // });
+      
+    } catch (error: any) {
+      console.error("Gagal menghapus data bukti pembayaran", error);
+      setSubmissionError(
+        error?.response?.data?.message || "Terjadi kesalahan saat menghapus data bukti pembayaran."
       );
     } finally {
       setIsSubmitting(false);
@@ -116,6 +146,7 @@ export default function RepaymentReceiptEditWrapper({ receiptId, invoiceSummary,
           invoiceSummary={invoiceSummary}
           onSubmit={handleEditSubmit} 
           onCancel={closePanel}
+          onDelete={handleDelete}
           isLoading={isSubmitting} 
           submissionError={submissionError}
         />

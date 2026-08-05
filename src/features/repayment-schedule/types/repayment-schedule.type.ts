@@ -109,16 +109,24 @@ extends RepaymentScheduleID,
         RepaymentScheduleInvoiceFee,
         Pick<RepaymentScheduleAuditTrail, 'createdBy' | 'createdAt'> {}
 
+export interface InvoiceInfo
+extends 
+        RepaymentScheduleID,
+        RepaymentScheduleParent,
+        RepaymentScheduleInfo, 
+        RepaymentScheduleInvoiceInfo {}
 
 export interface InvoiceSummary 
 extends 
         RepaymentScheduleID,
+        RepaymentScheduleParent,
         RepaymentScheduleInfo, 
         RepaymentScheduleInvoiceFee {}
 
 export interface InvoiceSummaryWithPenaltyBig 
 extends 
         RepaymentScheduleID,
+        RepaymentScheduleParent,
         RepaymentScheduleInfo, 
         RepaymentScheduleInvoiceFeeBig {
         outstandingTotalWithTax: Big;

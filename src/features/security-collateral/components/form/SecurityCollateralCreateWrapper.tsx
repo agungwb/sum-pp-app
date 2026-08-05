@@ -49,7 +49,7 @@ export default function SecurityCollateralCreateWrapper({ repaymentSecuritySumma
     setIsSubmitting(true);
     try {
       if (!repaymentSecuritySummary.id) throw new Error("Security ID tidak ditemukan");
-      await securityCollateralService.createCollateral(repaymentSecuritySummary.id, formData);
+      await securityCollateralService.createSecurityCollateral(repaymentSecuritySummary.id, formData);
       if (onSuccess){
         onSuccess();
       }

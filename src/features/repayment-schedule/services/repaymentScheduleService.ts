@@ -78,4 +78,10 @@ export const repaymentScheduleService = {
     return response.data;
   },
 
+  //DELETE
+  deleteRepaymentSchedule: async (scheduleId: string): Promise<RepaymentScheduleDetailWithAuditResponse> => {
+    const response = await apiClient.delete(`/${REPAYMENT_SCHEDULE_URL}/${scheduleId}`);
+    return response.data;
+  },
+
 };

@@ -64,8 +64,8 @@ export interface SecurityLookupResponse
 
       scheduleUpfrontFlag: boolean;
       scheduleInstallmentFlag: boolean;
-      scheduleUpfrontDate: string;
-      scheduleInstallmentDate: string;
+      scheduleUpfrontDate: string | null;
+      scheduleInstallmentDate: string | null;
 
           }
 

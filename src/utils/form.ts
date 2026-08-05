@@ -5,34 +5,69 @@
  * Fungsi ini sudah otomatis mendeteksi kolom file spesifik di aplikasi
  */
 export const mapDtoToFormData = (dtoPayload: Record<string, any>): FormData => {
-    const formData = new FormData();
-  
-    Object.keys(dtoPayload).forEach((key) => {
-      const value = dtoPayload[key];
-  
-      // Abaikan jika null, undefined, atau string kosong
-      if (value !== null && value !== undefined && value !== '') {
-        
-        // PEMETAAN OTOMATIS: Deteksi semua key yang mengandung kata 'Url', 'File', atau 'Document'
-        // dan pastikan nilainya adalah object File mentah dari browser
-        if ((key.toLowerCase().includes('url') || key.toLowerCase().includes('file')) && value instanceof File) {
-          formData.append(key, value);
-        } 
-        else if (Array.isArray(value)) {
-          value.forEach((item) => formData.append(`${key}[]`, item));
-        }
-        else if (typeof value === 'boolean') {
-          formData.append(key, value ? 'true' : 'false');
-        }
-        else {
-          formData.append(key, value);
-        }
-  
+  const formData = new FormData();
+
+  Object.keys(dtoPayload).forEach((key) => {
+    const value = dtoPayload[key];
+
+    // Sekarang KITA HANYA MENGABAIKAN undefined
+    if (value !== undefined) {
+      
+      // PEMETAAN OTOMATIS: Deteksi file
+      if ((key.toLowerCase().includes('url') || key.toLowerCase().includes('file') || key.toLowerCase().includes('document')) && value instanceof File) {
+        formData.append(key, value);
+      } 
+      else if (Array.isArray(value)) {
+        value.forEach((item) => formData.append(`${key}[]`, item));
       }
-    });
-  
-    return formData;
-  };
+      else if (typeof value === 'boolean') {
+        formData.append(key, value ? 'true' : 'false');
+      }
+      else if (value === null) {
+        // Eksplisit mengirim null sebagai string "null"
+        formData.append(key, 'null');
+      }
+      else {
+        // Blok ini sekarang akan menangani string kosong "", angka 0, dan teks biasa
+        // FormData secara otomatis akan menjadikannya string.
+        formData.append(key, value);
+      }
+
+    }
+  });
+
+  return formData;
+};
+
+export const mapDtoToFormDataOLD = (dtoPayload: Record<string, any>): FormData => {
+  const formData = new FormData();
+
+  Object.keys(dtoPayload).forEach((key) => {
+    const value = dtoPayload[key];
+
+    // Abaikan jika null, undefined, atau string kosong
+    if (value !== null && value !== undefined && value !== '') {
+      
+      // PEMETAAN OTOMATIS: Deteksi semua key yang mengandung kata 'Url', 'File', atau 'Document'
+      // dan pastikan nilainya adalah object File mentah dari browser
+      if ((key.toLowerCase().includes('url') || key.toLowerCase().includes('file')) && value instanceof File) {
+        formData.append(key, value);
+      } 
+      else if (Array.isArray(value)) {
+        value.forEach((item) => formData.append(`${key}[]`, item));
+      }
+      else if (typeof value === 'boolean') {
+        formData.append(key, value ? 'true' : 'false');
+      }
+      else {
+        formData.append(key, value);
+      }
+
+    }
+  });
+
+  return formData;
+};
 
   export type FormInputType = 
   | 'input' 

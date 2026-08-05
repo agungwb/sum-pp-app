@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import RepaymentSecurityForm from './RepaymentSecurityForm';
 import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { repaymentSecurityService } from '../../services/repaymentSecurityService'; // Sesuaikan path
@@ -18,6 +19,8 @@ export default function RepaymentSecurityEditWrapper({ repaymentId, onSuccess }:
   const [initialData, setInitialData] = useState<RepaymentSecurityFormRequest | null>(null);
   const [errorFetch, setErrorFetch] = useState<string | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -138,6 +141,20 @@ export default function RepaymentSecurityEditWrapper({ repaymentId, onSuccess }:
       ...formData,
       securityType: formData.securityType === '' ? null : formData.securityType,
       contractStatus: formData.contractStatus === '' ? null : formData.contractStatus,
+
+      contractEscrowBank: formData.contractEscrowBank === '' ? null : formData.contractEscrowBank,
+      contractEscrowAccount: formData.contractEscrowAccount === '' ? null : formData.contractEscrowAccount,
+      contractVaBank: formData.contractVaBank === '' ? null : formData.contractVaBank,
+      contractVaNumber: formData.contractVaNumber === '' ? null : formData.contractVaNumber,
+      contractContactEmail: formData.contractContactEmail === '' ? null : formData.contractContactEmail,
+      contractContactWhatsapp: formData.contractContactWhatsapp === '' ? null : formData.contractContactWhatsapp,
+      contractDocumentTitle: formData.contractDocumentTitle === '' ? null : formData.contractDocumentTitle,
+      contractDocumentNumber: formData.contractDocumentNumber === '' ? null : formData.contractDocumentNumber,
+
+      contractStartDate: formData.contractStartDate === '' ? null : formData.contractStartDate,
+      contractEndDate: formData.contractEndDate === '' ? null : formData.contractEndDate,
+      scheduleUpfrontDate: formData.scheduleUpfrontDate === '' ? null : formData.scheduleUpfrontDate,
+      scheduleInstallmentDate: formData.scheduleInstallmentDate === '' ? null : formData.scheduleInstallmentDate,
     };
 
     const isFileUploaded = formData.contractDocumentUrl instanceof File
@@ -166,6 +183,33 @@ export default function RepaymentSecurityEditWrapper({ repaymentId, onSuccess }:
     }
   };
 
+  const handleDelete = async () => {
+    setIsSubmitting(true);
+    setSubmissionError(null);
+    try {
+  
+      await repaymentSecurityService.deleteRepaymentSecurity(repaymentId);
+      
+      if (onSuccess){
+        onSuccess();
+      }
+      closePanel();
+      // 2. Kirim pesan sukses ke halaman list menggunakan state (opsional)
+      // 3. Redirect ke halaman list dengan opsi 'replace: true'
+      navigate('/dashboard/repayment', { 
+        replace: true, 
+        // state: { message: 'Data berhasil dihapus!' } 
+      });
+    } catch (error: any) {
+      console.error("Gagal menghapus repayment security", error);
+      setSubmissionError(
+        error?.response?.data?.message || "Terjadi kesalahan saat menghapus data repayment security."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // ... (Logika error handling dan skeleton loading tetap sama seperti sebelumnya)
 
   if (!initialData) return <div>Loading...</div>;
@@ -175,8 +219,9 @@ export default function RepaymentSecurityEditWrapper({ repaymentId, onSuccess }:
       mode='edit'
       initialData={initialData}
       onSubmit={handleEditSubmit}
-      isLoading={isSubmitting}
       onCancel={closePanel}
+      onDelete={handleDelete}
+      isLoading={isSubmitting}
       submissionError={submissionError}
     />
   );

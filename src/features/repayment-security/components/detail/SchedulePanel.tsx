@@ -12,6 +12,7 @@ import { ScheduleType } from '../../../repayment-schedule/types/repayment-schedu
 import { Big } from 'big.js';
 import { toSafeBig } from '../../../../utils/number';
 import { InvoiceStatus } from '../../types/repayment-security.enum';
+import { InvoiceInfo, InvoiceSummary } from '../../../repayment-schedule/types/repayment-schedule.type';
 
 interface RepaymentScheduleTableProps {
   repaymentSecurity: RepaymentSecurityWithSinkingFundResponse;
@@ -108,15 +109,18 @@ export default function SchedulePanel({
       status: row.invoiceStatus
     }));
 
-    const lastUpfront = repaymentSchedules
+    const lastUpfront: InvoiceInfo = repaymentSchedules
     .filter(s => s.scheduleType === ScheduleType.UPFRONT)
     .sort((a, b) => a.scheduleSequence - b.scheduleSequence)
     .map(row => ({
       id: row.id,
+
       repaymentSecurityId: row.repaymentSecurityId,
+
       scheduleType: row.scheduleType || null,
       scheduleSequence: row.scheduleSequence,
       scheduleDate: row.scheduleDate || '',
+
       invoiceNumber: row.invoiceNumber || null,
       invoiceSentTrial: row.invoiceSentTrial ?? 0,
       invoiceDate: row.invoiceDate || null,
@@ -124,7 +128,7 @@ export default function SchedulePanel({
       invoiceNotes: row.invoiceNotes || null,
     })).slice(-1)[0];
 
-    const lastInstallment = repaymentSchedules
+    const lastInstallment: InvoiceInfo = repaymentSchedules
     .filter(s => s.scheduleType === ScheduleType.INSTALLMENT)
     .sort((a, b) => a.scheduleSequence - b.scheduleSequence)
     .map(row => ({

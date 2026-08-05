@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import RepaymentScheduleForm from './RepaymentScheduleForm';
 import { useSidePanel } from '../../../../contexts/SidePanelContext';
 import { repaymentScheduleService } from '../../services/repaymentScheduleService';
@@ -19,6 +20,7 @@ export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecu
   const { closePanel } = useSidePanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const navigate = useNavigate();
   
   // State Modal Konfirmasi
 
@@ -88,6 +90,7 @@ export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecu
       invoiceStatus: formData.invoiceStatus === '' ? null : formData.invoiceStatus,
       scheduleType: formData.scheduleType === '' ? null : formData.scheduleType,
       invoiceNumber: formData.invoiceNumber === '-' ? null : formData.invoiceNumber,
+      invoiceDate: formData.invoiceDate === '' ? null : formData.invoiceDate,
     };
 
     try {
@@ -114,6 +117,39 @@ export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecu
     }
   };
 
+  const handleDelete = async () => {
+    setIsSubmitting(true);
+    setSubmissionError(null);
+    try {
+
+      // await new Promise((resolve) => setTimeout(resolve, 5000));
+      // Memanggil fungsi menghapus
+      await repaymentScheduleService.deleteRepaymentSchedule(scheduleId);
+      
+      console.log('Berhasil menghapus jadwal untuk Schedule ID:', scheduleId);
+      
+      // Bisa tambahkan Toast Notification (Success) di sini
+      if (onSuccess){
+        onSuccess();
+      }
+      closePanel(); // Langsung tutup side panel setelah berhasil
+
+      //Navigate
+      navigate('/dashboard/repayment/'+repaymentSecurity.id, { 
+        replace: true, 
+        // state: { message: 'Data berhasil dihapus!' } 
+      });
+    } catch (error: any) {
+      console.error("Gagal menghapus jadwal :", error);
+      setSubmissionError(
+        error?.response?.data?.message || "Terjadi kesalahan saat menghapus data."
+      );
+      // Bisa tambahkan Toast Notification (Error) di sini
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="h-full w-full flex flex-col relative bg-white">
       {initialData ? (
@@ -123,6 +159,7 @@ export default function RepaymentScheduleEditWrapper({ scheduleId, repaymentSecu
           repaymentSecurity={repaymentSecurity}
           onSubmit={handleUpdateSubmit} 
           onCancel={closePanel}
+          onDelete={handleDelete}
           isLoading={isSubmitting} 
           submissionError={submissionError}
         />

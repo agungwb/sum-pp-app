@@ -111,6 +111,11 @@ export const repaymentSecurityService = {
     return response.data;
   },
 
+  deleteRepaymentSecurity: async (repaymentSecurityId: string): Promise<RepaymentSecurityDetailWithAuditResponse> => {
+    const response = await apiClient.delete(`/${repaymentSecurityId}`);
+    return response.data;
+  },
+
   mapRepaymentSecuritySummaryFromDetail : (
     detail: RepaymentSecurityDetailResponse | RepaymentSecurityWithSinkingFundResponse
   ): RepaymentSecuritySummaryResponse => {

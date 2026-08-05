@@ -125,6 +125,7 @@ export default function RepaymentSchedulePage() {
 
   const invoiceSummary: InvoiceSummaryWithPenaltyBig = {
         id: schedule?.id ?? '',
+        repaymentSecurityId: schedule?.repaymentSecurityId ?? '',
         scheduleType: schedule?.scheduleType ?? null,
         scheduleSequence: schedule?.scheduleSequence ?? 0,
         scheduleDate: schedule?.scheduleDate ?? '',
